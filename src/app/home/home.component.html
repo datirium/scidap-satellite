@@ -1,0 +1,87 @@
+<!-- <div class="container">
+  <h1 class="title">
+    {{ 'PAGES.HOME.TITLE' | translate }}
+  </h1>
+</div> -->
+
+
+<!-- <div class="main-container">
+  <div class="alert alert-app-level">
+      ...
+  </div>
+  <header class="header header-6">
+      ...
+  </header>
+  <nav class="subnav">
+      ...
+  </nav>
+  <div class="content-container">
+      <div class="content-area">
+          ...
+      </div>
+      <nav class="sidenav">
+          ...
+      </nav>
+  </div>
+</div> -->
+
+<clr-wizard #wizard [(clrWizardOpen)]="xlOpen" [clrWizardClosable]="false" [clrWizardPreventDefaultNext]="true" [clrWizardDisableStepnav]="true">
+  <!-- (clrWizardOnFinish)="doFinish()" -->
+
+  <clr-wizard-title>Installing SciDAP Satellite</clr-wizard-title>
+
+  <clr-wizard-button [type]="'previous'">Back</clr-wizard-button>
+  <clr-wizard-button [type]="'next'">Next</clr-wizard-button>
+  <clr-wizard-button [type]="'finish'">Finish</clr-wizard-button>
+
+  <clr-wizard-page (clrWizardPageCustomButton)="doLoginOrRegister($event)">
+    <ng-template clrPageTitle>Welcome</ng-template>
+
+    <ng-template clrPageButtons>
+      <clr-wizard-button [type]="'login'">Login</clr-wizard-button>
+      <clr-wizard-button [type]="'new-user'">New User</clr-wizard-button>
+    </ng-template>
+
+    <!-- <div class="clr-row">
+      <div class="clr-col">&nbsp;</div>
+      <div class="clr-col">
+
+        <div class="btn-group btn-primary btn-icon">
+          <button class="btn" >
+            <clr-icon shape="check" title="Check"></clr-icon>
+            Login
+          </button>
+          <button class="btn" >
+            <clr-icon shape="user" title="user"></clr-icon>
+            New User
+          </button>
+        </div>
+      </div>
+      <div class="clr-col">&nbsp;</div>
+    </div> -->
+  </clr-wizard-page>
+
+  <clr-wizard-page *ngIf="!_newuser && !_login">
+    <ng-template clrPageTitle>Login or Register</ng-template>
+  </clr-wizard-page>
+
+  <clr-wizard-page *ngIf="_newuser">
+    <ng-template clrPageTitle>New User</ng-template>
+    ...
+  </clr-wizard-page>
+
+  <clr-wizard-page *ngIf="_login" (clrWizardPageCustomButton)="doLogin($event)">
+    <ng-template clrPageTitle>Login to SciDAP</ng-template>
+    <app-login [(message)]="loginData"></app-login>
+    <ng-template clrPageButtons>
+      <clr-wizard-button [type]="'previous'">Back</clr-wizard-button>
+      <clr-wizard-button [type]="'login'">Login</clr-wizard-button>
+    </ng-template>
+  </clr-wizard-page>
+
+
+  <clr-wizard-page>
+    <ng-template clrPageTitle>Installing</ng-template>
+    ...
+  </clr-wizard-page>
+</clr-wizard>

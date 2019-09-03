@@ -1,0 +1,30 @@
+<div class="clr-row">
+  <div class="clr-col-lg-2 clr-col-md-1">&nbsp;</div>
+  <div class="clr-col-lg-7 clr-col-md-10 clr-col-12">
+    <div class="card">
+      <div class="card-block">
+        <h4 class="card-title">Login</h4>
+        <p class="card-text">
+          Enter your email and password.
+        </p>
+      </div>
+      <div class="card-block">
+        <div class="card-text">
+          <form clrForm class="clr-form clr-form-horizontal">
+            <clr-input-container>
+              <label>Email:</label>
+              <input clrInput type="text" [(ngModel)]="email" name="email" required />
+              <clr-control-error>We need your email for authorization</clr-control-error>
+            </clr-input-container>
+            <clr-input-container>
+              <label>Password:</label>
+              <input clrInput type="password" [(ngModel)]="password" name="password" required />
+              <clr-control-error>Password is required</clr-control-error>
+            </clr-input-container>
+            <div>&nbsp;</div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
