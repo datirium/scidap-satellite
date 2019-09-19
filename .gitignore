@@ -11,6 +11,13 @@ src/**/*.js
 !src/karma.conf.js
 *.js.map
 
+/Services
+/Services/*
+/build-scripts
+
+/electron/**/*.js
+/electron/**/*.js.map
+
 # dependencies
 /node_modules
 

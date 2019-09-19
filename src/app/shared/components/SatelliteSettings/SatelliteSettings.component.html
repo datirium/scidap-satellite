@@ -1,0 +1,168 @@
+<form clrForm class="clr-form clr-form-compact">
+    <clr-tabs>
+
+        <clr-tab>
+            <button clrTabLink>Common</button>
+            <ng-template [(clrIfActive)]="commonSettings">
+                <clr-tab-content>
+                    <span class="clr-sr-only">Tabbing through form inputs will trigger validation messages to be read aloud.</span>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Satellite data directory:
+                            <button class="btn btn-outline" (click)="openDirectoryDialog()">select</button>
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" placeholder="Select satellite data directory path" [(ngModel)]="satelliteSettings.scidapRoot" name="scidapRoot" required />
+                        <clr-control-helper>Please choose satellite's data directory. Where all analysis results will be stored.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-checkbox-container>
+                        <label class="clr-col-3"> Enable local files module: </label>
+                        <clr-checkbox-wrapper>
+                            <input type="checkbox" class="clr-col-9" clrCheckbox [(ngModel)]="satelliteSettings.localFiles" name="localFiles" />
+                        </clr-checkbox-wrapper>
+                        <clr-control-helper>Enabling this module will allow SciDAP access {{satelliteSettings.scidapRoot}}/files folder.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-checkbox-container>
+
+
+                    <!-- <clr-input-container class="clr-col-12">
+            <label class="clr-col-12 clr-col-md-3">Field 1 label</label>
+            <input class="clr-col-12 clr-col-md-9" clrInput type="text" [(ngModel)]="model" name="example" required />
+            <clr-control-helper>Helper text that shows while it is pristine and valid</clr-control-helper>
+            <clr-control-error>Error message that appears after focus is lost and control is invalid</clr-control-error>
+          </clr-input-container> -->
+
+                    <!-- <div class="clr-form-control clr-row">
+            <label for="example" class="clr-control-label clr-col-12 clr-col-md-2">Label</label>
+            <div class="clr-control-container clr-col-12 clr-col-md-10">
+              <div class="clr-input-wrapper">
+                <input type="text" id="example" placeholder="Example Input" class="clr-input">
+                <clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+              </div>
+              <span class="clr-subtext">Helper Text</span>
+            </div>
+          </div>  -->
+
+                </clr-tab-content>
+            </ng-template>
+        </clr-tab>
+
+        <clr-tab>
+            <button clrTabLink>Advanced</button>
+            <ng-template [(clrIfActive)]="advancedSettings">
+                <clr-tab-content>
+                    <clr-input-container>
+                        <label class="clr-col-3"> Satellite public url:
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" placeholder="https://127.0.0.1:3070/" [(ngModel)]="satelliteSettings.baseUrl" name="baseUrl" required />
+                        <clr-control-helper>URL to satellite that can be accessed from other computers. By default just local computer can access.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Satellite service port:
+                            <div style="color: tomato" *ngIf="checkPort(satelliteSettings.port)">
+                                <clr-icon shape="exclamation-circle"></clr-icon>
+                                <span>Port is in use!</span>
+                            </div>
+                        </label>
+                        <input clrInput type="number" max=65535 min=1000 class="clr-col-9" placeholder="40060" [(ngModel)]="satelliteSettings.port" name="port" required />
+                        <clr-control-helper>Satellite service port number to listen on.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Satellite SSL cert: &nbsp;&nbsp;
+                            <button class="btn btn-outline" (click)="openCertDialog(1)">select cert</button>
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" placeholder="" [(ngModel)]="satelliteSettings.sslCert" name="sslCert" />
+                        <clr-control-helper>Path to satellite's SSL certificate.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Satellite SSL key:
+                            &nbsp;&nbsp; <button class="btn btn-outline" (click)="openCertDialog(2)">select key</button>
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" placeholder="" [(ngModel)]="satelliteSettings.sslKey" name="sslKey" />
+                        <clr-control-helper>Path to satellite's SSL key.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Satellite SSL listen port:
+                            <div style="color: tomato" *ngIf="checkPort(satelliteSettings.scidapSSLPort)">
+                                <clr-icon shape="exclamation-circle"></clr-icon>
+                                <span>Port is in use!</span>
+                            </div>
+                        </label>
+                        <input clrInput type="number" max=65535 min=1000 class="clr-col-9" [(ngModel)]="satelliteSettings.scidapSSLPort" name="scidapSSLPort" required />
+                        <clr-control-helper>Satellite service port number to listen on.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Airflow's API url:
+                            <div style="color: tomato" *ngIf="checkURLPort(satelliteSettings.triggerDag)">
+                                <clr-icon shape="exclamation-circle"></clr-icon>
+                                <span>Port is in use!</span>
+                            </div>
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" [(ngModel)]="satelliteSettings.triggerDag" name="triggerDag" />
+                        <clr-control-helper>Airflow's API url.</clr-control-helper>
+                        <clr-control-error>Error message2</clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> ARIA2 service port:
+                            <div style="color: tomato" *ngIf="checkPort(satelliteSettings.aria2cPort)">
+                                <clr-icon shape="exclamation-circle"></clr-icon>
+                                <span>Port is in use!</span>
+                            </div>
+                        </label>
+                        <input clrInput type="text" max=65535 min=1000 class="clr-col-9" [(ngModel)]="satelliteSettings.aria2cPort" name="aria2cPort" required />
+                        <clr-control-helper>ARIA2 service port number to listen on.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> PM2 service port:
+                            <div style="color: tomato" *ngIf="checkPort(satelliteSettings.pm2Port)">
+                                <clr-icon shape="exclamation-circle"></clr-icon>
+                                <span>Port is in use!</span>
+                            </div>
+                        </label>
+                        <input clrInput type="text" max=65535 min=1000 class="clr-col-9" [(ngModel)]="satelliteSettings.pm2Port" name="pm2Port" required />
+                        <clr-control-helper>PM2 web api service port number to listen on.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> MongoDB service port:
+                            <div style="color: tomato" *ngIf="checkPort(satelliteSettings.mongoPort)">
+                                <clr-icon shape="exclamation-circle"></clr-icon>
+                                <span>Port is in use!</span>
+                            </div>
+                        </label>
+                        <input clrInput type="text" max=65535 min=1000 class="clr-col-9" [(ngModel)]="satelliteSettings.mongoPort" name="mongoPort" required />
+                        <clr-control-helper>MongoDB service port number to listen on.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <!-- <clr-input-container>
+                        <label class="clr-col-3"> API service port:</label>
+                        <input clrInput type="text" max=65535 min=1000 class="clr-col-9" placeholder="40068" [(ngModel)]="satelliteSettings.aria2cPort" name="aria2cPort" required />
+                        <clr-control-helper>Airflow API service port number to listen on.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container> -->
+
+                </clr-tab-content>
+
+
+
+            </ng-template>
+        </clr-tab>
+
+    </clr-tabs>
+</form>

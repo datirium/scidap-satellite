@@ -1,4 +1,34 @@
-<div class="clr-row">
+<div class="login-wrapper">
+  <form class="login" style="min-height: 50vh;">
+      <section class="title">
+          <!-- <h3 class="welcome">SciDAP Satellite</h3> -->
+          <h5 class="hint">Use your email and password to sign in</h5>
+      </section>
+      <div class="login-group">
+          <clr-input-container>
+              <label class="clr-sr-only">Username</label>
+              <input type="text" name="username" clrInput placeholder="Email" [(ngModel)]="email"/>
+          </clr-input-container>
+
+          <clr-password-container>
+              <label class="clr-sr-only">Password</label>
+              <input type="password" name="password" clrPassword placeholder="Password" [(ngModel)]="password"/>
+          </clr-password-container>
+
+          <clr-checkbox-wrapper>
+              <label>Remember me</label>
+              <input type="checkbox" name="rememberMe" clrCheckbox [(ngModel)]="rememberMe"/>
+          </clr-checkbox-wrapper>
+            <ng-content select="[error-message]"></ng-content>
+          <!-- <button type="submit" class="btn btn-primary">NEXT</button> -->
+          <a href="https://scidap.com/register" class="signup" target="_blank">New user? Please register first.</a>
+      </div>
+  </form>
+</div>
+
+
+
+<!-- <div class="clr-row">
   <div class="clr-col-lg-2 clr-col-md-1">&nbsp;</div>
   <div class="clr-col-lg-7 clr-col-md-10 clr-col-12">
     <div class="card">
@@ -22,9 +52,13 @@
               <clr-control-error>Password is required</clr-control-error>
             </clr-input-container>
             <div>&nbsp;</div>
+            <clr-checkbox-wrapper>
+              <label>Remember me</label>
+              <input type="checkbox" name="rememberMe" clrCheckbox [(ngModel)]="rememberMe"/>
+            </clr-checkbox-wrapper>
           </form>
         </div>
       </div>
     </div>
   </div>
-</div>
+</div> -->

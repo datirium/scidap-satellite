@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "angular-electron": {
+    "scidap-satellite": {
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
@@ -76,21 +76,21 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "angular-electron:build"
+            "browserTarget": "scidap-satellite:build"
           },
           "configurations": {
             "dev": {
-              "browserTarget": "angular-electron:build:dev"
+              "browserTarget": "scidap-satellite:build:dev"
             },
             "production": {
-              "browserTarget": "angular-electron:build:production"
+              "browserTarget": "scidap-satellite:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "angular-electron:build"
+            "browserTarget": "scidap-satellite:build"
           }
         },
         "test": {
@@ -128,7 +128,7 @@
         }
       }
     },
-    "angular-electron-e2e": {
+    "scidap-satellite-e2e": {
       "root": "e2e",
       "projectType": "application",
       "architect": {
@@ -146,7 +146,7 @@
       }
     }
   },
-  "defaultProject": "angular-electron",
+  "defaultProject": "scidap-satellite",
   "schematics": {
     "@schematics/angular:component": {
       "prefix": "app",

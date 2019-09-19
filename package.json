@@ -1,6 +1,6 @@
 {
   "name": "scidap-satellite",
-  "version": "6.1.0",
+  "version": "1.0.0",
   "description": "SciDAP Satellite monitoring program",
   "homepage": "https://scidap.com/",
   "author": {
@@ -16,7 +16,7 @@
     "typescript",
     "sass"
   ],
-  "main": "main.js",
+  "main": "electron/main.js",
   "private": true,
   "scripts": {
     "postinstall": "npm run postinstall:electron && electron-builder install-app-deps",
@@ -42,6 +42,7 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "0.802.2",
+    "@angular/animations": "^8.2.3",
     "@angular/cli": "8.2.2",
     "@angular/common": "8.2.2",
     "@angular/compiler": "8.2.2",
@@ -52,6 +53,11 @@
     "@angular/platform-browser": "8.2.2",
     "@angular/platform-browser-dynamic": "8.2.2",
     "@angular/router": "8.2.2",
+    "@babel/core": "^7.5.5",
+    "@babel/runtime": "^7.5.5",
+    "@clr/angular": "^2.1.2",
+    "@clr/icons": "^2.1.2",
+    "@clr/ui": "^2.1.2",
     "@ngx-translate/core": "11.0.1",
     "@ngx-translate/http-loader": "4.0.0",
     "@types/jasmine": "3.3.16",
@@ -59,11 +65,12 @@
     "@types/meteor": "^1.4.29",
     "@types/mocha": "5.2.7",
     "@types/node": "12.6.8",
+    "@webcomponents/custom-elements": "^1.2.4",
     "chai": "4.2.0",
     "codelyzer": "5.1.0",
     "conventional-changelog-cli": "2.0.21",
     "core-js": "3.1.4",
-    "electron": "6.0.2",
+    "electron": "6.0.9",
     "electron-builder": "21.2.0",
     "electron-reload": "1.5.0",
     "jasmine-core": "3.4.0",
@@ -88,14 +95,10 @@
     "node": ">=10.9.0"
   },
   "dependencies": {
-    "@angular/animations": "^8.2.3",
-    "@babel/core": "^7.5.5",
-    "@babel/runtime": "^7.5.5",
-    "@clr/angular": "^2.1.2",
-    "@clr/icons": "^2.1.2",
-    "@clr/ui": "^2.1.2",
-    "@webcomponents/custom-elements": "^1.2.4",
+    "electron-log": "^3.0.8",
     "electron-store": "^4.0.0",
-    "meteor-node-stubs": "^0.4.1"
+    "meteor-node-stubs": "^0.4.1",
+    "pm2": "^3.5.1",
+    "tcp-port-used": "^1.0.1"
   }
 }

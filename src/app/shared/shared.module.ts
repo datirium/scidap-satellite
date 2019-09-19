@@ -8,12 +8,12 @@ import { ClarityModule } from '@clr/angular';
 
 import { TranslateModule } from '@ngx-translate/core';
 
-import { PageNotFoundComponent, LoginComponent } from './components/';
+import { PageNotFoundComponent, LoginComponent, SatelliteSettingsComponent } from './components/';
 
 import { WebviewDirective } from './directives/';
 
 @NgModule({
-  declarations: [PageNotFoundComponent, WebviewDirective, LoginComponent],
+  declarations: [PageNotFoundComponent, WebviewDirective, LoginComponent, SatelliteSettingsComponent],
   imports: [
     CommonModule,
     BrowserModule,
@@ -23,6 +23,6 @@ import { WebviewDirective } from './directives/';
     ClarityModule,
     TranslateModule
   ],
-  exports: [TranslateModule, WebviewDirective, LoginComponent]
+  exports: [TranslateModule, WebviewDirective, LoginComponent, SatelliteSettingsComponent]
 })
 export class SharedModule {}

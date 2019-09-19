@@ -1,155 +1,228 @@
-import { Component, OnInit, ViewChild, NgZone } from '@angular/core';
+import { Component, OnInit, ViewChild, NgZone, AfterViewInit } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { ClrWizard } from '@clr/angular';
+import { ClrWizard, ClrWizardPage } from '@clr/angular';
+
+import { switchMap, filter, merge } from 'rxjs/operators';
+
+import { of as observableOf, BehaviorSubject, Observable, Subject, bindCallback, combineLatest } from 'rxjs';
 
 import { ElectronService } from '../core/services';
 import { BaseComponent } from '../core/lib/base.component';
 
+import { SatelliteSettingsComponent } from '../shared/components';
+
 const Store = require('electron-store');
 
 @Component({
-  selector: 'app-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+    selector: 'app-home',
+    templateUrl: './home.component.html',
+    styleUrls: ['./home.component.scss']
 })
-export class HomeComponent extends BaseComponent implements OnInit {
+export class HomeComponent extends BaseComponent implements OnInit, AfterViewInit {
 
-  @ViewChild('wizard', { static: true }) wizard: ClrWizard;
+    @ViewChild('wizard', { static: true }) wizard: ClrWizard;
+    @ViewChild('settings', { static: true }) pageSettings: ClrWizardPage;
 
-  public form: FormGroup;
-  public xlOpen = true;
+    @ViewChild('satelliteSettings', { static: false }) satelliteSettings: SatelliteSettingsComponent;
 
-  public email;
-  public password;
+    public form: FormGroup;
+    public xlOpen = true;
 
-  public showWarning = false;
-  public _login = false;
-  public _newuser = false;
+    public email;
+    public password;
+    public rememberMe;
 
-  public store = new Store();
+    satIdAssigned;
 
-  _loginData = {};
-  set loginData(v: any) {
-    this._loginData = v;
+    public showWarning = false;
+    public errorMessage;
+    public _login = false;
+    public _newuser = false;
 
-    if (v.email) {
-      this.store.set('email', v.email);
+    public store = new Store();
+
+    public step = 0;
+
+    initInProgress = false;
+
+    token;
+
+    _loginData = {};
+    set loginData(v: any) {
+        this._loginData = v;
+
+        if (v.email) {
+            this.store.set('email', v.email);
+        }
+
+        if (v.password) {
+            this.store.set('password', v.password);
+        }
+
+        if (v.rememberMe) {
+            this.store.set('rememberMe', v.rememberMe);
+        }
     }
 
-    if (v.password) {
-      this.store.set('password', v.password);
-    }
-  }
-
-  get loginData() {
-    return this._loginData;
-  }
-
-  constructor(
-    private formBuilder: FormBuilder,
-    private _electronService: ElectronService,
-    private _zone: NgZone) {
-
-      super();
-      this.restoreSaved();
-  }
-
-  private restoreSaved() {
-    const m = { email: '', password: '' };
-    if (this.store.get('email')) {
-      console.log(this.store.get('email'));
-      m.email = this.store.get('email');
+    get loginData() {
+        return this._loginData;
     }
 
-    if (this.store.get('password')) {
-      console.log(this.store.get('password'));
-      m.password = this.store.get('password');
+    constructor(
+        private formBuilder: FormBuilder,
+        private _electronService: ElectronService,
+        private _zone: NgZone) {
+
+        super();
+        console.log(this._electronService.remote.app.getAppPath());
+        this.restoreSaved();
     }
 
-    this._loginData = m;
-  }
+    private restoreSaved() {
+        const m = { email: '', password: '', rememberMe: false };
 
-  public handleDangerClick(): void {
-    this.wizard.finish();
-  }
+        if (this.store.get('email')) {
+            console.log(this.store.get('email'));
+            m.email = this.store.get('email');
+        }
 
+        if (this.store.get('password')) {
+            console.log(this.store.get('password'));
+            m.password = this.store.get('password');
+        }
 
-  public doCustomClick(buttonType: string): void {
-    if ("custom-next" === buttonType) {
-      this.wizard.next();
+        if (this.store.get('rememberMe')) {
+            console.log(this.store.get('rememberMe'));
+            m.rememberMe = this.store.get('rememberMe');
+        }
+
+        if (this.store.get('token')) {
+            console.log(this.store.get('token'));
+            this.token = this.store.get('token');
+        }
+
+        this._loginData = m;
     }
 
-    if ("custom-previous" === buttonType) {
-      this.wizard.previous();
+    public handleDangerClick(): void {
+        this.wizard.finish();
     }
 
-    if ("custom-danger" === buttonType) {
-      this.showWarning = true;
+
+    changeState(state) {
+        if (this.step >= state) {
+            return;
+        }
+        this.step = state;
+        this._zone.run(() => this.wizard.next());
     }
-  }
-  ngOnInit() {
-  }
 
-  goToLogin() {
-    this._login = true;
-    this._newuser = false;
-    this.wizard.next();
-  }
-
-  goToNewUser() {
-    this._login = false;
-    this._newuser = true;
-    this.wizard.next();
-  }
-
-  doLoginOrRegister(buttonType) {
-    if ('login' === buttonType) {
-      this.goToLogin();
+    ngOnInit() {
     }
-    if ('new-user' === buttonType) {
-      this.goToNewUser();
-    }
-  }
 
-  doLogin() {
-    if (this.loginData && this.loginData.email && this.loginData.password) {
-      console.log(this.loginData);
-      this._electronService.login(this.loginData.email, this.loginData.password).subscribe(
-        (er) => {
-          this._zone.run(() => {
-            if (!er) {
-              console.log('logged in!');
-              this._showError = false;
-              this._submitting = false;
-              this.wizard.next();
-              return;
+    ngAfterViewInit(): void {
+        if (this.token) {
+
+            this.wizard.pageCollection.pagesAsArray.find(page => {
+                if (page._id === this.pageSettings._id) {
+                    return true;
+                }
+                page.completed = true;
+                return false;
+            });
+            this.wizard.navService.currentPage = this.pageSettings;
+        }
+    }
+
+    goToLogin() {
+        this._login = true;
+        this._newuser = false;
+        this.changeState(1);
+    }
+
+    goToNewUser() {
+        this._login = false;
+        this._newuser = true;
+        this.changeState(1);
+    }
+
+    doLoginOrRegister(buttonType) {
+        if ('login' === buttonType) {
+            this.goToLogin();
+        }
+        if ('new-user' === buttonType) {
+            this.goToNewUser();
+        }
+    }
+
+    doLogin() {
+        if (this.loginData && this.loginData.email && this.loginData.password) {
+            console.log(this.loginData);
+            this._electronService.login(this.loginData.email, this.loginData.password)
+                .pipe(
+                    switchMap((er: any) => {
+                        if (!er) {
+                            console.log('logged in!');
+                            this._zone.run(() => {
+                                this._showError = false;
+                                this._submitting = false;
+                                this.errorMessage = false;
+                            });
+                            return combineLatest([this._electronService.profileSubscribe(), this._electronService.labSubscribe()]);
+                        }
+                        this._zone.run(() => {
+                            if (er['error'] === 1000) {
+                                // let self = this;
+                                console.log('email is not verified');
+                                this.errorMessage = 'Email has not been verified!';
+                            } else {
+                                console.log({ title: 'User can\'t be logged in!', message: er.message });
+                                this.errorMessage = `User can't be logged in! ${er.message}`;
+                            }
+                        });
+                        return observableOf({ error: er.error, message: er.message } as any);
+                    }),
+                    filter((v) => v[0] && !v[0].error)
+
+                )
+                .subscribe(
+                    ([user, lab]) => {
+                        console.log(user, lab);
+                        this._zone.run(() => {
+                            if (lab && lab.satellite_id) {
+                                this.satIdAssigned = true;
+                            }
+                            this._submitting = false;
+                            setTimeout(() => this.changeState(2), 10);
+                        });
+                    });
+
+        }
+    }
+
+    doAgree(buttonType) {
+        if ('cancel' === buttonType) {
+            console.log('send app quit');
+        }
+
+        this._electronService.satCreateGetToken().subscribe(
+            (token) => {
+                console.log(token);
+                if (token && !token.error) {
+                    this.store.set('token', token);
+                    this.changeState(3);
+                }
             }
-            if (er['error'] === 1000) {
-              // let self = this;
-              console.log('email is not verified');
-              // this._dialogService
-              //   .openConfirm({
-              //     title: 'Email has not been verified!',
-              //     message: "Would you like to repeat verification email?",
-              //     acceptButton: "Repeat email"
-              //   })
-              //   .afterClosed()
-              //   .subscribe((accept: boolean) => {
-              //     if (accept) {
-              //       self._accounts
-              //         .sendVerificationEmail(self.loginForm.controls['email'].value)
-              //         .then(() => self._submitting = false);
-              //     }
-              //   });
+        );
+        //
+    }
 
-            } else {
-              console.log({ title: 'User can\'t be logged in!', message: er.message });
-              // this._dialogService.openAlert({ title: "User can't be logged in!", message: er.message });
+    doSettings() {
+        this.initInProgress = true;
+        this.satelliteSettings.doFinish().then((v) => {
+            this.initInProgress = false;
+            if (v[0] === 'complete') {
             }
-            this._submitting = false;
-          });
         });
-
     }
-  }
 }

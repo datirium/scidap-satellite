@@ -15,143 +15,198 @@ import { debounceTime, filter, map, catchError } from 'rxjs/operators';
 const Store = require('electron-store');
 const store = new Store();
 
+declare var __meteor_runtime_config__;
+
+export const Labs: Mongo.Collection<any> = new Mongo.Collection<any>('labs');
+
 export interface LoginOptions {
-  usernameOrEmail?: any;
-  password?: string;
-  requestPermissions?: Array<string>;
-  loginStyle?: string;
-  loginUrl?: string;
-  clientId?: string;
+    usernameOrEmail?: any;
+    password?: string;
+    requestPermissions?: Array<string>;
+    loginStyle?: string;
+    loginUrl?: string;
+    clientId?: string;
 }
 
 export let AuthProvider = {
-  FACEBOOK: 'facebook',
-  GOOGLE: 'google',
-  TWITTER: 'twitter',
-  GITHUB: 'github',
-  PASSWORD: 'password',
-  SCIDAP: 'scidap',
-  SCIDAPSATELLITE: 'scidapsatellite'
+    FACEBOOK: 'facebook',
+    GOOGLE: 'google',
+    TWITTER: 'twitter',
+    GITHUB: 'github',
+    PASSWORD: 'password',
+    SCIDAP: 'scidap',
+    SCIDAPSATELLITE: 'scidapsatellite'
 };
 
 export let _AuthProvider = {
-  'facebook': 'loginWithFacebook',
-  'google': 'loginWithGoogle',
-  'twitter': 'loginWithTwitter',
-  'github': 'loginWithGithub',
-  'password': 'loginWithPassword',
-  'scidapsatellite': 'loginWithScidapSatellite',
-  'scidap': 'loginWithSciDAP'
+    'facebook': 'loginWithFacebook',
+    'google': 'loginWithGoogle',
+    'twitter': 'loginWithTwitter',
+    'github': 'loginWithGithub',
+    'password': 'loginWithPassword',
+    'scidapsatellite': 'loginWithScidapSatellite',
+    'scidap': 'loginWithSciDAP'
 };
 
 @Injectable({
-  providedIn: 'root'
+    providedIn: 'root'
 })
 export class ElectronService extends Tracking {
-  ipcRenderer: typeof ipcRenderer;
-  webFrame: typeof webFrame;
-  remote: typeof remote;
-  childProcess: typeof childProcess;
-  fs: typeof fs;
+    ipcRenderer: typeof ipcRenderer;
+    webFrame: typeof webFrame;
+    remote: typeof remote;
+    childProcess: typeof childProcess;
+    fs: typeof fs;
+    currentUser;
+    currentUserId;
+    currentUserProfile = {};
 
-  get isElectron() {
-    return window && window.process && window.process.type;
-  }
-
-  constructor() {
-    super();
-    // Conditional imports
-    if (this.isElectron) {
-      this.ipcRenderer = window.require('electron').ipcRenderer;
-      this.webFrame = window.require('electron').webFrame;
-      this.remote = window.require('electron').remote;
-
-      this.childProcess = window.require('child_process');
-      this.fs = window.require('fs');
-    }
-  }
-
-
-
-  /**
- *
- * @param {string} provider - "google", "facebook", ...
- * @param {LoginOptions} loginOptions {password:"", usernameOrEmail:""}
- * @returns {Observable<any>}
- */
-  loginWith(provider: string, loginOptions?: LoginOptions): Observable<any> {
-
-    const options = loginOptions || {};
-    const errorMsg = `[AccountsService]: accounts-${provider} pkg is not installed`;
-
-    if (!this.isProvider(provider) &&
-      provider !== AuthProvider.SCIDAP &&
-      provider !== AuthProvider.PASSWORD) {
-      throw new Error(errorMsg);
+    get isElectron() {
+        return window && window.process && window.process.type;
     }
 
-    if (provider === AuthProvider.SCIDAP) {
-      const scidapObservable = bindCallback(function (callback) {
-        Accounts['callLoginMethod']({
-          methodArguments: [{ email: options['usernameOrEmail'], pass: options['password'], scidap: true }],
-          userCallback: callback
-        } as any);
-      });
-      return scidapObservable();
+    constructor() {
+        super();
+        // Conditional imports
+        if (this.isElectron) {
+            this.ipcRenderer = window.require('electron').ipcRenderer;
+            this.webFrame = window.require('electron').webFrame;
+            this.remote = window.require('electron').remote;
+
+            this.childProcess = window.require('child_process');
+            this.fs = window.require('fs');
+        }
     }
 
-    const accountObservable: any = bindCallback(Meteor[_AuthProvider[provider]]);
 
-    if (provider === AuthProvider.PASSWORD) {
-      return accountObservable(options['usernameOrEmail'], options['password']);
-    }
 
-    return accountObservable({ ...this._getDefaultOptions(provider), ...options });
-  }
-
-  isProvider(provider: string) {
-    let c = ServiceConfiguration.configurations.findOne({ service: provider });
-    return Meteor[_AuthProvider[provider]] && c;
-  }
-
-  /**
+    /**
    *
-   * @param {string} email
-   * @param {string} password
-   * @param {boolean} corp
+   * @param {string} provider - "google", "facebook", ...
+   * @param {LoginOptions} loginOptions {password:"", usernameOrEmail:""}
    * @returns {Observable<any>}
    */
-  login(email: string, password: string, corp = false): Observable<any> {
-    if (corp) {
-      return this.loginWith(AuthProvider.SCIDAP, { usernameOrEmail: email, password: password, loginStyle: '' });
-    } else {
-      return this.loginWith(AuthProvider.PASSWORD, { usernameOrEmail: { email: email }, password: password, loginStyle: '' });
-    }
-  }
+    loginWith(provider: string, loginOptions?: LoginOptions): Observable<any> {
 
-  private _getDefaultOptions(provider: string): LoginOptions {
-    let loginOptions = <LoginOptions>({ loginStyle: 'popup' }); // popup, redirect
+        const options = loginOptions || {};
+        const errorMsg = `[AccountsService]: accounts-${provider} pkg is not installed`;
 
-    if (provider !== AuthProvider.TWITTER) {
-      loginOptions.requestPermissions = ['email'];
+        if (!this.isProvider(provider) &&
+            provider !== AuthProvider.SCIDAP &&
+            provider !== AuthProvider.PASSWORD) {
+            throw new Error(errorMsg);
+        }
+
+        if (provider === AuthProvider.SCIDAP) {
+            const scidapObservable = bindCallback(function (callback) {
+                Accounts['callLoginMethod']({
+                    methodArguments: [{ email: options['usernameOrEmail'], pass: options['password'], scidap: true }],
+                    userCallback: callback
+                } as any);
+            });
+            return scidapObservable();
+        }
+
+        const accountObservable: any = bindCallback(Meteor[_AuthProvider[provider]]);
+
+        if (provider === AuthProvider.PASSWORD) {
+            return accountObservable(options['usernameOrEmail'], options['password']);
+        }
+
+        return accountObservable({ ...this._getDefaultOptions(provider), ...options });
     }
 
-    if (provider === AuthProvider.GOOGLE) {
-      loginOptions.requestPermissions.push(
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/plus.me',
-        'https://www.googleapis.com/auth/plus.login',
-        'https://www.googleapis.com/auth/userinfo.profile',
-        'https://www.googleapis.com/auth/drive.readonly'
-      ); // 'aboutMe,birthday,emails,name,organizations,verified'
+    isProvider(provider: string) {
+        const c = ServiceConfiguration.configurations.findOne({ service: provider });
+        return Meteor[_AuthProvider[provider]] && c;
     }
-    if (provider === AuthProvider.GITHUB) {
-      loginOptions.requestPermissions.push('public_repo', 'repo');
+
+    /**
+     *
+     * @param {string} email
+     * @param {string} password
+     * @param {boolean} corp
+     * @returns {Observable<any>}
+     */
+    login(email: string, password: string, corp = false): Observable<any> {
+        if (corp) {
+            return this.loginWith(AuthProvider.SCIDAP, { usernameOrEmail: email, password: password, loginStyle: '' });
+        } else {
+            return this.loginWith(AuthProvider.PASSWORD, { usernameOrEmail: { email: email }, password: password, loginStyle: '' });
+        }
     }
-    if (provider === AuthProvider.FACEBOOK) {
-      loginOptions.requestPermissions.push('user_likes');
+
+    private _getDefaultOptions(provider: string): LoginOptions {
+        const loginOptions = <LoginOptions>({ loginStyle: 'popup' }); // popup, redirect
+
+        if (provider !== AuthProvider.TWITTER) {
+            loginOptions.requestPermissions = ['email'];
+        }
+
+        if (provider === AuthProvider.GOOGLE) {
+            loginOptions.requestPermissions.push(
+                'https://www.googleapis.com/auth/drive.file',
+                'https://www.googleapis.com/auth/plus.me',
+                'https://www.googleapis.com/auth/plus.login',
+                'https://www.googleapis.com/auth/userinfo.profile',
+                'https://www.googleapis.com/auth/drive.readonly'
+            ); // 'aboutMe,birthday,emails,name,organizations,verified'
+        }
+        if (provider === AuthProvider.GITHUB) {
+            loginOptions.requestPermissions.push('public_repo', 'repo');
+        }
+        if (provider === AuthProvider.FACEBOOK) {
+            loginOptions.requestPermissions.push('user_likes');
+        }
+        return loginOptions;
     }
-    return loginOptions;
-  }
+
+    /**
+     *  Initial subscription to account profile
+     * @returns {Observable<any>}
+     */
+    public profileSubscribe(): Observable<any> {
+        return this.MeteorSubscribeAutorun('accounts/profile', () => {
+            this.currentUser = Meteor.user();
+            this.currentUserId = Meteor.userId();
+            if (this.currentUser) {
+                this.currentUserProfile = this.currentUser['profile'];
+            }
+
+            if (this.currentUserProfile['picture'] && !this.currentUserProfile['picture'].startsWith('https://')) {
+                this.currentUserProfile['picture'] = __meteor_runtime_config__.ROOT_URL + this.currentUserProfile['picture'];
+            }
+
+            return this.currentUser;
+        });
+    }
+
+    /**
+     *  Initial subscription to labs
+     * @returns {Observable<any>}
+     */
+    public labSubscribe(): Observable<any> {
+        return this.MeteorSubscribeAutorun('lab/owned', () => {
+            const lab = Labs.findOne({});
+            console.log(lab);
+            return lab;
+        });
+    }
+
+    /**
+     *  Initial subscription to labs
+     * @returns {Observable<any>}
+     */
+    public satCreateGetToken(): Observable<any> {
+        return this.MeteorCall('satellite/create/private');
+    }
+
+    /**
+     * Labs, sats
+     */
+
+    getSatToken() {
+
+    }
 
 }

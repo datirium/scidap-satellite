@@ -30,6 +30,17 @@ export class LoginComponent implements OnInit, AfterViewInit {
     return this.message.password;
   }
 
+  set rememberMe(v) {
+    this.message = {
+      ...this.message,
+      rememberMe: v
+    };
+  }
+
+  get rememberMe () {
+    return this.message.rememberMe;
+  }
+
   private messageValue;
 
   @Output()

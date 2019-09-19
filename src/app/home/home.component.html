@@ -26,23 +26,23 @@
 </div> -->
 
 <clr-wizard #wizard [(clrWizardOpen)]="xlOpen" [clrWizardClosable]="false" [clrWizardPreventDefaultNext]="true" [clrWizardDisableStepnav]="true">
-  <!-- (clrWizardOnFinish)="doFinish()" -->
+    <!-- (clrWizardOnFinish)="doFinish()" -->
 
-  <clr-wizard-title>Installing SciDAP Satellite</clr-wizard-title>
+    <clr-wizard-title>Installing SciDAP Satellite</clr-wizard-title>
 
-  <clr-wizard-button [type]="'previous'">Back</clr-wizard-button>
-  <clr-wizard-button [type]="'next'">Next</clr-wizard-button>
-  <clr-wizard-button [type]="'finish'">Finish</clr-wizard-button>
+    <!-- <clr-wizard-button [type]="'previous'">Back</clr-wizard-button>
+    <clr-wizard-button [type]="'next'">Next</clr-wizard-button>
+    <clr-wizard-button [type]="'finish'">Finish</clr-wizard-button> -->
 
-  <clr-wizard-page (clrWizardPageCustomButton)="doLoginOrRegister($event)">
-    <ng-template clrPageTitle>Welcome</ng-template>
+    <clr-wizard-page (clrWizardPageCustomButton)="doLoginOrRegister($event)">
+        <ng-template clrPageTitle>Welcome</ng-template>
 
-    <ng-template clrPageButtons>
-      <clr-wizard-button [type]="'login'">Login</clr-wizard-button>
-      <clr-wizard-button [type]="'new-user'">New User</clr-wizard-button>
-    </ng-template>
+        <ng-template clrPageButtons>
+            <clr-wizard-button [type]="'login'">Begin</clr-wizard-button>
+            <!-- <clr-wizard-button [type]="'new-user'">New User</clr-wizard-button> -->
+        </ng-template>
 
-    <!-- <div class="clr-row">
+        <!-- <div class="clr-row">
       <div class="clr-col">&nbsp;</div>
       <div class="clr-col">
 
@@ -59,29 +59,68 @@
       </div>
       <div class="clr-col">&nbsp;</div>
     </div> -->
-  </clr-wizard-page>
+    </clr-wizard-page>
 
-  <clr-wizard-page *ngIf="!_newuser && !_login">
+    <!-- <clr-wizard-page *ngIf="!_newuser && !_login">
     <ng-template clrPageTitle>Login or Register</ng-template>
   </clr-wizard-page>
 
   <clr-wizard-page *ngIf="_newuser">
     <ng-template clrPageTitle>New User</ng-template>
-    ...
-  </clr-wizard-page>
+    New user is not supported yet
+  </clr-wizard-page> -->
 
-  <clr-wizard-page *ngIf="_login" (clrWizardPageCustomButton)="doLogin($event)">
-    <ng-template clrPageTitle>Login to SciDAP</ng-template>
-    <app-login [(message)]="loginData"></app-login>
-    <ng-template clrPageButtons>
-      <clr-wizard-button [type]="'previous'">Back</clr-wizard-button>
-      <clr-wizard-button [type]="'login'">Login</clr-wizard-button>
-    </ng-template>
-  </clr-wizard-page>
+    <clr-wizard-page (clrWizardPageCustomButton)="doLogin()">
+        <ng-template clrPageTitle>Login to SciDAP</ng-template>
+        <app-login [(message)]="loginData">
+            <div error-message *ngIf="errorMessage" class="error active">
+                {{errorMessage}}
+            </div>
+        </app-login>
+        <!-- <div class="error active">
+    </div> -->
+        <ng-template clrPageButtons>
+            <clr-wizard-button [type]="'previous'">Back</clr-wizard-button>
+            <clr-wizard-button [type]="'login'">Login</clr-wizard-button>
+        </ng-template>
+    </clr-wizard-page>
 
+    <clr-wizard-page (clrWizardPageCustomButton)="doAgree($event)">
+        <ng-template clrPageTitle>Assign personal satellite</ng-template>
 
-  <clr-wizard-page>
-    <ng-template clrPageTitle>Installing</ng-template>
-    ...
-  </clr-wizard-page>
+        <div *ngIf="satIdAssigned">
+            <div class="alert alert-warning" role="alert">
+                <div class="alert-items">
+                    <div class="alert-item static">
+                        <div class="alert-icon-wrapper">
+                            <clr-icon class="alert-icon" shape="exclamation-triangle"></clr-icon>
+                        </div>
+                        <span class="alert-text">There is a satellite already assigned to you. If you continue your current satellite will be reassigned with personal.</span>
+                    </div>
+                </div>
+                <button type="button" class="close" aria-label="Close">
+                    <clr-icon aria-hidden="true" shape="close"></clr-icon>
+                </button>
+            </div>
+            <h3> Setup wizard is going to assign personal satellite for you. </h3>
+        </div>
+        <ng-template clrPageButtons>
+            <clr-wizard-button [type]="'quit'">quit</clr-wizard-button>
+            <clr-wizard-button [type]="'previous'">Back</clr-wizard-button>
+            <clr-wizard-button [type]="'agree'">Agree</clr-wizard-button>
+        </ng-template>
+
+    </clr-wizard-page>
+
+    <clr-wizard-page #settings (clrWizardPageCustomButton)="doSettings()">
+        <ng-template clrPageTitle>Settings</ng-template>
+        <app-satellite-settings *ngIf="!initInProgress" #satelliteSettings></app-satellite-settings>
+        <clr-spinner *ngIf="initInProgress">
+                Starting Processes
+        </clr-spinner>
+
+        <ng-template clrPageButtons>
+            <clr-wizard-button [type]="'complete'">Finish</clr-wizard-button>
+        </ng-template>
+    </clr-wizard-page>
 </clr-wizard>
