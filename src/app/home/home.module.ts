@@ -9,10 +9,13 @@ import { ClarityModule } from '@clr/angular';
 import { HomeRoutingModule } from './home-routing.module';
 
 import { HomeComponent } from './home.component';
+import { DashboardComponent } from './Dashboard/Dashboard.component';
+import { SatelliteSettingsComponent } from './SatelliteSettings/SatelliteSettings.component'
+
 import { SharedModule } from '../shared/shared.module';
 
 @NgModule({
-  declarations: [HomeComponent],
+  declarations: [HomeComponent, DashboardComponent, SatelliteSettingsComponent],
   imports: [
     CommonModule,
     BrowserModule,
@@ -20,7 +23,6 @@ import { SharedModule } from '../shared/shared.module';
     FormsModule,
     ReactiveFormsModule,
     ClarityModule,
-
     SharedModule, HomeRoutingModule]
 })
 export class HomeModule {}
