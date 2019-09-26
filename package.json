@@ -99,6 +99,7 @@
   "dependencies": {
     "electron-log": "^3.0.8",
     "electron-store": "^4.0.0",
+    "keytar": "^5.0.0-beta.2",
     "meteor-node-stubs": "^0.4.1",
     "pm2": "^3.5.1",
     "tcp-port-used": "^1.0.1"
