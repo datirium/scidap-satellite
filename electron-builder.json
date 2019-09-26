@@ -10,17 +10,19 @@
     "extraResources": [
         "Services/**"
     ],
-    "asar": true,
+    "asar": false,
     "asarUnpack": [
     ],
     "files": [
         "**/*",
         "!**/*.ts",
+        "!**/*.js.map",
         "!*.code-workspace",
         "!LICENSE.md",
         "!package.json",
         "!package-lock.json",
         "!Services/",
+        "!build-scripts/",
         "!src/",
         "!utils/",
         "!e2e/",
@@ -28,8 +30,9 @@
         "!angular.json",
         "!_config.yml",
         "!karma.conf.js",
-        "!tsconfig.json",
-        "!tslint.json"
+        "!tsconfig*.json",
+        "!tslint.json",
+        "!postinstall*.js"
     ],
     "win": {
         "icon": "dist",
