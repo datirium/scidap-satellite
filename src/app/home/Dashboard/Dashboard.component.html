@@ -37,13 +37,13 @@
                     </div>
                 </div>
                 <div class="clr-col-1" style="margin-left: 3px;">
-                    <button class="btn btn-sm btn-link" [disabled]="pm2MonitAdopted[process].pm2_env.status == 'stopped'">
+                    <button class="btn btn-sm btn-link" (click)="stopPM2program(pm2MonitAdopted[process].pm_id)" [disabled]="pm2MonitAdopted[process].pm2_env.status == 'stopped'">
                         stop
                     </button>
-                    <button class="btn btn-sm btn-link" [disabled]="pm2MonitAdopted[process].pm2_env.status == 'online'">
+                    <button class="btn btn-sm btn-link" (click)="startPM2program(pm2MonitAdopted[process].pm_id)" [disabled]="pm2MonitAdopted[process].pm2_env.status == 'online'">
                         start
                     </button>
-                    <button class="btn btn-sm btn-link">
+                    <button class="btn btn-sm btn-link" (click)="startPM2program(pm2MonitAdopted[process].pm_id)">
                         restart
                     </button>
                 </div>

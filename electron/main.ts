@@ -94,8 +94,30 @@ try {
             Log.error(err);
             event.reply('satellite-init', 'error');
         });
-
     });
+
+    ipcMain.on('restart-program', (event, arg) => {
+        Log.info('init');
+
+        satelliteApp.restartPM2program(arg).then( () => {
+            event.reply('restart-program', 'complete');
+        }).catch((err) => {
+            Log.error(err);
+            event.reply('restart-program', 'error');
+        });
+    });
+
+    ipcMain.on('stop-program', (event, arg) => {
+        Log.info('init');
+
+        satelliteApp.stopPM2program(arg).then( () => {
+            event.reply('stop-program', 'complete');
+        }).catch((err) => {
+            Log.error(err);
+            event.reply('stop-program', 'error');
+        });
+    });
+
 
 
 } catch (e) {

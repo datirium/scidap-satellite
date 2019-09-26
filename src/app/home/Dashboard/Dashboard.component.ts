@@ -97,4 +97,12 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
             }));
     }
 
+    stopPM2program(id) {
+        this._electronService.ipcRenderer.send('stop-program', id);
+    }
+
+    startPM2program(id) {
+        this._electronService.ipcRenderer.send('restart-program', id);
+    }
+
 }

@@ -355,6 +355,28 @@ export class SatelliteApp {
         });
     }
 
+    stopPM2program(id) {
+        return new Promise((resolve, reject) => {
+            pm2.stop(id, (err) => {
+                if (err) {
+                    reject(new Error(err));
+                }
+                return resolve();
+            });
+        });
+    }
+
+    restartPM2program(id) {
+        return new Promise((resolve, reject) => {
+            pm2.restart(id, (err) => {
+                if (err) {
+                    reject(new Error(err));
+                }
+                return resolve();
+            });
+        });
+    }
+
     /**
      * Init saves all settings and starts services for the first time!
      */
