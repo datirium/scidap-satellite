@@ -91,7 +91,7 @@ try {
         satelliteApp.satelliteInit().then( () => {
             event.reply('satellite-init', 'complete');
         }).catch((err) => {
-            console.error(err);
+            Log.error(err);
             event.reply('satellite-init', 'error');
         });
 
