@@ -29,9 +29,11 @@ export class SatelliteApp {
     airflowSettings;
     satelliteSettings;
     token;
+    initComplete;
 
     networkInterfaces = [];
 
+    pm2_home;
 
     /**
      *
@@ -39,10 +41,7 @@ export class SatelliteApp {
     constructor() {
         // const size = electronScreen.getPrimaryDisplay().workAreaSize;
         this.store = new Store({
-            // We'll call our data file 'user-preferences'
-            // configName: 'user-preferences',
             defaults: {
-                // 800x600 is the default size of our window
                 windowBounds: { x: 0, y: 0, width: 800, height: 600 }
             }
         });
@@ -64,9 +63,18 @@ export class SatelliteApp {
             Log.info(this.services_base_path);
         }
 
-        this.airflowSettings = JSON.parse(this.store.get('airflowSettings'), null);
-        this.satelliteSettings = JSON.parse(this.store.get('satelliteSettings'), null);
+        this.airflowSettings = JSON.parse(this.store.get('airflowSettings', null));
+        this.satelliteSettings = JSON.parse(this.store.get('satelliteSettings', null));
         this.token = this.store.get('token', null);
+
+        this.pm2_home = path.join(app.getPath('home'), '/.pm2');
+
+        this.initComplete = this.store.get('initComplete', false);
+
+        if (this.initComplete && this.airflowSettings && this.satelliteSettings && this.token) {
+            // Start PM2!
+            this.chainStartPM2Services().then((v) => Log.info(`services started ${v}`));
+        }
     }
 
     /**
@@ -113,20 +121,12 @@ export class SatelliteApp {
     windowEvents() {
         // Emitted when the window is closed.
         this.win.on('closed', () => {
-            // Dereference the window object, usually you would store window
-            // in an array if your app supports multi windows, this is the time
-            // when you should delete the corresponding element.
             this.win = null;
         });
 
 
-        // The BrowserWindow class extends the node.js core EventEmitter class, so we use that API
-        // to listen to events on the BrowserWindow. The resize event is emitted when the window size changes.
         this.win.on('resize', () => {
-            // The event doesn't pass us the window size, so we call the `getBounds` method which returns an object with
-            // the height, width, and x and y coordinates.
             const { x, y, width, height } = this.win.getBounds();
-            // Now that we have them, save them using the `set` method.
             this.store.set('windowBounds', { x, y, width, height });
         });
     }
@@ -136,9 +136,45 @@ export class SatelliteApp {
      *    PM2
      */
 
-    connectToPM2() {
+    async connectToPM2() {
+        let http_interface = path.join(this.services_base_path, '../../../', 'app/node_modules/pm2/bin/');
+        if (this.serve) {
+            http_interface = path.join(this.services_base_path, '../../../', 'node_modules/pm2/bin/');
+        }
+        // const _spawn = spawn(`${this.services_base_path}/node`, [`${http_interface}/HttpInterface.js`], {
+        const _spawn = spawn(`${http_interface}/pm2`, ['web'], {
+            shell: true,
+            env: {
+                PM2_API_PORT: this.satelliteSettings.pm2Port,
+                // PM2_HOME: this.pm2_home,
+                HOME: app.getPath('home'),
+                PATH: `${this.services_base_path}:${this.airflow_base_path}/Resources/app/bin:` +
+                    `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
+            }
+        });
+
+        _spawn.stderr.on('data', (data) => {
+            Log.info(`pm2 god spawn error: ${data}`);
+        });
+
+        _spawn.stdout.on('data', (data) => {
+            Log.info(`pm2 god spawn: ${data}`);
+        });
+
+        await new Promise((resolve, reject) => {
+            _spawn.on('close', (code) => {
+                if (code !== 0) {
+                    Log.info(`pm2 god spawn ${code}`);
+                    reject(code);
+                } else {
+                    Log.info('pm2 god spawned');
+                    resolve();
+                }
+            });
+        });
+
         return new Promise((resolve, reject) => {
-            pm2.connect((err) => { // start up pm2 god
+            pm2.connect(false, (err) => {
                 if (err) {
                     process.exit(2);
                     return reject(new Error(err));
@@ -149,7 +185,7 @@ export class SatelliteApp {
     }
 
     /**
-     *
+     * PM2 start promise wrapper, with options
      * @param options
      */
     startPM2(options) {
@@ -158,7 +194,7 @@ export class SatelliteApp {
                 if (err) {
                     reject(new Error(err));
                 }
-                return resolve(proc);
+                resolve(proc);
             });
         });
     }
@@ -169,7 +205,7 @@ export class SatelliteApp {
                 if (err) {
                     reject(new Error(err));
                 }
-                return resolve(proc);
+                resolve(proc);
             });
         });
     }
@@ -184,9 +220,7 @@ export class SatelliteApp {
             args: ['--enable-rpc', '--rpc-listen-all=false', `--rpc-listen-port=${this.satelliteSettings.aria2cPort}`, '--console-log-level=debug'],
             watch: false,
             exec_mode: 'fork_mode',
-            cwd: `${this.satelliteSettings.scidapRoot}/files`,
-            env: {
-            }
+            cwd: `${this.satelliteSettings.scidapRoot}/files`
         };
 
         return this.startPM2(options);
@@ -203,9 +237,7 @@ export class SatelliteApp {
             args: [`--port=${this.satelliteSettings.mongoPort}`, '--bind_ip=127.0.0.1', `--dbpath=${this.satelliteSettings.scidapRoot}/mongodb`],
             watch: false,
             exec_mode: 'fork_mode',
-            cwd: `${this.satelliteSettings.scidapRoot}/mongodb`,
-            env: {
-            }
+            cwd: `${this.satelliteSettings.scidapRoot}/mongodb`
         };
 
         return this.startPM2(options);
@@ -220,15 +252,16 @@ export class SatelliteApp {
 
         const options = {
             name: 'airflow-scheduler',
-            script: './app_packages/bin/airflow', //`${this.airflow_base_path}/Resources/python/bin/python3`,
-            args: ['scheduler'],
-            interpreter: 'bash',
+            script: `${this.airflow_base_path}/Resources/python/bin/python3`,
+            args: [`${this.airflow_base_path}/Resources/app_packages/bin/airflow`, 'scheduler'],
+            interpreter: 'none',
             watch: false,
             exec_mode: 'fork_mode',
-            cwd: `${this.airflow_base_path}/Resources/`,
+            cwd: this.airflowSettings.AIRFLOW_HOME,
             env: {
                 PYTHONPATH: `${this.airflow_base_path}/Resources/app:${this.airflow_base_path}/Resources/app_packages`,
-                PATH: `${this.airflow_base_path}/Resources/python/bin:${this.airflow_base_path}/Resources/app/bin:${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
+                PATH: `${this.airflow_base_path}/Resources/python/bin:${this.airflow_base_path}/Resources/app/bin:` +
+                    `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
                 AIRFLOW_HOME: this.airflowSettings.AIRFLOW_HOME
             }
         };
@@ -250,7 +283,8 @@ export class SatelliteApp {
             cwd: `${this.satelliteSettings.scidapRoot}`,
             env: {
                 PYTHONPATH: `${this.airflow_base_path}/Resources/app:${this.airflow_base_path}/Resources/app_packages`,
-                PATH: `${this.airflow_base_path}/Resources/python/bin:${this.airflow_base_path}/Resources/app/bin:${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
+                PATH: `${this.airflow_base_path}/Resources/python/bin:${this.airflow_base_path}/Resources/app/bin:` +
+                    `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
                 AIRFLOW_HOME: this.airflowSettings.AIRFLOW_HOME
             }
         };
@@ -263,7 +297,10 @@ export class SatelliteApp {
     startSatellite() {
         const options = {
             name: 'satellite',
+            // script: `${this.services_base_path}/node`,
             script: `${this.services_base_path}/../main.js`,
+            // args: [`${this.services_base_path}/../main.js`],
+            interpreter: 'node',
             watch: false,
             exec_mode: 'fork_mode',
             cwd: `${this.satelliteSettings.scidapRoot}`,
@@ -272,7 +309,9 @@ export class SatelliteApp {
                 ROOT_URL: `${this.satelliteSettings.baseUrl}`,
                 PORT: `${this.satelliteSettings.port}`,
                 METEOR_SETTINGS: this.getSatelliteConf(),
-                NODE_OPTIONS: '--trace-warnings --pending-deprecation'
+                NODE_OPTIONS: '--trace-warnings --pending-deprecation',
+                PATH: `${this.services_base_path}:${this.airflow_base_path}/Resources/app/bin:` +
+                    `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
             }
         };
         return this.startPM2(options);
@@ -281,16 +320,17 @@ export class SatelliteApp {
     /**
      *
      */
-    chainStartPM2Services() {
-        this.connectToPM2()
-            .then(() => this.startPM2web())
-            .then(() => this.startPM2Aria2c())
-            .then(() => this.startPM2Mongod())
-            .then(() => this.startAirflowScheduler())
-            .then(() => this.startAirflowAPI())
-            .then(() => this.startSatellite()).catch((error) => {
-                Log.info(error);
-            });
+    async chainStartPM2Services(): Promise<any> {
+        try {
+            await this.connectToPM2();
+            await this.startPM2Aria2c();
+            await this.startPM2Mongod();
+            await this.startAirflowScheduler();
+            await this.startAirflowAPI();
+            return await this.startSatellite();
+        } catch (error) {
+            Log.info(error);
+        }
     }
 
     killPM2() {
@@ -316,9 +356,9 @@ export class SatelliteApp {
     }
 
     /**
-     *
+     * Init saves all settings and starts services for the first time!
      */
-    satelliteInit() {
+    async satelliteInit() {
         this.airflowSettings = JSON.parse(this.store.get('airflowSettings'));
         this.satelliteSettings = JSON.parse(this.store.get('satelliteSettings'));
         this.token = this.store.get('token');
@@ -332,67 +372,53 @@ export class SatelliteApp {
             `airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port} --conn_extra "{\"endpoint\":\"/airflow/\"}"`
         ];
 
-        return init_commands.reduce((promiseChain, command) => {
-            return promiseChain.then(chainResults => {
-
-
-                return new Promise((resolve, reject) => {
-                    Log.info(command);
-                    const _spawn = spawn(`${self.airflow_base_path}/MacOS/${command}`, [], {
-                        shell: true,
-                        env: {
-                            AIRFLOW_HOME: self.airflowSettings.AIRFLOW_HOME
-                        }
-                    });
-
-                    let _stderr, _stdout;
-
-                    _spawn.stdout.on('data', (data) => {
-                        if (data.toString().includes('`conn_id`=process_report already exists')) {
-
-                        }
-                        _stdout = `$_stdout}${data}`;
-                    });
-
-                    _spawn.stderr.on('data', (data) => {
-                        _stderr = `$_stderr}${data}`;
-                    });
-
-                    _spawn.on('close', (code) => {
-                        if (code !== 0) {
-                            Log.info(`init command exited with code ${code}`);
-                            Log.info(`init stderr ${_stderr}`);
-                            reject(code);
-                        } else {
-                            Log.info(command, 'complete');
-                            resolve();
-                        }
-                    });
+        await init_commands.forEach(async (command) => {
+            Log.info(command);
+            const _spawn = spawn(`${self.airflow_base_path}/MacOS/${command}`, [], {
+                shell: true,
+                env: {
+                    AIRFLOW_HOME: self.airflowSettings.AIRFLOW_HOME
+                }
+            });
+            let _stderr, _stdout;
+            // TODO: delete old config!
+            _spawn.stdout.on('data', (data) => {
+                if (data.toString().includes('`conn_id`=process_report already exists')) {
+                }
+                _stdout = `${_stdout}${data}`;
+            });
+            _spawn.stderr.on('data', (data) => {
+                _stderr = `${_stderr}${data}`;
+            });
+            await new Promise((resolve, reject) => {
+                _spawn.on('close', (code) => {
+                    if (code !== 0) {
+                        Log.info(`init command exited with code ${code}`);
+                        Log.info(`init stderr ${_stderr}`);
+                        reject(code);
+                    } else {
+                        Log.info(command, 'complete');
+                        Log.info(command, _stdout);
+                        resolve();
+                    }
                 });
-            }
-            );
-        }, Promise.resolve([])).then(() => {
-            const airflowConfig: any = parse(fs.readFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
+            });
+        });
 
-            airflowConfig.core.dag_concurrency = 2;
-            airflowConfig.core.dags_are_paused_at_creation = 'False';
-            airflowConfig.core.max_active_runs_per_dag = 2;
-            airflowConfig.core.load_examples = 'False';
+        const airflowConfig: any = parse(fs.readFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
+        airflowConfig.core.dag_concurrency = 2;
+        airflowConfig.core.dags_are_paused_at_creation = 'False';
+        airflowConfig.core.max_active_runs_per_dag = 2;
+        airflowConfig.core.load_examples = 'False';
+        // conf.set("cwl", "tmp_folder", os.path.join(self.airflow_home, 'tmp'))
+        fs.writeFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
+        fs.mkdirSync(`${self.airflowSettings.AIRFLOW_HOME}/dags`, { recursive: true });
+        fs.copyFileSync(`${self.airflow_base_path}/Resources/app/cwl_airflow/dags/clean_dag_run.py`, `${self.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`);
+        fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/files`, { recursive: true });
+        fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/mongodb`, { recursive: true });
+        this.store.set('initComplete', true);
 
-            // conf.set("cwl", "tmp_folder", os.path.join(self.airflow_home, 'tmp'))
-
-            fs.writeFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
-            fs.mkdirSync(`${self.airflowSettings.AIRFLOW_HOME}/dags`, { recursive: true });
-
-            fs.copyFileSync(`${self.airflow_base_path}/Resources/app/cwl_airflow/dags/clean_dag_run.py`,
-                `${self.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`);
-
-            fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/files`, { recursive: true });
-            fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/mongodb`, { recursive: true });
-            return Promise.resolve();
-        }).then(() => this.chainStartPM2Services());
-
-        // return Promise.resolve();
+        return await this.chainStartPM2Services();
     }
 
 

@@ -1,15 +1,16 @@
 import { Component, OnInit, ViewChild, NgZone, AfterViewInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { ClrWizard, ClrWizardPage } from '@clr/angular';
 
-import { switchMap, filter, merge } from 'rxjs/operators';
+import { switchMap, filter, merge, catchError } from 'rxjs/operators';
 
-import { of as observableOf, BehaviorSubject, Observable, Subject, bindCallback, combineLatest } from 'rxjs';
+import { of as observableOf, BehaviorSubject, Observable, Subject, bindCallback, combineLatest, timer } from 'rxjs';
 
 import { ElectronService } from '../core/services';
 import { BaseComponent } from '../core/lib/base.component';
 
-import { SatelliteSettingsComponent } from '../shared/components';
+import { SatelliteSettingsComponent } from './SatelliteSettings/SatelliteSettings.component';
 
 const Store = require('electron-store');
 
@@ -20,19 +21,21 @@ const Store = require('electron-store');
 })
 export class HomeComponent extends BaseComponent implements OnInit, AfterViewInit {
 
-    @ViewChild('wizard', { static: true }) wizard: ClrWizard;
-    @ViewChild('settings', { static: true }) pageSettings: ClrWizardPage;
+    @ViewChild('wizard', { static: false }) wizard: ClrWizard;
+    @ViewChild('settings', { static: false }) pageSettings: ClrWizardPage;
 
     @ViewChild('satelliteSettings', { static: false }) satelliteSettings: SatelliteSettingsComponent;
 
     public form: FormGroup;
-    public xlOpen = true;
+    public wizardOpen = false;
 
     public email;
     public password;
     public rememberMe;
 
     satIdAssigned;
+    _airflowSettings;
+    _satelliteSettings;
 
     public showWarning = false;
     public errorMessage;
@@ -45,6 +48,9 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
     initInProgress = false;
 
+    processes = ['pm2-http-interface', 'aria2c', 'mongod', 'airflow-scheduler', 'airflow-apiserver', 'satellite'];
+    pm2Monit;
+    pm2MonitAdopted = {};
     token;
 
     _loginData = {};
@@ -71,15 +77,23 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
     constructor(
         private formBuilder: FormBuilder,
         private _electronService: ElectronService,
-        private _zone: NgZone) {
+        private _zone: NgZone,
+        private _http: HttpClient) {
 
         super();
-        console.log(this._electronService.remote.app.getAppPath());
+
         this.restoreSaved();
     }
 
+    /**
+     *
+     */
     private restoreSaved() {
         const m = { email: '', password: '', rememberMe: false };
+
+        if (!this.store.has('initComplete') || !this.store.get('initComplete')) {
+            this.wizardOpen = true;
+        }
 
         if (this.store.get('email')) {
             console.log(this.store.get('email'));
@@ -102,10 +116,16 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
         }
 
         this._loginData = m;
-    }
 
-    public handleDangerClick(): void {
-        this.wizard.finish();
+
+        if (this.store.has('airflowSettings')) {
+            this._airflowSettings = JSON.parse(this.store.get('airflowSettings'));
+        }
+
+        if (this.store.has('satelliteSettings')) {
+            this._satelliteSettings = JSON.parse(this.store.get('satelliteSettings'));
+        }
+
     }
 
 
@@ -117,12 +137,14 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
         this._zone.run(() => this.wizard.next());
     }
 
+    /**
+     *
+     */
     ngOnInit() {
     }
 
     ngAfterViewInit(): void {
         if (this.token) {
-
             this.wizard.pageCollection.pagesAsArray.find(page => {
                 if (page._id === this.pageSettings._id) {
                     return true;
@@ -132,8 +154,32 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
             });
             this.wizard.navService.currentPage = this.pageSettings;
         }
+
+        // if (!this.wizardOpen) {
+        //     this.monitorPM2().subscribe((v) => {
+        //         console.log(v);
+        //         this.pm2Monit = v;
+        //         const _pm2MonitAdopted = {};
+        //         this.pm2Monit.processes.forEach(element => {
+        //             _pm2MonitAdopted[element.name] = element;
+        //         });
+        //         this.pm2MonitAdopted = _pm2MonitAdopted;
+        //     });
+
+        //     // timer(0, 1000).pipe(
+        //     //     switchMap(() => this._http.get(`http://localhost:${this._satelliteSettings.pm2Port}`, { responseType: 'json' })),
+        //     //     catchError(error => {
+        //     //         console.log(error);
+        //     //         return observableOf({ error, series: null });
+        //     //     }));
+        // }
     }
 
+
+
+    /**
+     *
+     */
     goToLogin() {
         this._login = true;
         this._newuser = false;
@@ -157,7 +203,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
     doLogin() {
         if (this.loginData && this.loginData.email && this.loginData.password) {
-            console.log(this.loginData);
+            console.log('Login data:', this.loginData);
             this._electronService.login(this.loginData.email, this.loginData.password)
                 .pipe(
                     switchMap((er: any) => {
@@ -221,7 +267,16 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
         this.initInProgress = true;
         this.satelliteSettings.doFinish().then((v) => {
             this.initInProgress = false;
-            if (v[0] === 'complete') {
+            console.log(v);
+
+            if (this.store.get('initComplete', false)) {
+                this.wizard.close();
+                this.wizardOpen = false;
+            } else {
+                console.log('initComplete false');
+            }
+            if (v[0] !== 'complete') {
+                console.log('Error in init');
             }
         });
     }

@@ -5,28 +5,42 @@
 </div> -->
 
 
-<!-- <div class="main-container">
-  <div class="alert alert-app-level">
-      ...
-  </div>
-  <header class="header header-6">
-      ...
-  </header>
-  <nav class="subnav">
-      ...
-  </nav>
-  <div class="content-container">
-      <div class="content-area">
-          ...
-      </div>
-      <nav class="sidenav">
-          ...
-      </nav>
-  </div>
-</div> -->
+<div class="main-container" *ngIf="!wizardOpen">
+    <div class="alert alert-app-level">
+        <!-- ... -->
+    </div>
+    <header class="header-6">
+        <div class="branding">
+            <a href="javascript://" class="nav-link">SciDAP Satellite</a>
+        </div>
+        <div class="header-nav">
+            <a [routerLink]="[ '/home/dashboard' ]" routerLinkActive="active" class="nav-link nav-text">Dashboard</a>
+            <a [routerLink]="[ '/home/settings' ]" routerLinkActive="active" class="nav-link nav-text">Settings</a>
+        </div>
+        <div class="header-actions">
+            <a href="javascript://" class="nav-link nav-icon" aria-label="settings">
+                <clr-icon shape="cog"></clr-icon>
+            </a>
+        </div>
+    </header>
+    <!-- <nav class="subnav">
+      zz
+  </nav> -->
+    <div class="content-container">
+        <div class="content-area">
+            <router-outlet></router-outlet>
 
-<clr-wizard #wizard [(clrWizardOpen)]="xlOpen" [clrWizardClosable]="false" [clrWizardPreventDefaultNext]="true" [clrWizardDisableStepnav]="true">
-    <!-- (clrWizardOnFinish)="doFinish()" -->
+        </div>
+        <!-- <nav class="sidenav">
+          ...
+      </nav> -->
+    </div>
+</div>
+
+
+
+
+<clr-wizard #wizard [(clrWizardOpen)]="wizardOpen" [clrWizardClosable]="false" [clrWizardPreventDefaultNext]="true" [clrWizardDisableStepnav]="true">
 
     <clr-wizard-title>Installing SciDAP Satellite</clr-wizard-title>
 
@@ -42,33 +56,7 @@
             <!-- <clr-wizard-button [type]="'new-user'">New User</clr-wizard-button> -->
         </ng-template>
 
-        <!-- <div class="clr-row">
-      <div class="clr-col">&nbsp;</div>
-      <div class="clr-col">
-
-        <div class="btn-group btn-primary btn-icon">
-          <button class="btn" >
-            <clr-icon shape="check" title="Check"></clr-icon>
-            Login
-          </button>
-          <button class="btn" >
-            <clr-icon shape="user" title="user"></clr-icon>
-            New User
-          </button>
-        </div>
-      </div>
-      <div class="clr-col">&nbsp;</div>
-    </div> -->
     </clr-wizard-page>
-
-    <!-- <clr-wizard-page *ngIf="!_newuser && !_login">
-    <ng-template clrPageTitle>Login or Register</ng-template>
-  </clr-wizard-page>
-
-  <clr-wizard-page *ngIf="_newuser">
-    <ng-template clrPageTitle>New User</ng-template>
-    New user is not supported yet
-  </clr-wizard-page> -->
 
     <clr-wizard-page (clrWizardPageCustomButton)="doLogin()">
         <ng-template clrPageTitle>Login to SciDAP</ng-template>
@@ -77,8 +65,6 @@
                 {{errorMessage}}
             </div>
         </app-login>
-        <!-- <div class="error active">
-    </div> -->
         <ng-template clrPageButtons>
             <clr-wizard-button [type]="'previous'">Back</clr-wizard-button>
             <clr-wizard-button [type]="'login'">Login</clr-wizard-button>
@@ -109,14 +95,13 @@
             <clr-wizard-button [type]="'previous'">Back</clr-wizard-button>
             <clr-wizard-button [type]="'agree'">Agree</clr-wizard-button>
         </ng-template>
-
     </clr-wizard-page>
 
     <clr-wizard-page #settings (clrWizardPageCustomButton)="doSettings()">
         <ng-template clrPageTitle>Settings</ng-template>
         <app-satellite-settings *ngIf="!initInProgress" #satelliteSettings></app-satellite-settings>
         <clr-spinner *ngIf="initInProgress">
-                Starting Processes
+            Starting Processes
         </clr-spinner>
 
         <ng-template clrPageButtons>

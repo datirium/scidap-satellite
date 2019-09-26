@@ -8,12 +8,15 @@ import { ClarityModule } from '@clr/angular';
 
 import { TranslateModule } from '@ngx-translate/core';
 
-import { PageNotFoundComponent, LoginComponent, SatelliteSettingsComponent } from './components/';
+import { MomentModule } from 'ngx-moment';
+
+
+import { PageNotFoundComponent, LoginComponent, BytesPipe } from './components/';
 
 import { WebviewDirective } from './directives/';
 
 @NgModule({
-  declarations: [PageNotFoundComponent, WebviewDirective, LoginComponent, SatelliteSettingsComponent],
+  declarations: [PageNotFoundComponent, WebviewDirective, LoginComponent, BytesPipe],
   imports: [
     CommonModule,
     BrowserModule,
@@ -21,8 +24,9 @@ import { WebviewDirective } from './directives/';
     FormsModule,
     ReactiveFormsModule,
     ClarityModule,
-    TranslateModule
+    TranslateModule,
+    MomentModule
   ],
-  exports: [TranslateModule, WebviewDirective, LoginComponent, SatelliteSettingsComponent]
+  exports: [TranslateModule, MomentModule, WebviewDirective, LoginComponent, BytesPipe]
 })
 export class SharedModule {}

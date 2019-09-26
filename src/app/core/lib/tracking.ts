@@ -86,9 +86,9 @@ export class Tracking {
         return dispose;
     }
 
-    // ngOnDestroy(): void {
-    //     this.cleanup();
-    // }
+    ngOnDestroy(): void {
+        this.cleanup();
+    }
 
     protected MeteorSubscribeAutorun<T>(name: string, ...args: any[]): Observable<T> {
         return MeteorObservable.subscribeAutorun(name, ...args);
