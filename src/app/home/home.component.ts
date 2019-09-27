@@ -53,20 +53,24 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
     pm2MonitAdopted = {};
     token;
 
+    keytar;
+
     _loginData = {};
     set loginData(v: any) {
         this._loginData = v;
 
-        if (v.email) {
-            this.store.set('email', v.email);
-        }
-
-        if (v.password) {
-            this.store.set('password', v.password);
-        }
-
         if (v.rememberMe) {
+            if (v.email) {
+                this.keytar.setPassword('scidap-satellite', 'email', v.email);
+            }
+
+            if (v.password) {
+                this.keytar.setPassword('scidap-satellite', 'password', v.password);
+            }
             this.store.set('rememberMe', v.rememberMe);
+        } else {
+            this.keytar.deletePassword('scidap-satellite', 'password');
+            this.keytar.deletePassword('scidap-satellite', 'email');
         }
     }
 
@@ -82,6 +86,8 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
         super();
 
+        this.keytar = this._electronService.remote.require('keytar');
+
         this.restoreSaved();
     }
 
@@ -95,28 +101,20 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
             this.wizardOpen = true;
         }
 
-        if (this.store.get('email')) {
-            console.log(this.store.get('email'));
-            m.email = this.store.get('email');
-        }
+        Promise.all([
+            this.keytar.getPassword('scidap-satellite', 'email'),
+            this.keytar.getPassword('scidap-satellite', 'password'),
+            this.keytar.getPassword('scidap-satellite', 'token')])
+            .then((d) => {
+                [m.email, m.password, this.token] = d;
+                this._loginData = m;
+            }).catch((e) => {
+                console.log(e);
+            });
 
-        if (this.store.get('password')) {
-            console.log(this.store.get('password'));
-            m.password = this.store.get('password');
-        }
-
-        if (this.store.get('rememberMe')) {
-            console.log(this.store.get('rememberMe'));
+        if (this.store.has('rememberMe')) {
             m.rememberMe = this.store.get('rememberMe');
         }
-
-        if (this.store.get('token')) {
-            console.log(this.store.get('token'));
-            this.token = this.store.get('token');
-        }
-
-        this._loginData = m;
-
 
         if (this.store.has('airflowSettings')) {
             this._airflowSettings = JSON.parse(this.store.get('airflowSettings'));
@@ -144,7 +142,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
     }
 
     ngAfterViewInit(): void {
-        if (this.token) {
+        if (this.token && this.wizard) {
             this.wizard.pageCollection.pagesAsArray.find(page => {
                 if (page._id === this.pageSettings._id) {
                     return true;
@@ -154,25 +152,6 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
             });
             this.wizard.navService.currentPage = this.pageSettings;
         }
-
-        // if (!this.wizardOpen) {
-        //     this.monitorPM2().subscribe((v) => {
-        //         console.log(v);
-        //         this.pm2Monit = v;
-        //         const _pm2MonitAdopted = {};
-        //         this.pm2Monit.processes.forEach(element => {
-        //             _pm2MonitAdopted[element.name] = element;
-        //         });
-        //         this.pm2MonitAdopted = _pm2MonitAdopted;
-        //     });
-
-        //     // timer(0, 1000).pipe(
-        //     //     switchMap(() => this._http.get(`http://localhost:${this._satelliteSettings.pm2Port}`, { responseType: 'json' })),
-        //     //     catchError(error => {
-        //     //         console.log(error);
-        //     //         return observableOf({ error, series: null });
-        //     //     }));
-        // }
     }
 
 
@@ -203,7 +182,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
     doLogin() {
         if (this.loginData && this.loginData.email && this.loginData.password) {
-            console.log('Login data:', this.loginData);
+            console.log('Login data:', this.loginData.email, this.loginData.password !== '');
             this._electronService.login(this.loginData.email, this.loginData.password)
                 .pipe(
                     switchMap((er: any) => {
@@ -255,7 +234,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
             (token) => {
                 console.log(token);
                 if (token && !token.error) {
-                    this.store.set('token', token);
+                    this.keytar.setPassword('scidap-satellite', 'token', token);
                     this.changeState(3);
                 }
             }

@@ -51,7 +51,10 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
             this._satelliteSettings = JSON.parse(this.store.get('satelliteSettings'));
         }
 
-        this.tracked = this.monitorPM2().subscribe((v) => {
+        this.tracked = this.monitorPM2().subscribe((v: any) => {
+            if (v && v.error) {
+                return;
+            }
             console.log(v);
             this.pm2Monit = v;
             const _pm2MonitAdopted = {};

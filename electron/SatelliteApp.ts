@@ -7,6 +7,7 @@ import * as path from 'path';
 import * as url from 'url';
 import * as fs from 'fs';
 import * as os from 'os';
+import * as keytar from 'keytar';
 
 import { parse, stringify } from './IniParser';
 
@@ -65,15 +66,26 @@ export class SatelliteApp {
 
         this.airflowSettings = JSON.parse(this.store.get('airflowSettings', null));
         this.satelliteSettings = JSON.parse(this.store.get('satelliteSettings', null));
-        this.token = this.store.get('token', null);
 
         this.pm2_home = path.join(app.getPath('home'), '/.pm2');
 
         this.initComplete = this.store.get('initComplete', false);
 
-        if (this.initComplete && this.airflowSettings && this.satelliteSettings && this.token) {
-            // Start PM2!
-            this.chainStartPM2Services().then((v) => Log.info(`services started ${v}`));
+        if (this.initComplete && this.airflowSettings && this.satelliteSettings) {
+            Promise.all([
+                keytar.getPassword('scidap-satellite', 'email'),
+                keytar.getPassword('scidap-satellite', 'password'),
+                keytar.getPassword('scidap-satellite', 'token')])
+                .then((d) => {
+                    const [email, password, token] = d;
+                    if (token) {
+                        Log.info('Pm2 started!');
+                        this.token = token;
+                        // Start PM2!
+                        this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
+
+                    }
+                });
         }
     }
 
@@ -292,8 +304,8 @@ export class SatelliteApp {
     }
 
     /**
- *
- */
+     *
+     */
     startSatellite() {
         const options = {
             name: 'satellite',
@@ -383,7 +395,6 @@ export class SatelliteApp {
     async satelliteInit() {
         this.airflowSettings = JSON.parse(this.store.get('airflowSettings'));
         this.satelliteSettings = JSON.parse(this.store.get('satelliteSettings'));
-        this.token = this.store.get('token');
 
         Log.info('init airflowSettings:', this.airflowSettings);
         Log.info('init satelliteSettings:', this.satelliteSettings);
@@ -440,7 +451,18 @@ export class SatelliteApp {
         fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/mongodb`, { recursive: true });
         this.store.set('initComplete', true);
 
-        return await this.chainStartPM2Services();
+        const [email, password, token] = await Promise.all([
+            keytar.getPassword('scidap-satellite', 'email'),
+            keytar.getPassword('scidap-satellite', 'password'),
+            keytar.getPassword('scidap-satellite', 'token')]);
+
+        if (token) {
+            Log.info('Pm2 started!');
+            this.token = token;
+            return await this.chainStartPM2Services();
+        } else {
+            return Promise.reject('no token');
+        }
     }
 
 

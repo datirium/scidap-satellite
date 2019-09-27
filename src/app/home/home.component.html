@@ -40,7 +40,7 @@
 
 
 
-<clr-wizard #wizard [(clrWizardOpen)]="wizardOpen" [clrWizardClosable]="false" [clrWizardPreventDefaultNext]="true" [clrWizardDisableStepnav]="true">
+<clr-wizard #wizard [(clrWizardOpen)]="wizardOpen" *ngIf="wizardOpen" [clrWizardClosable]="false" [clrWizardPreventDefaultNext]="true" [clrWizardDisableStepnav]="true">
 
     <clr-wizard-title>Installing SciDAP Satellite</clr-wizard-title>
 
@@ -91,7 +91,7 @@
             <h3> Setup wizard is going to assign personal satellite for you. </h3>
         </div>
         <ng-template clrPageButtons>
-            <clr-wizard-button [type]="'quit'">quit</clr-wizard-button>
+            <!-- <clr-wizard-button [type]="'quit'">quit</clr-wizard-button> -->
             <clr-wizard-button [type]="'previous'">Back</clr-wizard-button>
             <clr-wizard-button [type]="'agree'">Agree</clr-wizard-button>
         </ng-template>
