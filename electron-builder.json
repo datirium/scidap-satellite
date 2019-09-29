@@ -5,14 +5,12 @@
     "directories": {
         "output": "release/"
     },
-    "extraFiles": [
-    ],
+    "extraFiles": [],
     "extraResources": [
         "Services/**"
     ],
     "asar": false,
-    "asarUnpack": [
-    ],
+    "asarUnpack": [],
     "files": [
         "**/*",
         "!**/*.ts",
@@ -41,10 +39,22 @@
         ]
     },
     "mac": {
+        "category": "public.app-category.business",
         "icon": "dist",
         "target": [
-            "dmg"
-        ]
+            "dmg",
+            "zip"
+        ],
+        "publish": {
+            "provider": "generic",
+            "url": "https://scidap.com/update/releases/",
+            "channel": "latest",
+            "publishAutoUpdate": true
+        },
+        "hardenedRuntime": true,
+        "gatekeeperAssess": false,
+        "entitlements": "./build-scripts/entitlements.mac.inherit.plist",
+        "entitlementsInherit": "./build-scripts/entitlements.mac.inherit.plist"
     },
     "linux": {
         "icon": "dist",
