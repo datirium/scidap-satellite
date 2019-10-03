@@ -10,7 +10,9 @@
         "Services/**"
     ],
     "asar": false,
-    "asarUnpack": [],
+    "asarUnpack": [
+        "node_modules/pm2*"
+    ],
     "files": [
         "**/*",
         "!**/*.ts",
@@ -32,6 +34,15 @@
         "!tslint.json",
         "!postinstall*.js"
     ],
+    "publish": [
+        {
+            "channel": "latest",
+            "publishAutoUpdate": true,
+            "updaterCacheDirName": "scidap-satellite-updater",
+            "provider": "generic",
+            "url": "https://scidap.com/update/releases/"
+        }
+    ],
     "win": {
         "icon": "dist",
         "target": [
@@ -39,7 +50,7 @@
         ]
     },
     "mac": {
-        "category": "public.app-category.business",
+        "category": "public.app-category.education",
         "icon": "dist",
         "target": [
             "dmg",

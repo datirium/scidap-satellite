@@ -1,5 +1,6 @@
 import { Component, OnInit, NgZone } from '@angular/core';
 import { ElectronService } from '../../core/services';
+import { Subject, Observable, Subscriber } from 'rxjs';
 
 const Store = require('electron-store');
 
@@ -145,5 +146,4 @@ export class SatelliteSettingsComponent implements OnInit {
         }
         return this.checkPort(+_url.port);
     }
-
 }

@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import { Tracking } from '../../lib/tracking';
 declare let ServiceConfiguration: any;
 
-import { of as observableOf, BehaviorSubject, Observable, Subject, bindCallback } from 'rxjs';
+import { of as observableOf, BehaviorSubject, Observable, Subject, bindCallback, Subscriber } from 'rxjs';
 
 import { debounceTime, filter, map, catchError } from 'rxjs/operators';
 
@@ -56,6 +56,7 @@ export class ElectronService extends Tracking {
     webFrame: typeof webFrame;
     remote: typeof remote;
     childProcess: typeof childProcess;
+    shell;
     fs: typeof fs;
     currentUser;
     currentUserId;
@@ -72,6 +73,7 @@ export class ElectronService extends Tracking {
             this.ipcRenderer = window.require('electron').ipcRenderer;
             this.webFrame = window.require('electron').webFrame;
             this.remote = window.require('electron').remote;
+            this.shell = window.require('electron').shell;
 
             this.childProcess = window.require('child_process');
             this.fs = window.require('fs');
@@ -207,6 +209,54 @@ export class ElectronService extends Tracking {
 
     getSatToken() {
 
+    }
+
+    installUpdates() {
+        this.ipcRenderer.send('quit-and-install');
+    }
+
+
+    checkForUpdates() {
+        this.ipcRenderer.send('checking-for-update');
+    }
+
+    updatesNews() {
+        return Observable.create((observer: Subscriber<any>) => {
+
+            this.ipcRenderer.on('update-available', (d, ...args) => {
+                observer.next({ res: 'update-available' });
+            });
+
+            this.ipcRenderer.on('update-not-available', (d, ...args) => {
+                observer.next({ res: 'update-not-available' });
+            });
+
+            this.ipcRenderer.on('update-downloaded', (d, ...args) => {
+                observer.next({ res: 'update-downloaded', args: args });
+            });
+
+            this.ipcRenderer.on('update-error', (d, ...args) => {
+                observer.next({ res: 'update-error', args: args });
+            });
+
+            this.ipcRenderer.on('download-progress', (d, ...args) => {
+                observer.next({ res: 'download-progress', args: args });
+            });
+
+
+
+            return () => {
+                this.ipcRenderer.removeAllListeners('update-available');
+                this.ipcRenderer.removeAllListeners('update-not-available');
+                this.ipcRenderer.removeAllListeners('update-downloaded');
+                this.ipcRenderer.removeAllListeners('update-error');
+                this.ipcRenderer.removeAllListeners('download-progress');
+            };
+        });
+    }
+
+    openExternal(url) {
+        this.shell.openExternal('http://electron.atom.io')
     }
 
 }

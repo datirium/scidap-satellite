@@ -1,0 +1,5 @@
+provider: generic
+url: 'https://scidap.com/update/releases/'
+channel: latest
+publishAutoUpdate: true
+updaterCacheDirName: scidap-satellite-updater

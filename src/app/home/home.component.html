@@ -11,25 +11,89 @@
     </div>
     <header class="header-6">
         <div class="branding">
-            <a href="javascript://" class="nav-link">SciDAP Satellite</a>
+            <a href="javascript://" class="nav-link">
+                <span class="title">
+                    SciDAP Satellite
+                </span>
+            </a>
         </div>
         <div class="header-nav">
             <a [routerLink]="[ '/home/dashboard' ]" routerLinkActive="active" class="nav-link nav-text">Dashboard</a>
             <a [routerLink]="[ '/home/settings' ]" routerLinkActive="active" class="nav-link nav-text">Settings</a>
         </div>
         <div class="header-actions">
-            <a href="javascript://" class="nav-link nav-icon" aria-label="settings">
+            <clr-dropdown>
+                <button class="nav-icon" clrDropdownTrigger aria-label="toggle settings menu">
+                    <clr-icon shape="cog" [ngClass]="{'has-badge': cogBadge}"></clr-icon>
+                    <clr-icon shape="caret down"></clr-icon>
+                </button>
+                <clr-dropdown-menu *clrIfOpen clrPosition="bottom-right">
+                    <h4 class="dropdown-header">SciDAP Satellite</h4>
+                    <a (click)="doAbout()" clrDropdownItem>About</a>
+                    <a (click)="checkUpdates()" clrDropdownItem>{{menuText}}</a>
+                    <div class="dropdown-divider" role="separator"></div>
+                    <a [routerLink]="[ '/home/dashboard' ]" routerLinkActive="active" clrDropdownItem>Dashboard</a>
+                    <a [routerLink]="[ '/home/settings' ]" routerLinkActive="active" clrDropdownItem>Settings</a>
+                    <div class="dropdown-divider" role="separator"></div>
+                    <a href="javascript://" clrDropdownItem>Quit</a>
+                </clr-dropdown-menu>
+            </clr-dropdown>
+            <!-- <a href="javascript://" class="nav-link nav-icon" aria-label="settings">
                 <clr-icon shape="cog"></clr-icon>
-            </a>
+            </a> -->
         </div>
     </header>
     <!-- <nav class="subnav">
       zz
   </nav> -->
+    <clr-modal [(clrModalOpen)]="updateAvailable" class="modal-backdrop fade in" [clrModalClosable]='false'>
+        <div class="modal-body" *ngIf="!showProgress && !_showError">
+            <div class="clr-row">
+                <div class="clr-col-3">
+                    <img src='favicon.256x256.png' style="width: 75px; height: 75px;">
+                </div>
+                <div class="clr-col-9">
+                    <h3>
+                        New version available
+                    </h3>
+                    <p>Update to the latest version now?</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-body" *ngIf="showProgress">
+            <div class="progress-block">
+                <label for="demoProgressBar">Download progress:</label>
+                <clr-progress-bar id="demoProgressBar" [clrValue]="downloadPercent"></clr-progress-bar>
+                <span>{{downloadSpeed | bytes}}</span>
+            </div>
+        </div>
+
+        <div class="modal-footer" *ngIf="!showProgress && !_showError">
+            <button type="button" class="btn btn-outline" (click)="updateAvailable = false">Later</button>
+            <button type="button" class="btn btn-primary" (click)="doUpdate()">{{buttonText}}</button>
+        </div>
+        <div class="modal-body" *ngIf="_showError">
+            <div class="clr-row">
+                <div class="clr-col-3">
+                    <img src='favicon.256x256.png' style="width: 75px; height: 75px;">
+                </div>
+                <div class="clr-col-9">
+                    <h3>
+                        Error occurred
+                    </h3>
+                    <p>Please try later</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" *ngIf="_showError">
+            <button type="button" class="btn btn-outline" (click)="updateAvailable = false">Cancel</button>
+        </div>
+    </clr-modal>
+
     <div class="content-container">
         <div class="content-area">
             <router-outlet></router-outlet>
-
         </div>
         <!-- <nav class="sidenav">
           ...

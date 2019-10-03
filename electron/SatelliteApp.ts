@@ -72,18 +72,13 @@ export class SatelliteApp {
         this.initComplete = this.store.get('initComplete', false);
 
         if (this.initComplete && this.airflowSettings && this.satelliteSettings) {
-            Promise.all([
-                keytar.getPassword('scidap-satellite', 'email'),
-                keytar.getPassword('scidap-satellite', 'password'),
-                keytar.getPassword('scidap-satellite', 'token')])
-                .then((d) => {
-                    const [email, password, token] = d;
+                keytar.getPassword('scidap-satellite', 'token')
+                .then((token) => {
                     if (token) {
                         Log.info('Pm2 started!');
                         this.token = token;
                         // Start PM2!
                         this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
-
                     }
                 });
         }
@@ -356,6 +351,44 @@ export class SatelliteApp {
         });
     }
 
+    async killPM2_2() {
+
+        let pm2_interface = path.join(this.services_base_path, '../../../', 'app/node_modules/pm2/bin/');
+        if (this.serve) {
+            pm2_interface = path.join(this.services_base_path, '../../../', 'node_modules/pm2/bin/');
+        }
+
+        const _spawn = spawn(`${pm2_interface}/pm2`, ['kill'], {
+            shell: true,
+            env: {
+                HOME: app.getPath('home'),
+                PATH: `${this.services_base_path}:${this.airflow_base_path}/Resources/app/bin:` +
+                    `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
+            }
+        });
+
+        _spawn.stderr.on('data', (data) => {
+            Log.info(`pm2 god kill error: ${data}`);
+        });
+
+        _spawn.stdout.on('data', (data) => {
+            Log.info(`pm2 god kill: ${data}`);
+        });
+
+        await new Promise((resolve, reject) => {
+            _spawn.on('close', (code) => {
+                if (code !== 0) {
+                    Log.info(`pm2 god kill ${code}`);
+                    reject(code);
+                } else {
+                    Log.info('pm2 god kill');
+                    resolve();
+                }
+            });
+        });
+
+    }
+
     disconnectPM2() {
         return new Promise((resolve, reject) => {
             pm2.disconnect((err) => {
@@ -451,10 +484,7 @@ export class SatelliteApp {
         fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/mongodb`, { recursive: true });
         this.store.set('initComplete', true);
 
-        const [email, password, token] = await Promise.all([
-            keytar.getPassword('scidap-satellite', 'email'),
-            keytar.getPassword('scidap-satellite', 'password'),
-            keytar.getPassword('scidap-satellite', 'token')]);
+        const token = await keytar.getPassword('scidap-satellite', 'token');
 
         if (token) {
             Log.info('Pm2 started!');
@@ -536,4 +566,10 @@ export class SatelliteApp {
         return this.networkInterfaces;
     }
 
+    /**
+     *
+     */
+    send(channel, ...arg) {
+        this.win.webContents.send(channel, ...arg);
+    }
 }

@@ -55,7 +55,6 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
             if (v && v.error) {
                 return;
             }
-            console.log(v);
             this.pm2Monit = v;
             const _pm2MonitAdopted = {};
             this.pm2Monit.processes.forEach(element => {
@@ -84,6 +83,9 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
         super.ngOnDestroy();
     }
 
+    /**
+     *
+     */
     monitorPM2() {
 
         return timer(0, 1000).pipe(
@@ -93,7 +95,14 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
                 }
                 return !!this._satelliteSettings;
             }),
-            switchMap(() => this._http.get(`http://localhost:${this._satelliteSettings.pm2Port}`, { responseType: 'json' })),
+            switchMap(() => this._http.get(`http://localhost:${this._satelliteSettings.pm2Port}`, { responseType: 'json' })
+                .pipe(
+                    catchError((error) => {
+                        console.log(error);
+                        return observableOf({ error, series: null });
+                    })
+                )
+            ),
             catchError(error => {
                 console.log(error);
                 return observableOf({ error, series: null });

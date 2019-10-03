@@ -1,11 +1,11 @@
 {
   "name": "scidap-satellite",
   "version": "1.0.0",
-  "description": "SciDAP Satellite monitoring program",
+  "description": "scientific data analysis platform satellite bundle",
   "homepage": "https://scidap.com/",
   "author": {
-    "name": "Porter",
-    "email": "porter@datirium.com"
+    "name": "Datirium, LLC",
+    "email": "datirium@datirium.com"
   },
   "keywords": [
     "scidap",
@@ -99,6 +99,7 @@
   "dependencies": {
     "electron-log": "^3.0.8",
     "electron-store": "^4.0.0",
+    "electron-updater": "^4.1.2",
     "keytar": "^4.13.0",
     "meteor-node-stubs": "^0.4.1",
     "pm2": "^3.5.1",

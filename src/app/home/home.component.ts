@@ -37,6 +37,13 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
     _airflowSettings;
     _satelliteSettings;
 
+    menuText = 'Check for updates';
+    buttonText = 'update';
+
+    public cogBadge = false;
+    public updateAvailable = false;
+    readyToInstall = false;
+
     public showWarning = false;
     public errorMessage;
     public _login = false;
@@ -48,6 +55,10 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
     initInProgress = false;
 
+    downloadPercent;
+    downloadSpeed;
+    showProgress;
+
     processes = ['pm2-http-interface', 'aria2c', 'mongod', 'airflow-scheduler', 'airflow-apiserver', 'satellite'];
     pm2Monit;
     pm2MonitAdopted = {};
@@ -57,6 +68,9 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
     _loginData = {};
     set loginData(v: any) {
+        if (Object.keys(v).length === 0) {
+            return;
+        }
         this._loginData = v;
 
         if (v.rememberMe) {
@@ -78,16 +92,20 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
         return this._loginData;
     }
 
+    /**
+     *
+     * @param _electronService
+     * @param _zone
+     */
     constructor(
-        private formBuilder: FormBuilder,
-        private _electronService: ElectronService,
-        private _zone: NgZone,
-        private _http: HttpClient) {
+        public _electronService: ElectronService,
+        private _zone: NgZone
+    ) {
 
         super();
 
         this.keytar = this._electronService.remote.require('keytar');
-
+        this.subscribeUpdates();
         this.restoreSaved();
     }
 
@@ -99,18 +117,28 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
         if (!this.store.has('initComplete') || !this.store.get('initComplete')) {
             this.wizardOpen = true;
+
+            Promise.all([
+                this.keytar.getPassword('scidap-satellite', 'email'),
+                this.keytar.getPassword('scidap-satellite', 'password'),
+                this.keytar.getPassword('scidap-satellite', 'token')])
+                .then((d) => {
+                    [m.email, m.password, this.token] = d;
+                    this._loginData = m;
+                }).catch((e) => {
+                    console.log(e);
+                });
+
+        } else {
+
+            this.keytar.getPassword('scidap-satellite', 'token')
+                .then((token) => {
+                    this.token = token;
+                }).catch((e) => {
+                    console.log(e);
+                });
         }
 
-        Promise.all([
-            this.keytar.getPassword('scidap-satellite', 'email'),
-            this.keytar.getPassword('scidap-satellite', 'password'),
-            this.keytar.getPassword('scidap-satellite', 'token')])
-            .then((d) => {
-                [m.email, m.password, this.token] = d;
-                this._loginData = m;
-            }).catch((e) => {
-                console.log(e);
-            });
 
         if (this.store.has('rememberMe')) {
             m.rememberMe = this.store.get('rememberMe');
@@ -171,6 +199,9 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
         this.changeState(1);
     }
 
+    /**
+     *
+     */
     doLoginOrRegister(buttonType) {
         if ('login' === buttonType) {
             this.goToLogin();
@@ -180,10 +211,13 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
         }
     }
 
+    /**
+     *
+     */
     doLogin() {
         if (this.loginData && this.loginData.email && this.loginData.password) {
             console.log('Login data:', this.loginData.email, this.loginData.password !== '');
-            this._electronService.login(this.loginData.email, this.loginData.password)
+            this.tracked = this._electronService.login(this.loginData.email, this.loginData.password)
                 .pipe(
                     switchMap((er: any) => {
                         if (!er) {
@@ -225,12 +259,16 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
         }
     }
 
+    /**
+     *
+     * @param buttonType
+     */
     doAgree(buttonType) {
         if ('cancel' === buttonType) {
             console.log('send app quit');
         }
 
-        this._electronService.satCreateGetToken().subscribe(
+        this.tracked = this._electronService.satCreateGetToken().subscribe(
             (token) => {
                 console.log(token);
                 if (token && !token.error) {
@@ -242,6 +280,9 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
         //
     }
 
+    /**
+     *
+     */
     doSettings() {
         this.initInProgress = true;
         this.satelliteSettings.doFinish().then((v) => {
@@ -258,5 +299,89 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
                 console.log('Error in init');
             }
         });
+    }
+
+    /**
+     *
+     */
+    subscribeUpdates() {
+        this.tracked = this._electronService.updatesNews().subscribe(({ res, ...args }) => {
+            args = args.args;
+
+            console.log(res, args);
+            if ('update-available' === res) {
+                this.cogBadge = true;
+                this.updateAvailable = true;
+                this.menuText = 'Downloading updates';
+            }
+
+            if ('update-not-available' === res && !this.readyToInstall) {
+                this.cogBadge = false;
+                this.updateAvailable = false;
+            }
+
+            if ('download-progress' === res) {
+                this._zone.run(() => {
+                    [ this.downloadPercent, this.downloadSpeed ] = args;
+                });
+                // if (this.downloadPercent === 100 || this.downloadPercent === '100') {
+                //     res = 'update-downloaded';
+                //     this.showProgress = false;
+                // }
+            }
+
+            if ('update-downloaded' === res) {
+                this.cogBadge = true;
+                this.updateAvailable = true;
+                this.menuText = 'Install updates';
+                this.buttonText = 'Install';
+                this.readyToInstall = true;
+                this.showProgress = false;
+            }
+
+            if ('update-error' === res) {
+                this.showProgress = false;
+                this._showError = true;
+                this.cogBadge = false;
+            }
+
+
+        });
+    }
+
+    checkUpdates() {
+        if (this.readyToInstall) {
+            this._electronService.installUpdates();
+        }
+
+        if (!this.updateAvailable && !this.readyToInstall) {
+            this._electronService.checkForUpdates();
+        }
+    }
+
+    doUpdate() {
+
+        if (this.readyToInstall) {
+            this._electronService.installUpdates();
+        } else {
+            this.updateAvailable = true;
+            this.cogBadge = false;
+            this.showProgress = true;
+        }
+
+    }
+
+    doAbout() {
+        const appVersion = this._electronService.remote.app.getVersion();
+        this._electronService.remote.dialog.showMessageBox(
+            {
+                type: 'info',
+                title: 'About',
+                message: `Scientific Data Analysis Platform`,
+                detail: `SciDAP Satellite (version: ${appVersion}) delivered by Datirium, LLC`,
+                buttons: ['Ok']
+            }).then((index) => {
+                console.log();
+            });
     }
 }
