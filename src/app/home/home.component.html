@@ -47,6 +47,7 @@
       zz
   </nav> -->
     <clr-modal [(clrModalOpen)]="updateAvailable" class="modal-backdrop fade in" [clrModalClosable]='false'>
+
         <div class="modal-body" *ngIf="!showProgress && !_showError">
             <div class="clr-row">
                 <div class="clr-col-3">
@@ -60,19 +61,19 @@
                 </div>
             </div>
         </div>
+        <div class="modal-footer" *ngIf="!showProgress && !_showError">
+                <button type="button" class="btn btn-outline" (click)="updateAvailable = false">Later</button>
+                <button type="button" class="btn btn-primary" (click)="doUpdate()">{{buttonText}}</button>
+            </div>
 
         <div class="modal-body" *ngIf="showProgress">
             <div class="progress-block">
                 <label for="demoProgressBar">Download progress:</label>
                 <clr-progress-bar id="demoProgressBar" [clrValue]="downloadPercent"></clr-progress-bar>
-                <span>{{downloadSpeed | bytes}}</span>
+                <!-- <span>{{downloadSpeed | bytes}}</span> -->
             </div>
         </div>
 
-        <div class="modal-footer" *ngIf="!showProgress && !_showError">
-            <button type="button" class="btn btn-outline" (click)="updateAvailable = false">Later</button>
-            <button type="button" class="btn btn-primary" (click)="doUpdate()">{{buttonText}}</button>
-        </div>
         <div class="modal-body" *ngIf="_showError">
             <div class="clr-row">
                 <div class="clr-col-3">

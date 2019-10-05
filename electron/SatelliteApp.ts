@@ -64,8 +64,8 @@ export class SatelliteApp {
             Log.info(this.services_base_path);
         }
 
-        this.airflowSettings = JSON.parse(this.store.get('airflowSettings', null));
-        this.satelliteSettings = JSON.parse(this.store.get('satelliteSettings', null));
+        this.airflowSettings = this.store.get('airflowSettings', null);
+        this.satelliteSettings = this.store.get('satelliteSettings', null);
 
         this.pm2_home = path.join(app.getPath('home'), '/.pm2');
 
@@ -426,11 +426,12 @@ export class SatelliteApp {
      * Init saves all settings and starts services for the first time!
      */
     async satelliteInit() {
-        this.airflowSettings = JSON.parse(this.store.get('airflowSettings'));
-        this.satelliteSettings = JSON.parse(this.store.get('satelliteSettings'));
+        this.airflowSettings = this.store.get('airflowSettings');
+        this.satelliteSettings = this.store.get('satelliteSettings');
 
         Log.info('init airflowSettings:', this.airflowSettings);
         Log.info('init satelliteSettings:', this.satelliteSettings);
+
         const self = this;
 
         const init_commands = [

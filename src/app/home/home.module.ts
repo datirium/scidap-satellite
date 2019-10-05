@@ -10,12 +10,13 @@ import { HomeRoutingModule } from './home-routing.module';
 
 import { HomeComponent } from './home.component';
 import { DashboardComponent } from './Dashboard/Dashboard.component';
-import { SatelliteSettingsComponent } from './SatelliteSettings/SatelliteSettings.component'
+import { DashboardSettingsComponent } from './DashboardSettings/DashboardSettings.component';
+import { SatelliteSettingsComponent } from './SatelliteSettings/SatelliteSettings.component';
 
 import { SharedModule } from '../shared/shared.module';
 
 @NgModule({
-  declarations: [HomeComponent, DashboardComponent, SatelliteSettingsComponent],
+  declarations: [HomeComponent, DashboardComponent,DashboardSettingsComponent,  SatelliteSettingsComponent],
   imports: [
     CommonModule,
     BrowserModule,

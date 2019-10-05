@@ -1,4 +1,5 @@
 import { Component, OnInit, Output, Input, EventEmitter, AfterViewInit } from '@angular/core';
+import { ElectronService } from '../../..//core/services';
 
 
 @Component({
@@ -56,7 +57,10 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.messageChange.emit(this.messageValue);
   }
 
-  constructor() {
+  constructor(
+    public _electronService: ElectronService
+
+  ) {
   }
 
   ngOnInit() {

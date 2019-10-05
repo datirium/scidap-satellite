@@ -75,7 +75,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
         if (v.rememberMe) {
             if (v.email) {
-                this.keytar.setPassword('scidap-satellite', 'email', v.email);
+                this.store.set('email', v.email);
             }
 
             if (v.password) {
@@ -84,7 +84,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
             this.store.set('rememberMe', v.rememberMe);
         } else {
             this.keytar.deletePassword('scidap-satellite', 'password');
-            this.keytar.deletePassword('scidap-satellite', 'email');
+            this.store.set('email', '');
         }
     }
 
@@ -118,12 +118,13 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
         if (!this.store.has('initComplete') || !this.store.get('initComplete')) {
             this.wizardOpen = true;
 
+            m.email = this.store.get('email', null);
+
             Promise.all([
-                this.keytar.getPassword('scidap-satellite', 'email'),
                 this.keytar.getPassword('scidap-satellite', 'password'),
                 this.keytar.getPassword('scidap-satellite', 'token')])
                 .then((d) => {
-                    [m.email, m.password, this.token] = d;
+                    [m.password, this.token] = d;
                     this._loginData = m;
                 }).catch((e) => {
                     console.log(e);
@@ -145,13 +146,12 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
         }
 
         if (this.store.has('airflowSettings')) {
-            this._airflowSettings = JSON.parse(this.store.get('airflowSettings'));
+            this._airflowSettings = this.store.get('airflowSettings');
         }
 
         if (this.store.has('satelliteSettings')) {
-            this._satelliteSettings = JSON.parse(this.store.get('satelliteSettings'));
+            this._satelliteSettings = this.store.get('satelliteSettings');
         }
-
     }
 
 
@@ -318,6 +318,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
             if ('update-not-available' === res && !this.readyToInstall) {
                 this.cogBadge = false;
                 this.updateAvailable = false;
+                this.menuText = 'Check for updates';
             }
 
             if ('download-progress' === res) {
@@ -336,6 +337,9 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
                 this.menuText = 'Install updates';
                 this.buttonText = 'Install';
                 this.readyToInstall = true;
+                if (this.showProgress) {
+                    this.doUpdate();
+                }
                 this.showProgress = false;
             }
 
@@ -343,6 +347,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
                 this.showProgress = false;
                 this._showError = true;
                 this.cogBadge = false;
+                this.menuText = 'Check for updates';
             }
 
 

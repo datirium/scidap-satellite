@@ -62,13 +62,13 @@ export class SatelliteSettingsComponent implements OnInit {
         if (this.store.has('airflowSettings')) {
             this.airflowSettings = {
                 ...this.airflowSettings,
-                ...JSON.parse(this.store.get('airflowSettings'))
+                ...this.store.get('airflowSettings')
             };
         }
         if (this.store.has('satelliteSettings')) {
             this.satelliteSettings = {
                 ...this.satelliteSettings,
-                ...JSON.parse(this.store.get('satelliteSettings'))
+                ...this.store.get('satelliteSettings')
             };
         }
     }
@@ -104,8 +104,8 @@ export class SatelliteSettingsComponent implements OnInit {
         }
         this.satelliteSettings.airflowAPIPort = parseInt(url.port, 10);
 
-        this.store.set('airflowSettings', JSON.stringify(this.airflowSettings));
-        this.store.set('satelliteSettings', JSON.stringify(this.satelliteSettings));
+        this.store.set('airflowSettings', this.airflowSettings);
+        this.store.set('satelliteSettings', this.satelliteSettings);
 
         const _ret = new Promise((resolve, reject) => {
             this._electronService.ipcRenderer.on('satellite-init', (d, ...args) => {

@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Routes, RouterModule } from '@angular/router';
 import { HomeComponent } from './home.component';
 import { DashboardComponent } from './Dashboard/Dashboard.component';
-import { SatelliteSettingsComponent } from './SatelliteSettings/SatelliteSettings.component';
+// import { SatelliteSettingsComponent } from './SatelliteSettings/SatelliteSettings.component';
+import { DashboardSettingsComponent } from './DashboardSettings/DashboardSettings.component';
 
 const routes: Routes = [
   {
@@ -16,7 +17,7 @@ const routes: Routes = [
       },
       {
         path: 'settings',
-        component: SatelliteSettingsComponent
+        component: DashboardSettingsComponent
       },
       {path: '**', redirectTo: 'dashboard'}
     ]

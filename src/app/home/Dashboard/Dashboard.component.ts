@@ -48,7 +48,7 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
 
 
         if (this.store.has('satelliteSettings')) {
-            this._satelliteSettings = JSON.parse(this.store.get('satelliteSettings'));
+            this._satelliteSettings = this.store.get('satelliteSettings');
         }
 
         this.tracked = this.monitorPM2().subscribe((v: any) => {
@@ -91,7 +91,7 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
         return timer(0, 1000).pipe(
             filter(() => {
                 if (this.store.has('satelliteSettings')) {
-                    this._satelliteSettings = JSON.parse(this.store.get('satelliteSettings'));
+                    this._satelliteSettings = this.store.get('satelliteSettings');
                 }
                 return !!this._satelliteSettings;
             }),
