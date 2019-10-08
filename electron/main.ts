@@ -147,6 +147,21 @@ try {
         });
     });
 
+    ipcMain.on('restart-programs', (event, arg) => {
+        Log.info('restart-programs');
+
+        satelliteApp.disconnectPM2().then(() => {
+            return satelliteApp.killPM2_2();
+        }).then(() => {
+            return satelliteApp.chainStartPM2Services();
+        }).then(() => {
+            event.reply('restart-programs', 'complete');
+        }).catch((err) => {
+            Log.error(err);
+            event.reply('restart-programs', 'error');
+        });
+    });
+
     ipcMain.on('checking-for-update', (event) => {
         Log.info('checking-for-update');
         if ( serve ) {

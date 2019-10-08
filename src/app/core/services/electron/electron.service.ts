@@ -215,7 +215,6 @@ export class ElectronService extends Tracking {
         this.ipcRenderer.send('quit-and-install');
     }
 
-
     checkForUpdates() {
         this.ipcRenderer.send('checking-for-update');
     }
@@ -256,7 +255,7 @@ export class ElectronService extends Tracking {
     }
 
     openExternal(url) {
-        this.shell.openExternal('http://electron.atom.io')
+        this.shell.openExternal(url);
     }
 
 }

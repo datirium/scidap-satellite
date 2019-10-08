@@ -39,6 +39,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
     menuText = 'Check for updates';
     buttonText = 'update';
+    skipng = false;
 
     public cogBadge = false;
     public updateAvailable = false;
@@ -58,6 +59,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
     downloadPercent;
     downloadSpeed;
     showProgress;
+    checkPressed;
 
     processes = ['pm2-http-interface', 'aria2c', 'mongod', 'airflow-scheduler', 'airflow-apiserver', 'satellite'];
     pm2Monit;
@@ -68,23 +70,29 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
     _loginData = {};
     set loginData(v: any) {
-        if (Object.keys(v).length === 0) {
+        if (!v || Object.keys(v).length === 0) {
             return;
         }
         this._loginData = v;
 
-        if (v.rememberMe) {
-            if (v.email) {
-                this.store.set('email', v.email);
-            }
+        console.log(v);
 
-            if (v.password) {
-                this.keytar.setPassword('scidap-satellite', 'password', v.password);
+        if (v.hasOwnProperty('rememberMe')) {
+            console.log('has Property!');
+
+            if (v.rememberMe) {
+                if (v.email) {
+                    this.store.set('email', v.email);
+                }
+
+                if (v.password) {
+                    this.keytar.setPassword('scidap-satellite', 'password', v.password).catch((e) => console.log(e));
+                }
+                this.store.set('rememberMe', v.rememberMe);
+            } else if (v.rememberMe === false) {
+                this.keytar.deletePassword('scidap-satellite', 'password');
+                this.store.set('email', '');
             }
-            this.store.set('rememberMe', v.rememberMe);
-        } else {
-            this.keytar.deletePassword('scidap-satellite', 'password');
-            this.store.set('email', '');
         }
     }
 
@@ -140,9 +148,15 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
                 });
         }
 
+        if (this.store.has('email')) {
+            m.email = this.store.get('email');
+        }
 
         if (this.store.has('rememberMe')) {
             m.rememberMe = this.store.get('rememberMe');
+            if (m.rememberMe) {
+                this._loginData = m;
+            }
         }
 
         if (this.store.has('airflowSettings')) {
@@ -156,6 +170,9 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
 
     changeState(state) {
+        if (this.step > parseInt(this.wizard.navService.currentPage._id, 10)) {
+            this.step = parseInt(this.wizard.navService.currentPage._id, 10);
+        }
         if (this.step >= state) {
             return;
         }
@@ -204,7 +221,21 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
      */
     doLoginOrRegister(buttonType) {
         if ('login' === buttonType) {
-            this.goToLogin();
+            if (this.skipng) {
+                this.store.set('skipng', true);
+
+                this.wizard.pageCollection.pagesAsArray.find(page => {
+                    if (page._id === this.pageSettings._id) {
+                        return true;
+                    }
+                    page.completed = true;
+                    return false;
+                });
+                this.wizard.navService.currentPage = this.pageSettings;
+            } else {
+                this.store.set('skipng', false);
+                this.goToLogin();
+            }
         }
         if ('new-user' === buttonType) {
             this.goToNewUser();
@@ -305,49 +336,55 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
      *
      */
     subscribeUpdates() {
+        const self = this;
         this.tracked = this._electronService.updatesNews().subscribe(({ res, ...args }) => {
             args = args.args;
 
             console.log(res, args);
             if ('update-available' === res) {
-                this.cogBadge = true;
-                this.updateAvailable = true;
-                this.menuText = 'Downloading updates';
+                self.cogBadge = true;
+                self.updateAvailable = true;
+                self.menuText = 'Downloading updates';
             }
 
-            if ('update-not-available' === res && !this.readyToInstall) {
-                this.cogBadge = false;
-                this.updateAvailable = false;
-                this.menuText = 'Check for updates';
+            if ('update-not-available' === res && !self.readyToInstall) {
+                self.checkPressed = false;
+                self.cogBadge = false;
+                self.updateAvailable = false;
+                self.menuText = 'Check for updates';
             }
 
             if ('download-progress' === res) {
-                this._zone.run(() => {
-                    [ this.downloadPercent, this.downloadSpeed ] = args;
+                self._zone.run(() => {
+                    [self.downloadPercent, self.downloadSpeed] = args;
                 });
-                // if (this.downloadPercent === 100 || this.downloadPercent === '100') {
+                // if (self.downloadPercent === 100 || self.downloadPercent === '100') {
                 //     res = 'update-downloaded';
-                //     this.showProgress = false;
+                //     self.showProgress = false;
                 // }
             }
 
             if ('update-downloaded' === res) {
-                this.cogBadge = true;
-                this.updateAvailable = true;
-                this.menuText = 'Install updates';
-                this.buttonText = 'Install';
-                this.readyToInstall = true;
-                if (this.showProgress) {
-                    this.doUpdate();
+                self.checkPressed = false;
+                self.cogBadge = true;
+                self.updateAvailable = true;
+                self.menuText = 'Install updates';
+                self.buttonText = 'Install';
+                self.readyToInstall = true;
+                if (self.showProgress) {
+                    self.doUpdate();
                 }
-                this.showProgress = false;
+                self.showProgress = false;
             }
 
             if ('update-error' === res) {
-                this.showProgress = false;
-                this._showError = true;
-                this.cogBadge = false;
-                this.menuText = 'Check for updates';
+                self.checkPressed = false;
+                self.showProgress = false;
+                self.updateAvailable = true;
+                self._showError = true;
+                self.cogBadge = false;
+                self.readyToInstall = false;
+                self.menuText = 'Check for updates';
             }
 
 
@@ -355,11 +392,14 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
     }
 
     checkUpdates() {
+        if (this.checkPressed) { return; }
+        this.checkPressed = true;
         if (this.readyToInstall) {
             this._electronService.installUpdates();
         }
 
         if (!this.updateAvailable && !this.readyToInstall) {
+            console.log('check updates!', this.updateAvailable, this.readyToInstall);
             this._electronService.checkForUpdates();
         }
     }

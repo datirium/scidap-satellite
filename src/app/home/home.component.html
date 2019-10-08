@@ -62,9 +62,9 @@
             </div>
         </div>
         <div class="modal-footer" *ngIf="!showProgress && !_showError">
-                <button type="button" class="btn btn-outline" (click)="updateAvailable = false">Later</button>
-                <button type="button" class="btn btn-primary" (click)="doUpdate()">{{buttonText}}</button>
-            </div>
+            <button type="button" class="btn btn-outline" (click)="updateAvailable = false">Later</button>
+            <button type="button" class="btn btn-primary" (click)="doUpdate()">{{buttonText}}</button>
+        </div>
 
         <div class="modal-body" *ngIf="showProgress">
             <div class="progress-block">
@@ -81,14 +81,14 @@
                 </div>
                 <div class="clr-col-9">
                     <h3>
-                        Error occurred
+                        Error occurred during installation
                     </h3>
                     <p>Please try later</p>
                 </div>
             </div>
         </div>
         <div class="modal-footer" *ngIf="_showError">
-            <button type="button" class="btn btn-outline" (click)="updateAvailable = false">Cancel</button>
+            <button type="button" class="btn btn-outline" (click)="updateAvailable = false">Close</button>
         </div>
     </clr-modal>
 
@@ -115,10 +115,39 @@
 
     <clr-wizard-page (clrWizardPageCustomButton)="doLoginOrRegister($event)">
         <ng-template clrPageTitle>Welcome</ng-template>
+        To <a (click)="_electronService.openExternal('https://scidap.com/')">Scientific Data Analysis Platform.</a><br><br>
+        SciDAP installation bundle includes:
+        <ul class="list">
+            <li>SciDAP Satellite/BioWardrobe NG (<a (click)="_electronService.openExternal('https://github.com/Barski-lab/biowardrobe-ng')">home page</a>)
+                <ul class="list">
+                    <li>node.js runtime (<a (click)="_electronService.openExternal('https://nodejs.org/en/')">home page</a>)</li>
+                    <li>aria2c download manager (<a (click)="_electronService.openExternal('https://aria2.github.io/')">home page</a>)</li>
+                </ul>
+            </li>
+            <li>CWL Airflow pipeline manager (<a (click)="_electronService.openExternal('https://barski-lab.github.io/cwl-airflow/')">home page</a>)
+                <ul class="list">
+                    <li>CWL Airflow API manager (<a (click)="_electronService.openExternal('https://cwl-airflow.readthedocs.io/en/latest/readme/api.html')">home page</a>)</li>
+                    <li>python3 executer (<a (click)="_electronService.openExternal('https://www.python.org/')">home page</a>)</li>
+                </ul>
+            </li>
+            <li>pm2 process manager (<a (click)="_electronService.openExternal('https://pm2.io/')">home page</a>)</li>
+        </ul>
+        <br><br>
+        Installation wizard will guide you trough all the steps.
+
+        <br>
+        <br>
+        <!-- <clr-checkbox-container class="clr-row">
+            <label class="clr-col-3"> Install CWL Airflow only </label>
+            <clr-checkbox-wrapper>
+                <input type="checkbox" class="clr-col-9" clrCheckbox [(ngModel)]="skipng" name="localFiles" />
+            </clr-checkbox-wrapper> -->
+            <!-- <clr-control-helper>Enabling this module will allow SciDAP access folder.</clr-control-helper>
+            <clr-control-error></clr-control-error> -->
+        <!-- </clr-checkbox-container> -->
 
         <ng-template clrPageButtons>
-            <clr-wizard-button [type]="'login'">Begin</clr-wizard-button>
-            <!-- <clr-wizard-button [type]="'new-user'">New User</clr-wizard-button> -->
+            <clr-wizard-button [type]="'login'">START</clr-wizard-button>
         </ng-template>
 
     </clr-wizard-page>
