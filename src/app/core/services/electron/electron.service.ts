@@ -250,6 +250,7 @@ export class ElectronService extends Tracking {
                 this.ipcRenderer.removeAllListeners('update-downloaded');
                 this.ipcRenderer.removeAllListeners('update-error');
                 this.ipcRenderer.removeAllListeners('download-progress');
+                observer.complete();
             };
         });
     }

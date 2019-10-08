@@ -16,7 +16,7 @@ import { SatelliteSettingsComponent } from './SatelliteSettings/SatelliteSetting
 import { SharedModule } from '../shared/shared.module';
 
 @NgModule({
-  declarations: [HomeComponent, DashboardComponent,DashboardSettingsComponent,  SatelliteSettingsComponent],
+  declarations: [HomeComponent, DashboardComponent, DashboardSettingsComponent,  SatelliteSettingsComponent],
   imports: [
     CommonModule,
     BrowserModule,
