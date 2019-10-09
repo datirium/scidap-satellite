@@ -43,6 +43,7 @@
             "url": "https://scidap.com/update/releases/"
         }
     ],
+    "afterSign": "build-scripts/notarize.js",
     "win": {
         "icon": "dist",
         "target": [
