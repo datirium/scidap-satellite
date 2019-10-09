@@ -43,6 +43,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
     public cogBadge = false;
     public updateAvailable = false;
+    public updateNotAvailable = false;
     readyToInstall = false;
 
     public showWarning = false;
@@ -336,55 +337,56 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
      *
      */
     subscribeUpdates() {
-        const self = this;
         this.tracked = this._electronService.updatesNews().subscribe(({ res, ...args }) => {
             args = args.args;
 
             console.log(res, args);
+
             if ('update-available' === res) {
-                self.cogBadge = true;
-                self.updateAvailable = true;
-                self.menuText = 'Downloading updates';
+                this.cogBadge = true;
+                this.updateAvailable = true;
+                this.menuText = 'Downloading updates';
             }
 
-            if ('update-not-available' === res && !self.readyToInstall) {
-                self.checkPressed = false;
-                self.cogBadge = false;
-                self.updateAvailable = false;
-                self.menuText = 'Check for updates';
+            if ('update-not-available' === res && !this.readyToInstall) {
+                this.checkPressed = false;
+                this.cogBadge = false;
+                this.updateNotAvailable = true;
+                this.menuText = 'Check for updates';
+                this.doNoUpdate();
             }
 
             if ('download-progress' === res) {
-                self._zone.run(() => {
-                    [self.downloadPercent, self.downloadSpeed] = args;
+                this._zone.run(() => {
+                    [this.downloadPercent, this.downloadSpeed] = args;
                 });
-                // if (self.downloadPercent === 100 || self.downloadPercent === '100') {
+                // if (this.downloadPercent === 100 || this.downloadPercent === '100') {
                 //     res = 'update-downloaded';
-                //     self.showProgress = false;
+                //     this.showProgress = false;
                 // }
             }
 
             if ('update-downloaded' === res) {
-                self.checkPressed = false;
-                self.cogBadge = true;
-                self.updateAvailable = true;
-                self.menuText = 'Install updates';
-                self.buttonText = 'Install';
-                self.readyToInstall = true;
-                if (self.showProgress) {
-                    self.doUpdate();
+                this.checkPressed = false;
+                this.cogBadge = true;
+                this.updateAvailable = true;
+                this.menuText = 'Install updates';
+                this.buttonText = 'Install';
+                this.readyToInstall = true;
+                if (this.showProgress) {
+                    this.doUpdate();
                 }
-                self.showProgress = false;
+                this.showProgress = false;
             }
 
             if ('update-error' === res) {
-                self.checkPressed = false;
-                self.showProgress = false;
-                self.updateAvailable = true;
-                self._showError = true;
-                self.cogBadge = false;
-                self.readyToInstall = false;
-                self.menuText = 'Check for updates';
+                this.checkPressed = false;
+                this.showProgress = false;
+                this.updateAvailable = true;
+                this._showError = true;
+                this.cogBadge = false;
+                this.readyToInstall = false;
+                this.menuText = 'Check for updates';
             }
 
 
@@ -394,12 +396,12 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
     checkUpdates() {
         if (this.checkPressed) { return; }
         this.checkPressed = true;
+
         if (this.readyToInstall) {
             this._electronService.installUpdates();
         }
 
         if (!this.updateAvailable && !this.readyToInstall) {
-            console.log('check updates!', this.updateAvailable, this.readyToInstall);
             this._electronService.checkForUpdates();
         }
     }
@@ -414,6 +416,20 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
             this.showProgress = true;
         }
 
+    }
+
+    doNoUpdate() {
+        const appVersion = this._electronService.remote.app.getVersion();
+        this._electronService.remote.dialog.showMessageBox(
+            {
+                type: 'info',
+                title: 'About',
+                message: `Scientific Data Analysis Platform`,
+                detail: `There are currently no updates available.\nSciDAP Satellite version ${appVersion} \n\n\u00A9 Datirium, LLC`,
+                buttons: ['Ok']
+            }).then((index) => {
+                console.log();
+            });
     }
 
     doAbout() {

@@ -46,6 +46,12 @@
     <!-- <nav class="subnav">
       zz
   </nav> -->
+
+    <!--
+
+                Modal update available
+
+    -->
     <clr-modal [(clrModalOpen)]="updateAvailable" class="modal-backdrop fade in" [clrModalClosable]='false'>
 
         <div class="modal-body" *ngIf="!showProgress && !_showError">
@@ -116,7 +122,7 @@
     <clr-wizard-page (clrWizardPageCustomButton)="doLoginOrRegister($event)">
         <ng-template clrPageTitle>Welcome</ng-template>
         To <a (click)="_electronService.openExternal('https://scidap.com/')">Scientific Data Analysis Platform.</a><br><br>
-        SciDAP installation bundle includes:
+        SciDAP installation bundle includes:<br>
         <ul class="list">
             <li>SciDAP Satellite/BioWardrobe NG (<a (click)="_electronService.openExternal('https://github.com/Barski-lab/biowardrobe-ng')">home page</a>)
                 <ul class="list">
@@ -142,7 +148,7 @@
             <clr-checkbox-wrapper>
                 <input type="checkbox" class="clr-col-9" clrCheckbox [(ngModel)]="skipng" name="localFiles" />
             </clr-checkbox-wrapper> -->
-            <!-- <clr-control-helper>Enabling this module will allow SciDAP access folder.</clr-control-helper>
+        <!-- <clr-control-helper>Enabling this module will allow SciDAP access folder.</clr-control-helper>
             <clr-control-error></clr-control-error> -->
         <!-- </clr-checkbox-container> -->
 
