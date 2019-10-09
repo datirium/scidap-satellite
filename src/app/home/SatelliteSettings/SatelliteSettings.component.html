@@ -21,7 +21,7 @@
                         <clr-checkbox-wrapper>
                             <input type="checkbox" class="clr-col-9" clrCheckbox [(ngModel)]="satelliteSettings.localFiles" name="localFiles" />
                         </clr-checkbox-wrapper>
-                        <clr-control-helper>Enabling this module will allow SciDAP access {{satelliteSettings.scidapRoot}}/files folder.</clr-control-helper>
+                        <clr-control-helper>Enabling this module will allow SciDAP access {{_electronService.remote.app.getPath('home')}} folder.</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-checkbox-container>
 

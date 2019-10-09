@@ -525,7 +525,7 @@ export class SatelliteApp {
         if (this.satelliteSettings.localFiles) {
             satelliteConf.remotes.localfiles = {
                 ...satelliteConf.remotes.localfiles,
-                base_directory: `${this.satelliteSettings.scidapRoot}/files`
+                base_directory: `${app.getPath('home')}`    // `${this.satelliteSettings.scidapRoot}/files`
             };
         } else {
             satelliteConf.remotes.localfiles = {

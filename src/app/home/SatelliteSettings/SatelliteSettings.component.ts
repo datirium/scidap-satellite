@@ -41,7 +41,7 @@ export class SatelliteSettingsComponent implements OnInit {
     public store = new Store();
 
     constructor(
-        private _electronService: ElectronService,
+        public _electronService: ElectronService,
         private _zone: NgZone
     ) {
         this.portcheck = this._electronService.remote.require('tcp-port-used');
@@ -59,9 +59,11 @@ export class SatelliteSettingsComponent implements OnInit {
                 `airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port} --conn_extra "{\"endpoint\":\"/airflow/\"}"`
             ]
         };
+
         if (this.store.has('skipng')) {
             this.skipng = this.store.get('skipng');
         }
+
         if (this.store.has('airflowSettings')) {
             this.airflowSettings = {
                 ...this.airflowSettings,
