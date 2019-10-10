@@ -32,7 +32,8 @@
         "!karma.conf.js",
         "!tsconfig*.json",
         "!tslint.json",
-        "!postinstall*.js"
+        "!postinstall*.js",
+        "!embedded.provisionprofile"
     ],
     "publish": [
         {
@@ -66,7 +67,11 @@
         "hardenedRuntime": true,
         "gatekeeperAssess": false,
         "entitlements": "./build-scripts/entitlements.mac.inherit.plist",
-        "entitlementsInherit": "./build-scripts/entitlements.mac.inherit.plist"
+        "entitlementsInherit": "./build-scripts/entitlements.mac.inherit.plist",
+        "provisioningProfile": "embedded.provisionprofile",
+        "extendInfo": {
+            "ElectronTeamID": "WW49A8Y53S"
+        }
     },
     "linux": {
         "icon": "dist",

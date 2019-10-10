@@ -1,5 +1,9 @@
 #!/bin/bash
 echo $npm_package_version
+
+mkdir -p ../build
+cd ../build
+
 pw=$(pwd)
 sat=${pw}/satellite
 
@@ -155,6 +159,7 @@ else
   tar -zxvf ${CWLAIRFLOW_ARCH} >/dev/null 2>&1
   mv ${CWLAIRFLOW_HOME} ${CWLAIRFLOW_HOME_N}
   mv ${CWLAIRFLOW_HOME_N}/Contents/* ${CWLAIRFLOW_HOME_N}/
+  chmod -R u+w ${CWLAIRFLOW_HOME_N}/
 fi
 
 mv ${CWLAIRFLOW_HOME_N} ${sat} ../Services

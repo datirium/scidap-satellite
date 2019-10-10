@@ -18,6 +18,6 @@ exports.default = async function notarizing(context) {
     // appleIdPassword: process.env.APPLEIDPASS,
     appleId: process.env.APPLE_ID,
     appleIdPassword: password,
-    ascProvider: 'DATIRIUM LLC',
+    ascProvider: process.env.TEAM_ID,
   });
 };

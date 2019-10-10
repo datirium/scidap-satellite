@@ -15,7 +15,7 @@ src/**/*.js
 
 /Services
 /Services/*
-/build-scripts
+/build
 
 /electron/**/*.js
 /electron/**/*.js.map
