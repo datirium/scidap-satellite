@@ -196,20 +196,13 @@ export class ElectronService extends Tracking {
     }
 
     /**
-     *  Initial subscription to labs
+     *  Either gets token or creates satellite
      * @returns {Observable<any>}
      */
     public satCreateGetToken(): Observable<any> {
         return this.MeteorCall('satellite/create/private');
     }
 
-    /**
-     * Labs, sats
-     */
-
-    getSatToken() {
-
-    }
 
     installUpdates() {
         this.ipcRenderer.send('quit-and-install');
