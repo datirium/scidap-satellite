@@ -20,6 +20,7 @@
         <div class="header-nav">
             <a [routerLink]="[ '/home/dashboard' ]" routerLinkActive="active" class="nav-link nav-text">Dashboard</a>
             <a [routerLink]="[ '/home/settings' ]" routerLinkActive="active" class="nav-link nav-text">Settings</a>
+            <!-- <a [routerLink]="[ '/home/aria2web' ]" routerLinkActive="active" class="nav-link nav-text">Aria2 Webui</a> -->
         </div>
         <div class="header-actions">
             <clr-dropdown>
@@ -35,7 +36,10 @@
                     <a [routerLink]="[ '/home/dashboard' ]" routerLinkActive="active" clrDropdownItem>Dashboard</a>
                     <a [routerLink]="[ '/home/settings' ]" routerLinkActive="active" clrDropdownItem>Settings</a>
                     <div class="dropdown-divider" role="separator"></div>
-                    <a href="javascript://" clrDropdownItem>Quit</a>
+                    <a (click)="doWebUiWindow()" clrDropdownItem>Aria2 WebUi</a>
+                    <a (click)="doMongoExpressWindow()" clrDropdownItem>Mongo Express</a>
+                    <div class="dropdown-divider" role="separator"></div>
+                    <a (click)="_electronService.remote.app.quit()" clrDropdownItem>Quit</a>
                 </clr-dropdown-menu>
             </clr-dropdown>
             <!-- <a href="javascript://" class="nav-link nav-icon" aria-label="settings">

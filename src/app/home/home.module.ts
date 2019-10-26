@@ -12,11 +12,18 @@ import { HomeComponent } from './home.component';
 import { DashboardComponent } from './Dashboard/Dashboard.component';
 import { DashboardSettingsComponent } from './DashboardSettings/DashboardSettings.component';
 import { SatelliteSettingsComponent } from './SatelliteSettings/SatelliteSettings.component';
+// import { Aria2WebuiComponent } from './Aria2Webui/Aria2Webui.component';
 
 import { SharedModule } from '../shared/shared.module';
 
 @NgModule({
-  declarations: [HomeComponent, DashboardComponent, DashboardSettingsComponent,  SatelliteSettingsComponent],
+  declarations: [
+    HomeComponent,
+    DashboardComponent,
+    DashboardSettingsComponent,
+    SatelliteSettingsComponent,
+    // Aria2WebuiComponent
+  ],
   imports: [
     CommonModule,
     BrowserModule,

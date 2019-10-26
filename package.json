@@ -1,6 +1,6 @@
 {
   "name": "scidap-satellite",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "scientific data analysis platform satellite bundle",
   "homepage": "https://scidap.com/",
   "author": {
@@ -104,7 +104,8 @@
     "electron-updater": "^4.1.2",
     "keytar": "^4.13.0",
     "meteor-node-stubs": "^0.4.1",
-    "pm2": "^3.5.1",
+    "mongo-express": "^0.53.0",
+    "pm2": "^4.1.2",
     "tcp-port-used": "^1.0.1"
   }
 }

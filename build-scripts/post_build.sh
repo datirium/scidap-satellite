@@ -1,7 +1,11 @@
 #!/bin/bash
-echo $npm_package_version
+#echo $npm_package_version
 
+rm -rf ../Services
+
+mkdir -p ../Services
 mkdir -p ../build
+
 cd ../build
 
 pw=$(pwd)
@@ -49,9 +53,11 @@ if [ -e ${NODE_HOME} ]; then
   warn "${NODE_HOME} exists skip untar"
 else
   tar -zxvf ${NODE_ARCH} >${pw}/download.node.log 2>&1
-  cp ${NODE_HOME}/bin/node ${sat}/bin/
 fi
 
+if [ ! -f ${sat}/bin/node ]; then
+  cp ${NODE_HOME}/bin/node ${sat}/bin/
+fi
 
 #
 #         INSATLL SAT Modules!
@@ -88,8 +94,13 @@ if [ -e ${MONGO_HOME} ]; then
   warn "${MONGO_HOME} exists skip untar"
 else
   tar -zxvf ${MONGO_ARCH} >/dev/null 2>&1
-  mv ${MONGO_HOME}/bin/mongod ${MONGO_HOME}/bin/mongodump ${MONGO_HOME}/bin/mongorestore ${sat}/bin
+#  mv ${MONGO_HOME}/bin/mongod ${MONGO_HOME}/bin/mongodump ${MONGO_HOME}/bin/mongorestore ${sat}/bin
 fi
+
+if [ ! -f ${sat}/bin/mongod ]; then
+  cp ${MONGO_HOME}/bin/mongod ${MONGO_HOME}/bin/mongodump ${MONGO_HOME}/bin/mongorestore ${sat}/bin
+fi
+
 
 #
 #  ARIA2
@@ -142,7 +153,7 @@ fi
 #  CWL AIRFLOW
 #
 
-CWLAIRFLOW_VERSION="1.1.9"
+CWLAIRFLOW_VERSION="1.1.10"
 CWLAIRFLOW_ARCH="cwl-airflow.macos.tar.gz"
 CWLAIRFLOW_HOME="${pw}/cwl-airflow.app"
 CWLAIRFLOW_HOME_N="${pw}/cwl-airflow"
@@ -163,5 +174,27 @@ else
 fi
 
 mv ${CWLAIRFLOW_HOME_N} ${sat} ../Services
+
+cd $pw
+
+if [ -e "webui-aria2" ]; then
+  warn "WebUi already created please delete"
+else
+  git clone https://github.com/ziahamza/webui-aria2
+  cd webui-aria2
+  npm install
+  npm run build
+fi
+
+if [ ! -e "../node_modules/mongo-express" ]; then
+    cd ..
+    npm install mongo-express
+fi
+
+cd $pw
+
+if [ -e "../node_modules/mongo-express" ]; then
+    mv ../node_modules/mongo-express ../Services
+fi
 
 cd $pw

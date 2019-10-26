@@ -21,6 +21,8 @@ const args = process.argv.slice(1);
 
 export class SatelliteApp {
     private win = null;
+    private webUiWin = null;
+    private mongoExpressWin = null;
     private store;
 
     services_base_path;
@@ -72,7 +74,7 @@ export class SatelliteApp {
         this.initComplete = this.store.get('initComplete', false);
 
         if (this.initComplete && this.airflowSettings && this.satelliteSettings) {
-                keytar.getPassword('scidap-satellite', 'token')
+            keytar.getPassword('scidap-satellite', 'token')
                 .then((token) => {
                     if (token) {
                         Log.info('Pm2 started!');
@@ -104,6 +106,7 @@ export class SatelliteApp {
             webPreferences: {
                 nodeIntegration: true,
             },
+            tabbingIdentifier: 'SciDAP'
         });
 
 
@@ -120,6 +123,85 @@ export class SatelliteApp {
 
         this.windowEvents();
         return this.win;
+    }
+
+    /**
+     *
+     */
+    createWebuiWindow() {
+        if (this.webUiWin) {
+            return;
+        }
+
+        const { x, y, width, height } = this.store.get('windowBounds');
+
+        // Create the browser window.
+        this.webUiWin = new BrowserWindow({
+            x,
+            y,
+            width,
+            height,
+            title: 'WebUI',
+            webPreferences: {
+                nodeIntegration: true,
+            },
+            tabbingIdentifier: 'SciDAP'
+        });
+
+
+        if (this.serve) {
+            this.webUiWin.loadURL(url.format({
+                pathname: path.join(__dirname, '../build/webui-aria2/docs/index.html'),
+                protocol: 'file:',
+                slashes: true
+            }));
+        } else {
+            this.webUiWin.loadURL(url.format({
+                pathname: path.join(__dirname, '../dist/webui-aria2/index.html'),
+                protocol: 'file:',
+                slashes: true
+            }));
+        }
+
+        this.webUiWin.on('closed', () => {
+            this.webUiWin = null;
+        });
+
+        return this.webUiWin;
+    }
+
+
+        /**
+     *
+     */
+    createMongoExpressWindow() {
+        if (this.mongoExpressWin) {
+            return;
+        }
+
+        const { x, y, width, height } = this.store.get('windowBounds');
+
+        // Create the browser window.
+        this.mongoExpressWin = new BrowserWindow({
+            x,
+            y,
+            width,
+            height,
+            title: 'Mongo Express',
+            webPreferences: {
+                nodeIntegration: true,
+            },
+            tabbingIdentifier: 'SciDAP'
+        });
+
+
+        this.mongoExpressWin.loadURL('http://localhost:27083/');
+
+        this.mongoExpressWin.on('closed', () => {
+            this.mongoExpressWin = null;
+        });
+
+        return this.mongoExpressWin;
     }
 
     /**
@@ -253,6 +335,29 @@ export class SatelliteApp {
     /**
      *
      */
+    startPM2MongoExpress() {
+        const options = {
+            name: 'mongo-express',
+            script: `${this.services_base_path}/../../mongo-express/app.js`,
+            args: ['-a', '-U', `mongodb://localhost:${this.satelliteSettings.mongoPort}/scidap-satellite`, '--port', 27083],
+            // args: [`${this.services_base_path}/../main.js`],
+            interpreter: 'node',
+            watch: false,
+            exec_mode: 'fork_mode',
+            cwd: `${this.satelliteSettings.scidapRoot}`,
+            env: {
+                ME_CONFIG_BASICAUTH_USERNAME: '',
+                PATH: `${this.services_base_path}:${this.airflow_base_path}/Resources/app/bin:` +
+                    `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
+            }
+        };
+
+        return this.startPM2(options);
+    }
+
+    /**
+     *
+     */
     startAirflowScheduler() {
         // -l LOG_FILE, --log-file LOG_FILE
         // Location of the log file
@@ -334,6 +439,7 @@ export class SatelliteApp {
             await this.startPM2Mongod();
             await this.startAirflowScheduler();
             await this.startAirflowAPI();
+            await this.startPM2MongoExpress();
             return await this.startSatellite();
         } catch (error) {
             Log.info(error);

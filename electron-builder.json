@@ -5,7 +5,15 @@
     "directories": {
         "output": "release/"
     },
-    "extraFiles": [],
+    "extraFiles": [
+        {
+            "from": "build/webui-aria2/docs",
+            "to": "dist/webui-aria2",
+            "filter": [
+                "**/*"
+            ]
+        }
+    ],
     "extraResources": [
         "Services/**"
     ],

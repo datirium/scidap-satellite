@@ -203,6 +203,14 @@ export class ElectronService extends Tracking {
         return this.MeteorCall('satellite/create/private');
     }
 
+    webUiWindow() {
+        this.ipcRenderer.send('webui-window');
+    }
+
+    mongoExpressWindow() {
+        this.ipcRenderer.send('mongo-express-window');
+    }
+
 
     installUpdates() {
         this.ipcRenderer.send('quit-and-install');

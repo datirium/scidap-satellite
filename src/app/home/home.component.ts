@@ -445,4 +445,12 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
                 console.log();
             });
     }
+
+    doWebUiWindow() {
+        this._electronService.webUiWindow();
+    }
+
+    doMongoExpressWindow() {
+        this._electronService.mongoExpressWindow();
+    }
 }

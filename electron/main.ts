@@ -110,6 +110,14 @@ try {
         satelliteApp.send('update-error', error);
     });
 
+    ipcMain.on('webui-window', (event) => {
+        satelliteApp.createWebuiWindow();
+    });
+
+    ipcMain.on('mongo-express-window', (event) => {
+        satelliteApp.createMongoExpressWindow();
+    });
+
 
     /**
      * change to once?
