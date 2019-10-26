@@ -29,7 +29,7 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
 
     initInProgress = false;
 
-    processes = ['pm2-http-interface', 'aria2c', 'mongod', 'airflow-scheduler', 'airflow-apiserver', 'satellite'];
+    processes = ['satellite', 'airflow-scheduler', 'airflow-apiserver', 'aria2c', 'mongod', 'mongo-express'];
 
     _satelliteSettings;
 
@@ -51,24 +51,12 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
             this._satelliteSettings = this.store.get('satelliteSettings');
         }
 
-        this.tracked = this.monitorPM2().subscribe((v: any) => {
-            if (v && v.error) {
-                return;
-            }
-            this.pm2Monit = v;
-            const _pm2MonitAdopted = {};
-            this.pm2Monit.processes.forEach(element => {
-                _pm2MonitAdopted[element.name] = element;
-            });
-            this.pm2MonitAdopted = _pm2MonitAdopted;
-        });
 
-        // timer(0, 1000).pipe(
-        //     switchMap(() => this._http.get(`http://localhost:${this._satelliteSettings.pm2Port}`, { responseType: 'json' })),
-        //     catchError(error => {
-        //         console.log(error);
-        //         return observableOf({ error, series: null });
-        //     }));
+        this.tracked = this._electronService.pm2Monit().subscribe((list) => {
+            this._zone.run(() => {
+                this.pm2Monit = list.args[0];
+            });
+        });
 
     }
 
@@ -86,16 +74,16 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
     /**
      *
      */
-    monitorPM2() {
+    monitorPM2_2(): Observable<any> {
 
         return timer(0, 1000).pipe(
             filter(() => {
-                if (this.store.has('satelliteSettings')) {
+                if (!this._satelliteSettings && this.store.has('satelliteSettings')) {
                     this._satelliteSettings = this.store.get('satelliteSettings');
                 }
                 return !!this._satelliteSettings;
             }),
-            switchMap(() => this._http.get(`http://localhost:${this._satelliteSettings.pm2Port}`, { responseType: 'json' })
+            switchMap(() => bindCallback(this._electronService.pm2.list)()
                 .pipe(
                     catchError((error) => {
                         console.log(error);

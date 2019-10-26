@@ -31,7 +31,7 @@ export class SatelliteSettingsComponent implements OnInit {
         aria2cPort: 6800,
         mongoPort: 27017,
         pm2Port: 9615,
-        baseUrl: '',
+        baseUrl: 'http://localhost:3069/',
         sslCert: '',
         sslKey: '',
         triggerDag: 'http://127.0.0.1:8080/api/experimental/dags/{dag_id}/dag_runs',
@@ -47,8 +47,7 @@ export class SatelliteSettingsComponent implements OnInit {
         this.portcheck = this._electronService.remote.require('tcp-port-used');
         this.satelliteSettings = {
             ...this.satelliteSettings,
-            scidapRoot: this._electronService.remote.app.getPath('home') + '/scidap',
-            baseUrl: 'http://localhost:3069/'
+            scidapRoot: this._electronService.remote.app.getPath('home') + '/scidap'
         };
 
         this.airflowSettings = {
@@ -101,8 +100,7 @@ export class SatelliteSettingsComponent implements OnInit {
         });
     }
 
-    doFinish() {
-
+    doSave() {
         const url = new URL(this.satelliteSettings.triggerDag);
         if (!url.port) {
             url.port = '8080';
@@ -111,6 +109,11 @@ export class SatelliteSettingsComponent implements OnInit {
 
         this.store.set('airflowSettings', this.airflowSettings);
         this.store.set('satelliteSettings', this.satelliteSettings);
+    }
+
+    doFinish() {
+
+        this.doSave();
 
         const _ret = new Promise((resolve, reject) => {
             this._electronService.ipcRenderer.on('satellite-init', (d, ...args) => {

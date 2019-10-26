@@ -58,6 +58,7 @@ export class ElectronService extends Tracking {
     childProcess: typeof childProcess;
     shell;
     fs: typeof fs;
+    pm2;
     currentUser;
     currentUserId;
     currentUserProfile = {};
@@ -77,6 +78,7 @@ export class ElectronService extends Tracking {
 
             this.childProcess = window.require('child_process');
             this.fs = window.require('fs');
+            this.pm2 = this.remote.require('pm2');
         }
     }
 
@@ -251,6 +253,21 @@ export class ElectronService extends Tracking {
                 this.ipcRenderer.removeAllListeners('update-downloaded');
                 this.ipcRenderer.removeAllListeners('update-error');
                 this.ipcRenderer.removeAllListeners('download-progress');
+                observer.complete();
+            };
+        });
+    }
+
+    pm2Monit() {
+
+        return Observable.create((observer: Subscriber<any>) => {
+
+            this.ipcRenderer.on('pm2-monit', (d, ...args) => {
+                observer.next({args});
+            });
+
+            return () => {
+                this.ipcRenderer.removeAllListeners('pm2-monit');
                 observer.complete();
             };
         });

@@ -38,6 +38,7 @@ export class SatelliteApp {
 
     pm2_home;
 
+    pm2MonitIntervalId;
     /**
      *
      */
@@ -171,9 +172,9 @@ export class SatelliteApp {
     }
 
 
-        /**
-     *
-     */
+    /**
+ *
+ */
     createMongoExpressWindow() {
         if (this.mongoExpressWin) {
             return;
@@ -231,7 +232,7 @@ export class SatelliteApp {
             http_interface = path.join(this.services_base_path, '../../../', 'node_modules/pm2/bin/');
         }
         // const _spawn = spawn(`${this.services_base_path}/node`, [`${http_interface}/HttpInterface.js`], {
-        const _spawn = spawn(`${http_interface}/pm2`, ['web'], {
+        const _spawn = spawn(`${http_interface}/pm2`, ['ping'], {
             shell: true,
             env: {
                 PM2_API_PORT: this.satelliteSettings.pm2Port,
@@ -336,11 +337,15 @@ export class SatelliteApp {
      *
      */
     startPM2MongoExpress() {
+        let mongo_express_path = path.join(this.services_base_path, '../../../', 'app/node_modules/mongo-express/');
+        if (this.serve) {
+            mongo_express_path = path.join(this.services_base_path, '../../../', 'node_modules/mongo-express/');
+        }
+
         const options = {
             name: 'mongo-express',
-            script: `${this.services_base_path}/../../mongo-express/app.js`,
+            script: `${mongo_express_path}/app.js`,
             args: ['-a', '-U', `mongodb://localhost:${this.satelliteSettings.mongoPort}/scidap-satellite`, '--port', 27083],
-            // args: [`${this.services_base_path}/../main.js`],
             interpreter: 'node',
             watch: false,
             exec_mode: 'fork_mode',
@@ -440,6 +445,15 @@ export class SatelliteApp {
             await this.startAirflowScheduler();
             await this.startAirflowAPI();
             await this.startPM2MongoExpress();
+            if (this.pm2MonitIntervalId) {
+                clearInterval(this.pm2MonitIntervalId);
+            }
+            this.pm2MonitIntervalId = setInterval(() => {
+                pm2.list((err, processDescriptionList) => {
+                    this.send('pm2-monit', processDescriptionList);
+                });
+            }, 1000);
+
             return await this.startSatellite();
         } catch (error) {
             Log.info(error);
@@ -499,7 +513,8 @@ export class SatelliteApp {
         return new Promise((resolve, reject) => {
             pm2.disconnect((err) => {
                 if (err) {
-                    reject(new Error(err));
+                    // reject(new Error(err));
+                    Log.error(err);
                 }
                 return resolve();
             });

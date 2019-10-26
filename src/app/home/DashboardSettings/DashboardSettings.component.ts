@@ -1,12 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ElectronService } from '../../core/services';
 
+import { SatelliteSettingsComponent } from '../SatelliteSettings/SatelliteSettings.component';
 @Component({
   selector: 'app-dashboard-settings',
   templateUrl: './DashboardSettings.component.html',
   styleUrls: ['./DashboardSettings.component.scss']
 })
 export class DashboardSettingsComponent implements OnInit {
+
+  @ViewChild('satelliteSettings', { static: false }) satelliteSettings: SatelliteSettingsComponent;
 
   initInProgress;
   constructor(
@@ -17,6 +20,7 @@ export class DashboardSettingsComponent implements OnInit {
   }
 
   saveAndRestart() {
+    this.satelliteSettings.doSave();
     this._electronService.ipcRenderer.send('restart-programs');
   }
 }

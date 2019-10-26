@@ -96,7 +96,7 @@ try {
         // log_message = log_message + ' (' + progressObj.transferred + '/' + progressObj.total + ')';
         // Log.debug(log_message);
         satelliteApp.send('download-progress', progressObj.percent, progressObj.bytesPerSecond);
-      });
+    });
 
     // autoUpdater.on('download-progress', (progressObj) => {
     //     let log_message = "Download speed: " + progressObj.bytesPerSecond;
@@ -172,7 +172,7 @@ try {
 
     ipcMain.on('checking-for-update', (event) => {
         Log.info('checking-for-update');
-        if ( serve ) {
+        if (serve) {
             autoUpdater.checkForUpdates();
         } else {
             autoUpdater.checkForUpdatesAndNotify();

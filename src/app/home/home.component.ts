@@ -62,7 +62,6 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
     showProgress;
     checkPressed;
 
-    processes = ['pm2-http-interface', 'aria2c', 'mongod', 'airflow-scheduler', 'airflow-apiserver', 'satellite'];
     pm2Monit;
     pm2MonitAdopted = {};
     token;

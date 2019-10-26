@@ -1,9 +1,9 @@
 <div class="clr-row">
-    <div *ngFor="let process of processes" class="clr-col-xl-6 clr-col-12">
-        <div class="card">
+    <div *ngFor="let process of pm2Monit" class="clr-col-xl-6 clr-col-12">
+        <div class="card" *ngIf="process">
             <!-- <div class="card-header"> -->
             <!-- </div> -->
-            <div *ngIf="pm2MonitAdopted[process]" class="card-block clr-row">
+            <div  class="card-block clr-row">
                 <!-- <div class="card-title"> -->
                 <!-- </div> -->
                 <!-- <div class="card-text"> -->
@@ -11,39 +11,39 @@
                 <div class="clr-row clr-col-11">
                     <div class="clr-col-4" style="margin-right: 3px;">
                         <span style="white-space: nowrap;">
-                            <clr-icon shape="application" [ngClass]="{'is-success': pm2MonitAdopted[process].pm2_env.status == 'online', 'is-error': pm2MonitAdopted[process].pm2_env.status != 'online'}" size="16"></clr-icon>
-                            {{process}}
+                            <clr-icon shape="application" [ngClass]="{'is-success': process.pm2_env.status == 'online', 'is-error': process.pm2_env.status != 'online'}" size="16"></clr-icon>
+                            {{process.name}}
                         </span>
                         <p>
-                            pid: {{pm2MonitAdopted[process]?.pid}} <br>
-                            Restarts: {{pm2MonitAdopted[process]?.pm2_env.restart_time}} <br>
-                            <span *ngIf="pm2MonitAdopted[process]?.pm2_env.axm_monitor['Event Loop Latency']" style="white-space: nowrap;">
+                            pid: {{process.pid}} <br>
+                            Restarts: {{process.pm2_env.restart_time}} <br>
+                            <span *ngIf="process.pm2_env.axm_monitor['Event Loop Latency']" style="white-space: nowrap;">
                                 Event Loop Lag:
-                                {{pm2MonitAdopted[process]?.pm2_env.axm_monitor["Event Loop Latency"]?.value}}
-                                {{pm2MonitAdopted[process]?.pm2_env.axm_monitor["Event Loop Latency"]?.unit}}
+                                {{process.pm2_env.axm_monitor["Event Loop Latency"]?.value}}
+                                {{process.pm2_env.axm_monitor["Event Loop Latency"]?.unit}}
                                 <br>
                             </span>
-                            <span *ngIf="pm2MonitAdopted[process]?.pm2_env.pm_uptime" style="white-space: nowrap;">
-                                Uptime: {{pm2MonitAdopted[process]?.pm2_env.pm_uptime | amTimeAgo:true}}
+                            <span *ngIf="process.pm2_env.pm_uptime" style="white-space: nowrap;">
+                                Uptime: {{process.pm2_env.pm_uptime | amTimeAgo:true}}
                             </span>
                         </p>
 
                     </div>
                     <div class="clr-col-3" style="margin-right: 3px;">
-                        CPU <p> {{pm2MonitAdopted[process]?.monit.cpu}}% </p>
+                        CPU <p> {{process.monit.cpu}}% </p>
                     </div>
                     <div class="clr-col-3" style="margin-right: 3px;">
-                        Memory <p> {{pm2MonitAdopted[process]?.monit.memory| bytes}} </p>
+                        Memory <p> {{process.monit.memory| bytes}} </p>
                     </div>
                 </div>
                 <div class="clr-col-1" style="margin-left: 3px;">
-                    <button class="btn btn-sm btn-link" (click)="stopPM2program(pm2MonitAdopted[process].pm_id)" [disabled]="pm2MonitAdopted[process].pm2_env.status == 'stopped'">
+                    <button class="btn btn-sm btn-link" (click)="stopPM2program(process.pm_id)" [disabled]="process.pm2_env.status == 'stopped'">
                         stop
                     </button>
-                    <button class="btn btn-sm btn-link" (click)="startPM2program(pm2MonitAdopted[process].pm_id)" [disabled]="pm2MonitAdopted[process].pm2_env.status == 'online'">
+                    <button class="btn btn-sm btn-link" (click)="startPM2program(process.pm_id)" [disabled]="process.pm2_env.status == 'online'">
                         start
                     </button>
-                    <button class="btn btn-sm btn-link" (click)="startPM2program(pm2MonitAdopted[process].pm_id)">
+                    <button class="btn btn-sm btn-link" (click)="startPM2program(process.pm_id)">
                         restart
                     </button>
                 </div>
