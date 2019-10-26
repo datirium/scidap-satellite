@@ -8,7 +8,7 @@
     "extraFiles": [
         {
             "from": "build/webui-aria2/docs",
-            "to": "dist/webui-aria2",
+            "to": "Resources/app/dist/webui-aria2",
             "filter": [
                 "**/*"
             ]
