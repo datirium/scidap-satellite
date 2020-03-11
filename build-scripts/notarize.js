@@ -14,8 +14,6 @@ exports.default = async function notarizing(context) {
   return await notarize({
     appBundleId: 'com.datirium.scidap-satellite',
     appPath: `${appOutDir}/${appName}.app`,
-    // appleId: process.env.APPLEID,
-    // appleIdPassword: process.env.APPLEIDPASS,
     appleId: process.env.APPLE_ID,
     appleIdPassword: password,
     ascProvider: process.env.TEAM_ID,

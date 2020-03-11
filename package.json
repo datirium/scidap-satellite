@@ -1,6 +1,6 @@
 {
   "name": "scidap-satellite",
-  "version": "1.0.1",
+  "version": "1.0.5",
   "description": "scientific data analysis platform satellite bundle",
   "homepage": "https://scidap.com/",
   "author": {
@@ -71,9 +71,9 @@
     "conventional-changelog-cli": "2.0.21",
     "core-js": "3.1.4",
     "dotenv": "^8.2.0",
-    "electron": "^7.0.0",
+    "electron": "^7.1.1",
     "electron-builder": "^21.2.0",
-    "electron-notarize": "^0.1.1",
+    "electron-notarize": "^0.2.0",
     "electron-reload": "1.5.0",
     "highcharts": "^7.2.0",
     "jasmine-core": "3.4.0",
@@ -102,7 +102,7 @@
   "dependencies": {
     "electron-log": "^3.0.8",
     "electron-store": "^4.0.0",
-    "electron-updater": "^4.1.2",
+    "electron-updater": "^4.2.0",
     "keytar": "^4.13.0",
     "meteor-node-stubs": "^0.4.1",
     "mongo-express": "^0.53.0",

@@ -307,7 +307,8 @@ export class SatelliteApp {
         const options = {
             name: 'aria2c',
             script: `${this.services_base_path}/aria2c`,
-            args: ['--enable-rpc', '--rpc-listen-all=false', `--rpc-listen-port=${this.satelliteSettings.aria2cPort}`, '--console-log-level=debug'],
+            args: ['--enable-rpc', '--rpc-listen-all=false', `--rpc-listen-port=${this.satelliteSettings.aria2cPort}`,
+                '--console-log-level=debug', '--auto-file-renaming=false'],
             watch: false,
             exec_mode: 'fork_mode',
             cwd: `${this.satelliteSettings.scidapRoot}/files`
@@ -379,7 +380,9 @@ export class SatelliteApp {
                 PYTHONPATH: `${this.airflow_base_path}/Resources/app:${this.airflow_base_path}/Resources/app_packages`,
                 PATH: `${this.airflow_base_path}/Resources/python/bin:${this.airflow_base_path}/Resources/app/bin:` +
                     `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
-                AIRFLOW_HOME: this.airflowSettings.AIRFLOW_HOME
+                AIRFLOW_HOME: this.airflowSettings.AIRFLOW_HOME,
+                LC_ALL: 'en_US.UTF-8',
+                LANG: 'en_US.UTF-8'
             }
         };
 
@@ -414,9 +417,7 @@ export class SatelliteApp {
     startSatellite() {
         const options = {
             name: 'satellite',
-            // script: `${this.services_base_path}/node`,
             script: `${this.services_base_path}/../main.js`,
-            // args: [`${this.services_base_path}/../main.js`],
             interpreter: 'node',
             watch: false,
             exec_mode: 'fork_mode',
@@ -557,7 +558,7 @@ export class SatelliteApp {
 
         const init_commands = [
             `airflow initdb`,
-            `airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port} --conn_extra "{\"endpoint\":\"/airflow/\"}"`
+            `airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port} --conn_extra "{\\\"endpoint\\\":\\\"/airflow/\\\"}"`
         ];
 
         await init_commands.forEach(async (command) => {

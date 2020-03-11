@@ -19,7 +19,8 @@
     ],
     "asar": false,
     "asarUnpack": [
-        "node_modules/pm2*"
+        "node_modules/pm2",
+        "node_modules/mongo-express"
     ],
     "files": [
         "**/*",
@@ -41,6 +42,7 @@
         "!tsconfig*.json",
         "!tslint.json",
         "!postinstall*.js",
+        "!test*",
         "!embedded.provisionprofile"
     ],
     "publish": [

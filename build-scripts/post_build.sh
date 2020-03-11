@@ -30,6 +30,7 @@ else
   mv ${sat}/bundle/* ${sat}/bundle/.node_version.txt ${sat}
   rm -rf ${sat}/bundle/
   mkdir -p ${sat}/bin
+  chmod -R u+w ${sat}
 fi
 
 cd "${pw}"
@@ -39,7 +40,7 @@ cd "${pw}"
 #         DOWNLOAD NODE
 #
 
-NODE_VERSION="10.16.3"
+NODE_VERSION="10.17.0"
 NODE_HOME="${pw}/node-v${NODE_VERSION}-darwin-x64"
 NODE_ARCH="node-v${NODE_VERSION}-darwin-x64.tar.gz"
 
@@ -57,6 +58,10 @@ fi
 
 if [ ! -f ${sat}/bin/node ]; then
   cp ${NODE_HOME}/bin/node ${sat}/bin/
+fi
+
+if [ -f ${pw}/node ]; then
+  cp ${pw}/node ${sat}/bin/
 fi
 
 #
@@ -106,15 +111,34 @@ fi
 #  ARIA2
 #
 
-ARIA2_VERSION="1.34.0"
+ARIA2_VERSION="1.35.0"
 ARIA2_ARCH="aria2-${ARIA2_VERSION}.tar.xz"
 ARIA2_SRC="${pw}/aria2-${ARIA2_VERSION}"
 ARIA2_HOME="${pw}/aria2c"
+ARIA_SRC="bin"
+
+if [ -e aria2-${ARIA2_VERSION}-osx-darwin.tar.bz2 ]; then
+  warn "${ARIA2_ARCH} already exists: will not download"
+else
+ curl -L -O --fail https://github.com/aria2/aria2/releases/download/release-${ARIA2_VERSION}/aria2-${ARIA2_VERSION}-osx-darwin.tar.bz2
+fi
+
+if [ -e ${ARIA2_SRC} ]; then
+  warn "aria2-${ARIA2_VERSION}-osx-darwin exists skip untar"
+else
+ tar -jxvf aria2-${ARIA2_VERSION}-osx-darwin.tar.bz2
+fi
+
+if [ -e ${ARIA2_SRC} ]; then
+ cp  ${ARIA2_SRC}/bin/aria2c ${sat}/bin
+fi
+
+if [ $ARIA_SRC = "SRC" ]; then
 
 if [ -e ${ARIA2_ARCH} ]; then
   warn "${ARIA2_ARCH} already exists: will not download"
 else
-  curl -L -O --fail https://github.com/aria2/aria2/releases/download/release-${ARIA2_VERSION}/${ARIA2_ARCH}
+ curl -L -O --fail https://github.com/aria2/aria2/releases/download/release-${ARIA2_VERSION}/${ARIA2_ARCH}
 fi
 
 if [ -e ${ARIA2_SRC} ]; then
@@ -144,10 +168,14 @@ else
   make -j >> ${pw}/install.aria2c.log 2>&1
 fi
 
+
 if [ -e ${ARIA2_SRC}/src/aria2c ]; then
   strip ${ARIA2_SRC}/src/aria2c
   cp ${ARIA2_SRC}/src/aria2c ${sat}/bin
 fi
+fi
+
+cd ${pw}
 
 #
 #  CWL AIRFLOW
@@ -169,11 +197,31 @@ if [ -e ${CWLAIRFLOW_HOME_N} ]; then
 else
   tar -zxvf ${CWLAIRFLOW_ARCH} >/dev/null 2>&1
   mv ${CWLAIRFLOW_HOME} ${CWLAIRFLOW_HOME_N}
-  mv ${CWLAIRFLOW_HOME_N}/Contents/* ${CWLAIRFLOW_HOME_N}/
-  chmod -R u+w ${CWLAIRFLOW_HOME_N}/
+  mv ${CWLAIRFLOW_HOME_N}/Contents/* ${CWLAIRFLOW_HOME_N}
+  rm -f ${CWLAIRFLOW_HOME_N}/Contents/
+  
+  find ${CWLAIRFLOW_HOME_N}/Resources/app/bin -type f -maxdepth 1 -exec sed -i '' -e '1s/.*/#!\/usr\/bin\/env python3/' {}  \;
+  find ${CWLAIRFLOW_HOME_N}/Resources/app_packages/bin -type f -maxdepth 1 -exec sed -i '' -e '1s/.*/#!\/usr\/bin\/env python3/' {}  \;
+
+  chmod -R u+w ${CWLAIRFLOW_HOME_N}/  
 fi
 
+cd ${pw}
+
+SRA_TOOLKIT="sratoolkit.2.9.6-1-mac64"
+
+if [ -e ${SRA_TOOLKIT} ]; then
+  warn "${SRA_TOOLKIT} already exists: will not download"
+else
+  curl -L -O --fail http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.9.6-1/${SRA_TOOLKIT}.tar.gz
+fi
+
+cp sratoolkit.2.9.6-1-mac64/bin/fastq-dump.2.9.6 ${sat}/bin/fastq-dump
+
+
 mv ${CWLAIRFLOW_HOME_N} ${sat} ../Services
+
+#
 
 cd $pw
 
@@ -193,8 +241,8 @@ fi
 
 cd $pw
 
-if [ -e "../node_modules/mongo-express" ]; then
-    mv ../node_modules/mongo-express ../Services
-fi
+#if [ -e "../node_modules/mongo-express" ]; then
+#    mv ../node_modules/mongo-express ../Services
+#fi
 
 cd $pw

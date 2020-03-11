@@ -55,6 +55,7 @@ export const SatelliteDefault: any = {
             'type': 'urls',
             'protocol': [
                 'https',
+                'http',
                 'ftp'
             ],
             'refreshSessionInterval': 180
