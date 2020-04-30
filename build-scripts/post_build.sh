@@ -40,7 +40,7 @@ cd "${pw}"
 #         DOWNLOAD NODE
 #
 
-NODE_VERSION="10.17.0"
+NODE_VERSION="10.20.1"
 NODE_HOME="${pw}/node-v${NODE_VERSION}-darwin-x64"
 NODE_ARCH="node-v${NODE_VERSION}-darwin-x64.tar.gz"
 
@@ -181,7 +181,7 @@ cd ${pw}
 #  CWL AIRFLOW
 #
 
-CWLAIRFLOW_VERSION="1.1.10"
+CWLAIRFLOW_VERSION="1.1.12"
 CWLAIRFLOW_ARCH="cwl-airflow.macos.tar.gz"
 CWLAIRFLOW_HOME="${pw}/cwl-airflow.app"
 CWLAIRFLOW_HOME_N="${pw}/cwl-airflow"
@@ -199,11 +199,11 @@ else
   mv ${CWLAIRFLOW_HOME} ${CWLAIRFLOW_HOME_N}
   mv ${CWLAIRFLOW_HOME_N}/Contents/* ${CWLAIRFLOW_HOME_N}
   rm -f ${CWLAIRFLOW_HOME_N}/Contents/
-  
+
   find ${CWLAIRFLOW_HOME_N}/Resources/app/bin -type f -maxdepth 1 -exec sed -i '' -e '1s/.*/#!\/usr\/bin\/env python3/' {}  \;
   find ${CWLAIRFLOW_HOME_N}/Resources/app_packages/bin -type f -maxdepth 1 -exec sed -i '' -e '1s/.*/#!\/usr\/bin\/env python3/' {}  \;
 
-  chmod -R u+w ${CWLAIRFLOW_HOME_N}/  
+  chmod -R u+w ${CWLAIRFLOW_HOME_N}/
 fi
 
 cd ${pw}
@@ -231,6 +231,7 @@ else
   git clone https://github.com/ziahamza/webui-aria2
   cd webui-aria2
   npm install
+  npm i node-sass
   npm run build
 fi
 
