@@ -39,6 +39,9 @@ export class SatelliteApp {
     pm2_home;
 
     pm2MonitIntervalId;
+
+    public willQuitApp = false;
+
     /**
      *
      */
@@ -92,6 +95,7 @@ export class SatelliteApp {
      */
     createWindow() {
         if (this.win) {
+            this.win.show();
             return;
         }
 
@@ -173,8 +177,8 @@ export class SatelliteApp {
 
 
     /**
- *
- */
+     *
+     */
     createMongoExpressWindow() {
         if (this.mongoExpressWin) {
             return;
@@ -210,7 +214,15 @@ export class SatelliteApp {
      */
     windowEvents() {
         // Emitted when the window is closed.
-        this.win.on('closed', () => {
+        this.win.on('close', (e) => {
+            if (!this.willQuitApp) {
+                /* the user only tried to close the window */
+                e.preventDefault();
+                this.win.hide();
+            }
+        });
+
+        this.win.on('closed', (e) => {
             this.win = null;
         });
 
@@ -367,6 +379,15 @@ export class SatelliteApp {
     startAirflowScheduler() {
         // -l LOG_FILE, --log-file LOG_FILE
         // Location of the log file
+
+        /**
+         *  CONF PATCHES?
+         */
+        this.airflowUpdate();
+        /**
+         *  END CONF PATCH
+         */
+
 
         const options = {
             name: 'airflow-scheduler',
@@ -544,24 +565,9 @@ export class SatelliteApp {
         });
     }
 
-    /**
-     * Init saves all settings and starts services for the first time!
-     */
-    async satelliteInit() {
-        this.airflowSettings = this.store.get('airflowSettings');
-        this.satelliteSettings = this.store.get('satelliteSettings');
-
-        Log.info('init airflowSettings:', this.airflowSettings);
-        Log.info('init satelliteSettings:', this.satelliteSettings);
-
+    async runCommands(commands: any[]) {
         const self = this;
-
-        const init_commands = [
-            `airflow initdb`,
-            `airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port} --conn_extra "{\\\"endpoint\\\":\\\"/airflow/\\\"}"`
-        ];
-
-        await init_commands.forEach(async (command) => {
+        await commands.forEach(async (command) => {
             Log.info(command);
             const _spawn = spawn(`${self.airflow_base_path}/MacOS/${command}`, [], {
                 shell: true,
@@ -572,8 +578,6 @@ export class SatelliteApp {
             let _stderr, _stdout;
             // TODO: delete old config!
             _spawn.stdout.on('data', (data) => {
-                if (data.toString().includes('`conn_id`=process_report already exists')) {
-                }
                 _stdout = `${_stdout}${data}`;
             });
             _spawn.stderr.on('data', (data) => {
@@ -594,15 +598,76 @@ export class SatelliteApp {
             });
         });
 
+    }
+    /**
+     *
+     */
+    async airflowUpdate() {
+
+        const latestUpdate = this.store.get('latestUpdateVersion');
+        const appVersion = app.getVersion();
+        if (appVersion === latestUpdate) {
+            return;
+        }
+
+        this.airflowSettings = this.store.get('airflowSettings');
+
+        this.store.set('latestUpdateVersion', appVersion);
+
+        const init_commands = [
+            `airflow upgradedb`
+        ];
+        await this.runCommands(init_commands);
+        const airflowConfig: any = parse(fs.readFileSync(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
+        airflowConfig.core.dag_concurrency = 2;
+        airflowConfig.core.dags_are_paused_at_creation = 'False';
+        airflowConfig.core.max_active_runs_per_dag = 2;
+        airflowConfig.core.load_examples = 'False';
+        airflowConfig.core.hostname_callable = 'socket:gethostname';
+        await fs.promises.writeFile(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
+        await fs.promises.mkdir(`${this.airflowSettings.AIRFLOW_HOME}/dags`, { recursive: true });
+        await fs.promises.copyFile(`${this.airflow_base_path}/Resources/app/cwl_airflow/dags/clean_dag_run.py`, `${this.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`);
+    }
+
+    /**
+     * Init saves all settings and starts services for the first time!
+     */
+    async airflowInit() {
+        this.airflowSettings = this.store.get('airflowSettings');
+        this.satelliteSettings = this.store.get('satelliteSettings');
+
+        Log.info('init airflowSettings:', this.airflowSettings);
+        Log.info('init satelliteSettings:', this.satelliteSettings);
+
+        const self = this;
+
+        const init_commands = [
+            `airflow initdb`,
+            `airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port} --conn_extra "{\\\"endpoint\\\":\\\"/airflow/\\\"}"`
+        ];
+        // if (data.toString().includes('`conn_id`=process_report already exists')) {
+        // }
+
+        this.runCommands(init_commands);
+
         const airflowConfig: any = parse(fs.readFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
         airflowConfig.core.dag_concurrency = 2;
         airflowConfig.core.dags_are_paused_at_creation = 'False';
         airflowConfig.core.max_active_runs_per_dag = 2;
         airflowConfig.core.load_examples = 'False';
+        airflowConfig.core.hostname_callable = 'socket:gethostname';
         // conf.set("cwl", "tmp_folder", os.path.join(self.airflow_home, 'tmp'))
         fs.writeFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
         fs.mkdirSync(`${self.airflowSettings.AIRFLOW_HOME}/dags`, { recursive: true });
         fs.copyFileSync(`${self.airflow_base_path}/Resources/app/cwl_airflow/dags/clean_dag_run.py`, `${self.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`);
+    }
+
+    /**
+     *
+     */
+    async satelliteInit() {
+        await this.airflowInit();
+
         fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/files`, { recursive: true });
         fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/mongodb`, { recursive: true });
         this.store.set('initComplete', true);

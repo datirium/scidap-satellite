@@ -42,13 +42,16 @@ try {
     });
 
     // Quit when all windows are closed.
-    app.on('window-all-closed', () => {
-        // On OS X it is common for applications and their menu bar
-        // to stay active until the user quits explicitly with Cmd + Q
-        if (process.platform !== 'darwin') {
-            app.quit();
-        }
-    });
+    // app.on('window-all-closed', () => {
+    //     // On OS X it is common for applications and their menu bar
+    //     // to stay active until the user quits explicitly with Cmd + Q
+    //     // if (process.platform !== 'darwin') {
+    //         app.quit();
+    //     // }
+    // });
+    /* 'before-quit' is emitted when Electron receives
+     * the signal to exit and wants to start closing windows */
+    app.on('before-quit', () => satelliteApp.willQuitApp = true);
 
     app.on('activate', () => {
         // On OS X it's common to re-create a window in the app when the
