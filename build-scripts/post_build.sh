@@ -40,14 +40,14 @@ cd "${pw}"
 #         DOWNLOAD NODE
 #
 
-NODE_VERSION="10.20.1"
+NODE_VERSION="12.16.3"
 NODE_HOME="${pw}/node-v${NODE_VERSION}-darwin-x64"
 NODE_ARCH="node-v${NODE_VERSION}-darwin-x64.tar.gz"
 
 if [ -e ${NODE_ARCH} ]; then
   warn "${NODE_ARCH} already exists: will not download"
 else
-  curl -O --fail https://nodejs.org/download/release/latest-v10.x/${NODE_ARCH}
+  curl -O --fail https://nodejs.org/download/release/latest-v12.x/${NODE_ARCH}
 fi
 
 if [ -e ${NODE_HOME} ]; then
@@ -198,7 +198,7 @@ else
   tar -zxvf ${CWLAIRFLOW_ARCH} >/dev/null 2>&1
   mv ${CWLAIRFLOW_HOME} ${CWLAIRFLOW_HOME_N}
   mv ${CWLAIRFLOW_HOME_N}/Contents/* ${CWLAIRFLOW_HOME_N}
-  rm -f ${CWLAIRFLOW_HOME_N}/Contents/
+  rm -rf ${CWLAIRFLOW_HOME_N}/Contents/
 
   find ${CWLAIRFLOW_HOME_N}/Resources/app/bin -type f -maxdepth 1 -exec sed -i '' -e '1s/.*/#!\/usr\/bin\/env python3/' {}  \;
   find ${CWLAIRFLOW_HOME_N}/Resources/app_packages/bin -type f -maxdepth 1 -exec sed -i '' -e '1s/.*/#!\/usr\/bin\/env python3/' {}  \;
