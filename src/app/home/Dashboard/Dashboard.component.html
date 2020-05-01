@@ -1,54 +1,70 @@
-<div class="clr-row">
-    <div *ngFor="let process of pm2Monit" class="clr-col-xl-6 clr-col-12">
-        <div class="card" *ngIf="process">
-            <!-- <div class="card-header"> -->
-            <!-- </div> -->
-            <div  class="card-block clr-row">
-                <!-- <div class="card-title"> -->
-                <!-- </div> -->
-                <!-- <div class="card-text"> -->
-                <!-- </div> -->
-                <div class="clr-row clr-col-11">
-                    <div class="clr-col-4" style="margin-right: 3px;">
-                        <span style="white-space: nowrap;">
-                            <clr-icon shape="application" [ngClass]="{'is-success': process.pm2_env.status == 'online', 'is-error': process.pm2_env.status != 'online'}" size="16"></clr-icon>
-                            {{process.name}}
-                        </span>
-                        <p>
-                            pid: {{process.pid}} <br>
-                            Restarts: {{process.pm2_env.restart_time}} <br>
-                            <span *ngIf="process.pm2_env.axm_monitor['Event Loop Latency']" style="white-space: nowrap;">
-                                Event Loop Lag:
-                                {{process.pm2_env.axm_monitor["Event Loop Latency"]?.value}}
-                                {{process.pm2_env.axm_monitor["Event Loop Latency"]?.unit}}
-                                <br>
-                            </span>
-                            <span *ngIf="process.pm2_env.pm_uptime" style="white-space: nowrap;">
-                                Uptime: {{process.pm2_env.pm_uptime | amTimeAgo:true}}
-                            </span>
-                        </p>
-
-                    </div>
-                    <div class="clr-col-3" style="margin-right: 3px;">
-                        CPU <p> {{process.monit.cpu}}% </p>
-                    </div>
-                    <div class="clr-col-3" style="margin-right: 3px;">
-                        Memory <p> {{process.monit.memory| bytes}} </p>
-                    </div>
-                </div>
-                <div class="clr-col-1" style="margin-left: 3px;">
-                    <button class="btn btn-sm btn-link" (click)="stopPM2program(process.pm_id)" [disabled]="process.pm2_env.status == 'stopped'">
-                        stop
-                    </button>
-                    <button class="btn btn-sm btn-link" (click)="startPM2program(process.pm_id)" [disabled]="process.pm2_env.status == 'online'">
-                        start
-                    </button>
-                    <button class="btn btn-sm btn-link" (click)="startPM2program(process.pm_id)">
-                        restart
-                    </button>
-                </div>
-
-            </div>
+<div class="clr-row" style="padding: 12px;">
+  <div *ngIf="isAllUp" class="alert alert-info clr-col-xl-6 clr-col-12" role="alert">
+    <div class="alert-items">
+      <div class="alert-item static">
+        <div class="alert-icon-wrapper">
+          <clr-icon class="alert-icon" shape="info-circle"></clr-icon>
         </div>
+        <span class="alert-text">All processes included in the installation are up and running. This satellite can be now controlled from <strong>scidap.com</strong>
+          To function properly SciDAP satellite needs <strong>Docker</strong> to be installed, started and configured to have at least 20GB of RAM and 6 CPUs! </span>
+        <div class="alert-actions">
+          <a class="alert-action" (click)="_electronService.openExternal('https://scidap.com/login')">Open scidap.com</a>
+
+          <!-- <a href="..." class="alert-action">Reset to green</a> -->
+        </div>
+      </div>
     </div>
+  </div>
+  <div class="clr-col-xl-6 clr-col-12">&nbsp;</div>
+</div>
+
+<div class="clr-row">
+
+  <div *ngFor="let process of pm2Monit" class="clr-col-xl-6 clr-col-12">
+
+    <div class="card" *ngIf="process">
+      <div class="card-block clr-row">
+        <div class="clr-row clr-col-11">
+          <div class="clr-col-4" style="margin-right: 3px;">
+            <span style="white-space: nowrap;">
+              <clr-icon shape="application" [ngClass]="{'is-success': process.pm2_env.status == 'online', 'is-error': process.pm2_env.status != 'online'}" size="16"></clr-icon>
+              {{process.name}}
+            </span>
+            <p>
+              pid: {{process.pid}} <br>
+              Restarts: {{process.pm2_env.restart_time}} <br>
+              <span *ngIf="process.pm2_env.axm_monitor['Event Loop Latency']" style="white-space: nowrap;">
+                Event Loop Lag:
+                {{process.pm2_env.axm_monitor["Event Loop Latency"]?.value}}
+                {{process.pm2_env.axm_monitor["Event Loop Latency"]?.unit}}
+                <br>
+              </span>
+              <span *ngIf="process.pm2_env.pm_uptime" style="white-space: nowrap;">
+                Uptime: {{process.pm2_env.pm_uptime | amTimeAgo:true}}
+              </span>
+            </p>
+
+          </div>
+          <div class="clr-col-3" style="margin-right: 3px;">
+            CPU <p> {{process.monit.cpu}}% </p>
+          </div>
+          <div class="clr-col-3" style="margin-right: 3px;">
+            Memory <p> {{process.monit.memory| bytes}} </p>
+          </div>
+        </div>
+        <div class="clr-col-1" style="margin-left: 3px;">
+          <button class="btn btn-sm btn-link" (click)="stopPM2program(process.pm_id)" [disabled]="process.pm2_env.status == 'stopped'">
+            stop
+          </button>
+          <button class="btn btn-sm btn-link" (click)="startPM2program(process.pm_id)" [disabled]="process.pm2_env.status == 'online'">
+            start
+          </button>
+          <button class="btn btn-sm btn-link" (click)="startPM2program(process.pm_id)">
+            restart
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </div>

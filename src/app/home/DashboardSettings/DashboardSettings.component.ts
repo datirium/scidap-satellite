@@ -9,7 +9,7 @@ import { SatelliteSettingsComponent } from '../SatelliteSettings/SatelliteSettin
 })
 export class DashboardSettingsComponent implements OnInit {
 
-  @ViewChild('satelliteSettings', { static: false }) satelliteSettings: SatelliteSettingsComponent;
+  @ViewChild('satelliteSettings') satelliteSettings: SatelliteSettingsComponent;
 
   initInProgress;
   constructor(

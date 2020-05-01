@@ -40,7 +40,7 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
     subs;
 
     constructor(
-        private _electronService: ElectronService,
+        public _electronService: ElectronService,
         private _zone: NgZone,
         private _http: HttpClient) {
 
@@ -58,6 +58,13 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
             });
         });
 
+    }
+
+    get isAllUp(): boolean {
+        if (!this.pm2Monit) {
+            return false;
+        }
+        return !this.pm2Monit.find((process) => process.pm2_env.status !== 'online');
     }
 
     ngOnInit() {

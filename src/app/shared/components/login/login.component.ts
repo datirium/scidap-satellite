@@ -1,5 +1,5 @@
 import { Component, OnInit, Output, Input, EventEmitter, AfterViewInit } from '@angular/core';
-import { ElectronService } from '../../..//core/services';
+import { ElectronService } from '../../../core/services';
 
 
 @Component({

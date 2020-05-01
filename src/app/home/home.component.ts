@@ -357,7 +357,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
             if ('download-progress' === res) {
                 this._zone.run(() => {
-                    [this.downloadPercent, this.downloadSpeed] = args;
+                    [this.downloadPercent, this.downloadSpeed] = args as any;
                 });
                 // if (this.downloadPercent === 100 || this.downloadPercent === '100') {
                 //     res = 'update-downloaded';
