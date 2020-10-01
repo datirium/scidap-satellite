@@ -1,5 +1,5 @@
 provider: generic
-url: 'https://scidap.com/update/releases/'
+url: 'https://scidap.nyc3.digitaloceanspaces.com/releases/'
 channel: latest
 publishAutoUpdate: true
 updaterCacheDirName: scidap-satellite-updater

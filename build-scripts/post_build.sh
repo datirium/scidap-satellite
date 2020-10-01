@@ -103,7 +103,8 @@ else
 fi
 
 if [ ! -f ${sat}/bin/mongod ]; then
-  cp ${MONGO_HOME}/bin/mongod ${MONGO_HOME}/bin/mongodump ${MONGO_HOME}/bin/mongorestore ${sat}/bin
+  cp ${MONGO_HOME}/bin/mongod ${sat}/bin
+  #${MONGO_HOME}/bin/mongodump ${MONGO_HOME}/bin/mongorestore ${sat}/bin
 fi
 
 

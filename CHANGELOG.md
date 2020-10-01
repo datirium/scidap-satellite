@@ -1,3 +1,14 @@
+## 1.0.7 (2020-08-05)
+
+* fastq-dump mac os fix case sensitivity
+
+## 1.0.6 (2020-03-28)
+
+* biowardrobeNG (1.1.3) - download aria2c progress
+* new cwl-airflow 1.1.12 (cwltool==2.0.20200224214940 and airflow==1.10.9)
+* node 12.16.3
+* bump electron version
+
 ## 1.0.5 (2019-11-12)
 
 * biowardrobeNG (1.1.1)

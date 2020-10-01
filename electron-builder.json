@@ -51,7 +51,7 @@
             "publishAutoUpdate": true,
             "updaterCacheDirName": "scidap-satellite-updater",
             "provider": "generic",
-            "url": "https://scidap.com/update/releases/"
+            "url": "https://scidap.nyc3.digitaloceanspaces.com/releases/"
         }
     ],
     "afterSign": "build-scripts/notarize.js",
@@ -70,10 +70,13 @@
         ],
         "publish": {
             "provider": "generic",
-            "url": "https://scidap.com/update/releases/",
+            "url": "https://scidap.nyc3.digitaloceanspaces.com/releases/",
             "channel": "latest",
             "publishAutoUpdate": true
         },
+        "type": "distribution",
+        "binaries": [
+        ],
         "hardenedRuntime": true,
         "gatekeeperAssess": false,
         "entitlements": "./build-scripts/entitlements.mac.inherit.plist",
