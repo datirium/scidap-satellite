@@ -31,6 +31,7 @@ export class SatelliteApp {
 
     airflowSettings;
     satelliteSettings;
+    proxySettings;
     token;
     initComplete;
 
@@ -72,6 +73,7 @@ export class SatelliteApp {
 
         this.airflowSettings = this.store.get('airflowSettings', null);
         this.satelliteSettings = this.store.get('satelliteSettings', null);
+        this.proxySettings = this.store.get('proxySettings', null);
 
         this.pm2_home = path.join(app.getPath('home'), '/.pm2');
 
@@ -316,11 +318,15 @@ export class SatelliteApp {
      *
      */
     startPM2Aria2c() {
+        let cmd_args = ['--enable-rpc', '--rpc-listen-all=false', `--rpc-listen-port=${this.satelliteSettings.aria2cPort}`,
+            '--console-log-level=debug', '--auto-file-renaming=false']
+        if (this.proxySettings) {
+            cmd_args.push(`--all-proxy=${this.proxySettings}`)
+        }
         const options = {
             name: 'aria2c',
             script: `${this.services_base_path}/aria2c`,
-            args: ['--enable-rpc', '--rpc-listen-all=false', `--rpc-listen-port=${this.satelliteSettings.aria2cPort}`,
-                '--console-log-level=debug', '--auto-file-renaming=false'],
+            args: cmd_args,
             watch: false,
             exec_mode: 'fork_mode',
             cwd: `${this.satelliteSettings.scidapRoot}/files`
@@ -436,6 +442,18 @@ export class SatelliteApp {
      *
      */
     startSatellite() {
+        let env_var = {
+            MONGO_URL: `mongodb://localhost:${this.satelliteSettings.mongoPort}/scidap-satellite`,
+            ROOT_URL: `${this.satelliteSettings.baseUrl}`,
+            PORT: `${this.satelliteSettings.port}`,
+            METEOR_SETTINGS: this.getSatelliteConf(),
+            NODE_OPTIONS: '--trace-warnings --pending-deprecation',
+            PATH: `${this.services_base_path}:${this.airflow_base_path}/Resources/app/bin:` +
+                `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
+        }
+        if (this.proxySettings) {
+            env_var["https_proxy"] = `${this.proxySettings}`
+        }
         const options = {
             name: 'satellite',
             script: `${this.services_base_path}/../main.js`,
@@ -443,15 +461,7 @@ export class SatelliteApp {
             watch: false,
             exec_mode: 'fork_mode',
             cwd: `${this.satelliteSettings.scidapRoot}`,
-            env: {
-                MONGO_URL: `mongodb://localhost:${this.satelliteSettings.mongoPort}/scidap-satellite`,
-                ROOT_URL: `${this.satelliteSettings.baseUrl}`,
-                PORT: `${this.satelliteSettings.port}`,
-                METEOR_SETTINGS: this.getSatelliteConf(),
-                NODE_OPTIONS: '--trace-warnings --pending-deprecation',
-                PATH: `${this.services_base_path}:${this.airflow_base_path}/Resources/app/bin:` +
-                    `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
-            }
+            env: env_var
         };
         return this.startPM2(options);
     }
