@@ -659,6 +659,7 @@ export class SatelliteApp {
 
         const init_commands = [
             `cwl-airflow init --upgrade`,
+            `airflow connections -d --conn_id process_report`,  // otherwise connection won't be updated
             `airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port}`
         ];
         // if (data.toString().includes('`conn_id`=process_report already exists')) {
