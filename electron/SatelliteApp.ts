@@ -674,7 +674,7 @@ export class SatelliteApp {
         airflowConfig.core.hostname_callable = 'socket:gethostname';
         // conf.set("cwl", "tmp_folder", os.path.join(self.airflow_home, 'tmp'))
         fs.writeFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
-        fs.mkdirSync(`${self.airflowSettings.AIRFLOW_HOME}/dags`, { recursive: true });	
+        fs.mkdirSync(`${self.airflowSettings.AIRFLOW_HOME}/dags`, { recursive: true });
         // fs.copyFileSync(`${self.airflow_base_path}/Resources/app/cwl_airflow/dags/clean_dag_run.py`, `${self.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`);
     }
 
