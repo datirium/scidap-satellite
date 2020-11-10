@@ -402,7 +402,7 @@ export class SatelliteApp {
             exec_mode: 'fork_mode',
             cwd: this.airflowSettings.AIRFLOW_HOME,
             env: {
-                PATH: `${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`,
+                PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`,
                 AIRFLOW_HOME: this.airflowSettings.AIRFLOW_HOME,
                 LC_ALL: 'en_US.UTF-8',
                 LANG: 'en_US.UTF-8'
@@ -425,7 +425,7 @@ export class SatelliteApp {
             exec_mode: 'fork_mode',
             cwd: `${this.satelliteSettings.scidapRoot}`,
             env: {
-                PATH: `${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`,
+                PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`,
                 AIRFLOW_HOME: this.airflowSettings.AIRFLOW_HOME
             }
         };
@@ -436,16 +436,16 @@ export class SatelliteApp {
      *
      */
     startSatellite() {
-        let env_var = {
+        const env_var = {
             MONGO_URL: `mongodb://localhost:${this.satelliteSettings.mongoPort}/scidap-satellite`,
             ROOT_URL: `${this.satelliteSettings.baseUrl}`,
             PORT: `${this.satelliteSettings.port}`,
             METEOR_SETTINGS: this.getSatelliteConf(),
             NODE_OPTIONS: '--trace-warnings --pending-deprecation',
             PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
-        }
+        };
         if (this.proxySettings) {
-            env_var["https_proxy"] = `${this.proxySettings}`
+            env_var['https_proxy'] = `${this.proxySettings}`;
         }
         const options = {
             name: 'satellite',
