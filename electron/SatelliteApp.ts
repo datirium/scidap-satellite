@@ -571,10 +571,11 @@ export class SatelliteApp {
         const self = this;
         await commands.forEach(async (command) => {
             Log.info(command);
-            const _spawn = spawn(`${self.airflow_base_path}/bin_portable/${command}`, [], {
+            const _spawn = spawn(`${command}`, [], {
                 shell: true,
                 env: {
-                    AIRFLOW_HOME: self.airflowSettings.AIRFLOW_HOME
+                    AIRFLOW_HOME: self.airflowSettings.AIRFLOW_HOME,
+                    PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
                 }
             });
             let _stderr, _stdout;
@@ -615,18 +616,23 @@ export class SatelliteApp {
         this.airflowSettings = this.store.get('airflowSettings');
 
         this.store.set('latestUpdateVersion', appVersion);
-        
-        // Need to make sure that clean_dag_run.py will be updated (init creates new if not present)
+
+        // need to update clean_dag_run.py, so it should be deleted before running cwl-airflow init
         try {
             await fs.promises.unlink(`${this.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`)
         } catch (e) {
             Log.info('Failed to remove clean_dag_run.py');
         }
 
+        // need to guarantee sequential execution of the following commands therefore use &&
+        // to make sure the connection is updated, we need to delete it first
         const init_commands = [
-            `cwl-airflow init --upgrade`
+            `cwl-airflow init --upgrade && \
+             airflow connections -d --conn_id process_report && \
+             airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port}`
         ];
         await this.runCommands(init_commands);
+
         const airflowConfig: any = parse(fs.readFileSync(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
         airflowConfig.core.dag_concurrency = 2;
         airflowConfig.core.dags_are_paused_at_creation = 'False';
@@ -634,8 +640,6 @@ export class SatelliteApp {
         airflowConfig.core.load_examples = 'False';
         airflowConfig.core.hostname_callable = 'socket:gethostname';
         await fs.promises.writeFile(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
-        await fs.promises.mkdir(`${this.airflowSettings.AIRFLOW_HOME}/dags`, { recursive: true });
-        // await fs.promises.copyFile(`${this.airflow_base_path}/Resources/app/cwl_airflow/dags/clean_dag_run.py`, `${this.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`);
     }
 
     /**
@@ -649,22 +653,21 @@ export class SatelliteApp {
         Log.info('init satelliteSettings:', this.satelliteSettings);
 
         const self = this;
-        
-        // Need to make sure that clean_dag_run.py will be updated (init creates new if not present)
+
+        // need to update clean_dag_run.py, so it should be deleted before running cwl-airflow init
         try {
             fs.unlinkSync(`${this.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`)
         } catch (e) {
             Log.info('Failed to remove clean_dag_run.py');
         }
 
+        // need to guarantee sequential execution of the following commands therefore use &&
+        // to make sure the connection is updated, we need to delete it first
         const init_commands = [
-            `cwl-airflow init --upgrade`,
-            `airflow connections -d --conn_id process_report`,  // otherwise connection won't be updated
-            `airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port}`
+            `cwl-airflow init --upgrade && \
+             airflow connections -d --conn_id process_report && \
+             airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port}`
         ];
-        // if (data.toString().includes('`conn_id`=process_report already exists')) {
-        // }
-
         this.runCommands(init_commands);
 
         const airflowConfig: any = parse(fs.readFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
@@ -673,10 +676,7 @@ export class SatelliteApp {
         airflowConfig.core.max_active_runs_per_dag = 2;
         airflowConfig.core.load_examples = 'False';
         airflowConfig.core.hostname_callable = 'socket:gethostname';
-        // conf.set("cwl", "tmp_folder", os.path.join(self.airflow_home, 'tmp'))
         fs.writeFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
-        fs.mkdirSync(`${self.airflowSettings.AIRFLOW_HOME}/dags`, { recursive: true });
-        // fs.copyFileSync(`${self.airflow_base_path}/Resources/app/cwl_airflow/dags/clean_dag_run.py`, `${self.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`);
     }
 
     /**
