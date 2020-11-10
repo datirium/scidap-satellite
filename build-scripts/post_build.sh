@@ -25,7 +25,7 @@ download_and_extract() {
 
 
 # Setting up package versions
-NODE_VERSION="12.19.0"              # do not exceed 12.x, otherwise update NODE_URL
+NODE_VERSION="12.16.3"
 MONGO_VERSION="4.2.0"
 ARIA2_VERSION="1.35.0"
 CWLAIRFLOW_VERSION="1.2.6"
@@ -62,7 +62,7 @@ fi
 
 # Downloading Node and building node modules
 cd ${WORKDIR}
-NODE_URL="https://nodejs.org/download/release/latest-v12.x/node-v${NODE_VERSION}-darwin-x64.tar.gz"
+NODE_URL="https://nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-darwin-x64.tar.gz"
 download_and_extract $NODE_URL node-v${NODE_VERSION}-darwin-x64.tar.gz node-v${NODE_VERSION}-darwin-x64
 if [ -e ${SATDIR}/bin/node ]; then
   warn "Node has been already copied. Skipping copy"
@@ -75,7 +75,7 @@ if [ -e ${SATDIR}/programs/server/node_modules ]; then
 else
   echo "Installing node modules"
   TEMP_PATH=$PATH
-  PATH="${WORKDIR}/node-v${NODE_VERSION}-darwin-x64/bin/:/bin:/usr/bin"
+  PATH="${WORKDIR}/node-v${NODE_VERSION}-darwin-x64/bin:/bin:/usr/bin"
   cd ${SATDIR}/programs/server
   npm install > ${WORKDIR}/node-v${NODE_VERSION}-darwin-x64_build.log 2>&1
   PATH=$TEMP_PATH
