@@ -638,6 +638,7 @@ export class SatelliteApp {
         airflowConfig.core.max_active_runs_per_dag = 2;
         airflowConfig.core.load_examples = 'False';
         airflowConfig.core.hostname_callable = 'socket:gethostname';
+        airflowConfig.core.max_active_runs_per_dag = 1;
         await fs.promises.writeFile(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
     }
 
@@ -675,6 +676,7 @@ export class SatelliteApp {
         airflowConfig.core.max_active_runs_per_dag = 2;
         airflowConfig.core.load_examples = 'False';
         airflowConfig.core.hostname_callable = 'socket:gethostname';
+        airflowConfig.core.max_active_runs_per_dag = 1;
         fs.writeFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
     }
 
