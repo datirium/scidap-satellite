@@ -31,7 +31,6 @@ export class SatelliteApp {
 
     airflowSettings;
     satelliteSettings;
-    proxySettings;
     token;
     initComplete;
 
@@ -73,7 +72,6 @@ export class SatelliteApp {
 
         this.airflowSettings = this.store.get('airflowSettings', null);
         this.satelliteSettings = this.store.get('satelliteSettings', null);
-        this.proxySettings = this.store.get('proxySettings', null);
 
         this.pm2_home = path.join(app.getPath('home'), '/.pm2');
 
@@ -252,8 +250,7 @@ export class SatelliteApp {
                 PM2_API_PORT: this.satelliteSettings.pm2Port,
                 // PM2_HOME: this.pm2_home,
                 HOME: app.getPath('home'),
-                PATH: `${this.services_base_path}:${this.airflow_base_path}/Resources/app/bin:` +
-                    `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
+                PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
             }
         });
 
@@ -318,10 +315,10 @@ export class SatelliteApp {
      *
      */
     startPM2Aria2c() {
-        let cmd_args = ['--enable-rpc', '--rpc-listen-all=false', `--rpc-listen-port=${this.satelliteSettings.aria2cPort}`,
-            '--console-log-level=debug', '--auto-file-renaming=false']
-        if (this.proxySettings) {
-            cmd_args.push(`--all-proxy=${this.proxySettings}`)
+        const cmd_args = ['--enable-rpc', '--rpc-listen-all=false', `--rpc-listen-port=${this.satelliteSettings.aria2cPort}`,
+            '--console-log-level=debug', '--auto-file-renaming=false'];
+        if (this.satelliteSettings && this.satelliteSettings.proxy) {
+            cmd_args.push(`--all-proxy=${this.satelliteSettings.proxy}`);
         }
         const options = {
             name: 'aria2c',
@@ -371,8 +368,7 @@ export class SatelliteApp {
             cwd: `${this.satelliteSettings.scidapRoot}`,
             env: {
                 ME_CONFIG_BASICAUTH_USERNAME: '',
-                PATH: `${this.services_base_path}:${this.airflow_base_path}/Resources/app/bin:` +
-                    `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
+                PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
             }
         };
 
@@ -397,16 +393,14 @@ export class SatelliteApp {
 
         const options = {
             name: 'airflow-scheduler',
-            script: `${this.airflow_base_path}/Resources/python/bin/python3`,
-            args: [`${this.airflow_base_path}/Resources/app_packages/bin/airflow`, 'scheduler'],
-            interpreter: 'none',
+            script: `${this.airflow_base_path}/bin_portable/airflow`,
+            args: ['scheduler'],
+            interpreter: 'bash',
             watch: false,
             exec_mode: 'fork_mode',
             cwd: this.airflowSettings.AIRFLOW_HOME,
             env: {
-                PYTHONPATH: `${this.airflow_base_path}/Resources/app:${this.airflow_base_path}/Resources/app_packages`,
-                PATH: `${this.airflow_base_path}/Resources/python/bin:${this.airflow_base_path}/Resources/app/bin:` +
-                    `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
+                PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`,
                 AIRFLOW_HOME: this.airflowSettings.AIRFLOW_HOME,
                 LC_ALL: 'en_US.UTF-8',
                 LANG: 'en_US.UTF-8'
@@ -422,16 +416,14 @@ export class SatelliteApp {
     startAirflowAPI() {
         const options = {
             name: 'airflow-apiserver',
-            script: `${this.airflow_base_path}/MacOS/apiserver`,
-            args: [`--port=${this.satelliteSettings.airflowAPIPort}`],
+            script: `${this.airflow_base_path}/bin_portable/cwl-airflow`,
+            args: ['api', `--port=${this.satelliteSettings.airflowAPIPort}`],
             interpreter: 'bash',
             watch: false,
             exec_mode: 'fork_mode',
             cwd: `${this.satelliteSettings.scidapRoot}`,
             env: {
-                PYTHONPATH: `${this.airflow_base_path}/Resources/app:${this.airflow_base_path}/Resources/app_packages`,
-                PATH: `${this.airflow_base_path}/Resources/python/bin:${this.airflow_base_path}/Resources/app/bin:` +
-                    `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
+                PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`,
                 AIRFLOW_HOME: this.airflowSettings.AIRFLOW_HOME
             }
         };
@@ -442,17 +434,17 @@ export class SatelliteApp {
      *
      */
     startSatellite() {
-        let env_var = {
+        const env_var = {
             MONGO_URL: `mongodb://localhost:${this.satelliteSettings.mongoPort}/scidap-satellite`,
             ROOT_URL: `${this.satelliteSettings.baseUrl}`,
             PORT: `${this.satelliteSettings.port}`,
             METEOR_SETTINGS: this.getSatelliteConf(),
             NODE_OPTIONS: '--trace-warnings --pending-deprecation',
-            PATH: `${this.services_base_path}:${this.airflow_base_path}/Resources/app/bin:` +
-                `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
-        }
-        if (this.proxySettings) {
-            env_var["https_proxy"] = `${this.proxySettings}`
+            PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
+        };
+        if (this.satelliteSettings && this.satelliteSettings.proxy) {
+            env_var['https_proxy'] = `${this.satelliteSettings.proxy}`;
+            env_var['http_proxy'] = `${this.satelliteSettings.proxy}`;
         }
         const options = {
             name: 'satellite',
@@ -514,8 +506,7 @@ export class SatelliteApp {
             shell: true,
             env: {
                 HOME: app.getPath('home'),
-                PATH: `${this.services_base_path}:${this.airflow_base_path}/Resources/app/bin:` +
-                    `${this.airflow_base_path}/Resources/app_packages/bin:/usr/bin:/bin:/usr/local/bin`,
+                PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
             }
         });
 
@@ -579,10 +570,11 @@ export class SatelliteApp {
         const self = this;
         await commands.forEach(async (command) => {
             Log.info(command);
-            const _spawn = spawn(`${self.airflow_base_path}/MacOS/${command}`, [], {
+            const _spawn = spawn(`${command}`, [], {
                 shell: true,
                 env: {
-                    AIRFLOW_HOME: self.airflowSettings.AIRFLOW_HOME
+                    AIRFLOW_HOME: self.airflowSettings.AIRFLOW_HOME,
+                    PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
                 }
             });
             let _stderr, _stdout;
@@ -624,19 +616,30 @@ export class SatelliteApp {
 
         this.store.set('latestUpdateVersion', appVersion);
 
+        // need to update clean_dag_run.py, so it should be deleted before running cwl-airflow init
+        try {
+            await fs.promises.unlink(`${this.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`)
+        } catch (e) {
+            Log.info('Failed to remove clean_dag_run.py');
+        }
+
+        // need to guarantee sequential execution of the following commands therefore use &&
+        // to make sure the connection is updated, we need to delete it first
         const init_commands = [
-            `airflow upgradedb`
+            `cwl-airflow init --upgrade && \
+             airflow connections -d --conn_id process_report && \
+             airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port}`
         ];
         await this.runCommands(init_commands);
+
         const airflowConfig: any = parse(fs.readFileSync(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
         airflowConfig.core.dag_concurrency = 2;
         airflowConfig.core.dags_are_paused_at_creation = 'False';
         airflowConfig.core.max_active_runs_per_dag = 2;
         airflowConfig.core.load_examples = 'False';
         airflowConfig.core.hostname_callable = 'socket:gethostname';
+        airflowConfig.core.max_active_runs_per_dag = 1;
         await fs.promises.writeFile(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
-        await fs.promises.mkdir(`${this.airflowSettings.AIRFLOW_HOME}/dags`, { recursive: true });
-        await fs.promises.copyFile(`${this.airflow_base_path}/Resources/app/cwl_airflow/dags/clean_dag_run.py`, `${this.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`);
     }
 
     /**
@@ -651,13 +654,20 @@ export class SatelliteApp {
 
         const self = this;
 
-        const init_commands = [
-            `airflow initdb`,
-            `airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port} --conn_extra "{\\\"endpoint\\\":\\\"/airflow/\\\"}"`
-        ];
-        // if (data.toString().includes('`conn_id`=process_report already exists')) {
-        // }
+        // need to update clean_dag_run.py, so it should be deleted before running cwl-airflow init
+        try {
+            fs.unlinkSync(`${this.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`)
+        } catch (e) {
+            Log.info('Failed to remove clean_dag_run.py');
+        }
 
+        // need to guarantee sequential execution of the following commands therefore use &&
+        // to make sure the connection is updated, we need to delete it first
+        const init_commands = [
+            `cwl-airflow init --upgrade && \
+             airflow connections -d --conn_id process_report && \
+             airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port}`
+        ];
         this.runCommands(init_commands);
 
         const airflowConfig: any = parse(fs.readFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
@@ -666,10 +676,8 @@ export class SatelliteApp {
         airflowConfig.core.max_active_runs_per_dag = 2;
         airflowConfig.core.load_examples = 'False';
         airflowConfig.core.hostname_callable = 'socket:gethostname';
-        // conf.set("cwl", "tmp_folder", os.path.join(self.airflow_home, 'tmp'))
+        airflowConfig.core.max_active_runs_per_dag = 1;
         fs.writeFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
-        fs.mkdirSync(`${self.airflowSettings.AIRFLOW_HOME}/dags`, { recursive: true });
-        fs.copyFileSync(`${self.airflow_base_path}/Resources/app/cwl_airflow/dags/clean_dag_run.py`, `${self.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`);
     }
 
     /**
