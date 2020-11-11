@@ -31,7 +31,6 @@ export class SatelliteApp {
 
     airflowSettings;
     satelliteSettings;
-    proxySettings;
     token;
     initComplete;
 
@@ -73,7 +72,6 @@ export class SatelliteApp {
 
         this.airflowSettings = this.store.get('airflowSettings', null);
         this.satelliteSettings = this.store.get('satelliteSettings', null);
-        this.proxySettings = this.store.get('proxySettings', null);
 
         this.pm2_home = path.join(app.getPath('home'), '/.pm2');
 
@@ -317,10 +315,10 @@ export class SatelliteApp {
      *
      */
     startPM2Aria2c() {
-        let cmd_args = ['--enable-rpc', '--rpc-listen-all=false', `--rpc-listen-port=${this.satelliteSettings.aria2cPort}`,
-            '--console-log-level=debug', '--auto-file-renaming=false']
-        if (this.proxySettings) {
-            cmd_args.push(`--all-proxy=${this.proxySettings}`)
+        const cmd_args = ['--enable-rpc', '--rpc-listen-all=false', `--rpc-listen-port=${this.satelliteSettings.aria2cPort}`,
+            '--console-log-level=debug', '--auto-file-renaming=false'];
+        if (this.satelliteSettings && this.satelliteSettings.proxy) {
+            cmd_args.push(`--all-proxy=${this.satelliteSettings.proxy}`);
         }
         const options = {
             name: 'aria2c',
@@ -444,8 +442,9 @@ export class SatelliteApp {
             NODE_OPTIONS: '--trace-warnings --pending-deprecation',
             PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
         };
-        if (this.proxySettings) {
-            env_var['https_proxy'] = `${this.proxySettings}`;
+        if (this.satelliteSettings && this.satelliteSettings.proxy) {
+            env_var['https_proxy'] = `${this.satelliteSettings.proxy}`;
+            env_var['http_proxy'] = `${this.satelliteSettings.proxy}`;
         }
         const options = {
             name: 'satellite',
