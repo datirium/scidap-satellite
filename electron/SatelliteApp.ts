@@ -110,6 +110,7 @@ export class SatelliteApp {
             title: 'SciDAP Satellite',
             webPreferences: {
                 nodeIntegration: true,
+                enableRemoteModule: true
             },
             tabbingIdentifier: 'SciDAP'
         });

@@ -51,7 +51,7 @@ if [ -e $SATDIR/main.js ]; then
 else
   echo "Building biowardrobe-ng-${BIOWARDROBE_NG_VERSION}"
   cd biowardrobe-ng-${BIOWARDROBE_NG_VERSION}
-  AOT=1 ROLLUP=0 meteor build --directory "${SATDIR}" > ${WORKDIR}/biowardrobe-ng-${BIOWARDROBE_NG_VERSION}_build.log 2>&1 
+  AOT=1 ROLLUP=0 meteor build --directory "${SATDIR}" > ${WORKDIR}/biowardrobe-ng-${BIOWARDROBE_NG_VERSION}_build.log 2>&1
   cd "${SATDIR}"
   mv bundle/* bundle/.node_version.txt .
   rm -rf bundle

@@ -11,6 +11,10 @@ lxml in cwl-airflow:
  git clone https://github.com/lxml/lxml
  python3.7 setup.py build --static-deps
 ```
+
+The most annoying patch is to sign the binaries https://github.com/electron-userland/electron-builder/pull/5322/commits/209874e84e83940f30b7f33086c3e6d00177bf6a, problem that `app-builder-lib/electron-osx-sign/util.js` ignores hidden and libs, etc.
+
+
 ## Boilerplate
 
 Clone this repository locally :
