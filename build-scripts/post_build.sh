@@ -25,8 +25,8 @@ download_and_extract() {
 
 
 # Setting up package versions
-NODE_VERSION="12.16.3"
-MONGO_VERSION="4.2.0"
+NODE_VERSION="12.19.0"
+MONGO_VERSION="4.2.10"
 ARIA2_VERSION="1.35.0"
 CWLAIRFLOW_VERSION="1.2.6"
 CWLAIRFLOW_PYTHON_VERSION="3.8"
@@ -51,6 +51,8 @@ if [ -e $SATDIR/main.js ]; then
 else
   echo "Building biowardrobe-ng-${BIOWARDROBE_NG_VERSION}"
   cd biowardrobe-ng-${BIOWARDROBE_NG_VERSION}
+#  cd ../../../barski-lab/biowardrobe-ng
+  npm install
   AOT=1 ROLLUP=0 meteor build --directory "${SATDIR}" > ${WORKDIR}/biowardrobe-ng-${BIOWARDROBE_NG_VERSION}_build.log 2>&1
   cd "${SATDIR}"
   mv bundle/* bundle/.node_version.txt .

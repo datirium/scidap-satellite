@@ -32,6 +32,8 @@ export class SatelliteSettingsComponent implements OnInit {
         mongoPort: 27017,
         pm2Port: 9615,
         baseUrl: 'http://localhost:3069/',
+        proxy: '',
+        noProxy: '',
         sslCert: '',
         sslKey: '',
         triggerDag: 'http://127.0.0.1:8080/api/experimental/dags/{dag_id}/dag_runs',
@@ -54,8 +56,9 @@ export class SatelliteSettingsComponent implements OnInit {
             ...this.airflowSettings,
             AIRFLOW_HOME: this._electronService.remote.app.getPath('userData') + '/airflow',
             init_commands: [
-                `airflow initdb`,
-                `airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port} --conn_extra "{\"endpoint\":\"/airflow/\"}"`
+                `cwl-airflow init --upgrade && \
+                 airflow connections -d --conn_id process_report && \
+                 airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port}`
             ]
         };
 

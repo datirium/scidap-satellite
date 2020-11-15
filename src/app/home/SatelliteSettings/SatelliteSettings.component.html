@@ -4,7 +4,7 @@
         <clr-tab>
             <button clrTabLink>Common</button>
             <ng-template [(clrIfActive)]="commonSettings">
-                <clr-tab-content>
+                <clr-tab-content class="form-flex">
                     <span class="clr-sr-only">Tabbing through form inputs will trigger validation messages to be read aloud.</span>
 
                     <clr-input-container>
@@ -69,6 +69,22 @@
                         </label>
                         <input clrInput type="number" max=65535 min=1000 class="clr-col-9" placeholder="40060" [(ngModel)]="satelliteSettings.port" name="port" required />
                         <clr-control-helper>Satellite service port number to listen on.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Proxy settings:
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" placeholder="http://USERNAME:PASSWORD@SERVER:PORT/" [(ngModel)]="satelliteSettings.proxy" name="proxy" required />
+                        <clr-control-helper>Your company can deny direct access to the Internet and instead have an HTTP or HTTPS proxy available. Usually port is 3128.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Exclude hosts from proxy:
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" placeholder="^.*\\(aventail\\|seanet\\)\\.com" [(ngModel)]="satelliteSettings.noProxy" name="noProxy" required />
+                        <clr-control-helper>Specifies URLs that should be excluded from proxying (on servers that should be contacted directly). Paired with a regexp matching host names not to be proxied. </clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 

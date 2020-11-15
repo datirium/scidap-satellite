@@ -12,6 +12,7 @@ import * as keytar from 'keytar';
 import { parse, stringify } from './IniParser';
 
 import { SatelliteDefault } from './SatelliteDefault';
+import { join } from 'path';
 
 const pm2 = require('pm2');
 
@@ -73,7 +74,7 @@ export class SatelliteApp {
         this.airflowSettings = this.store.get('airflowSettings', null);
         this.satelliteSettings = this.store.get('satelliteSettings', null);
 
-        this.pm2_home = path.join(app.getPath('home'), '/.pm2');
+        this.pm2_home = path.join(app.getPath('home'), '.pm2');
 
         this.initComplete = this.store.get('initComplete', false);
 
@@ -245,14 +246,25 @@ export class SatelliteApp {
             http_interface = path.join(this.services_base_path, '../../../', 'node_modules/pm2/bin/');
         }
         // const _spawn = spawn(`${this.services_base_path}/node`, [`${http_interface}/HttpInterface.js`], {
+        let env_var: any = {
+            PM2_API_PORT: this.satelliteSettings.pm2Port,
+            // PM2_HOME: this.pm2_home,
+            HOME: app.getPath('home'),
+            PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
+        };
+
+        if (this.satelliteSettings && this.satelliteSettings.proxy) {
+            env_var = {
+                ...env_var,
+                https_proxy: `${this.satelliteSettings.proxy}`,
+                http_proxy: `${this.satelliteSettings.proxy}`,
+                no_proxy: `${this.satelliteSettings.noProxy || ''}`
+            };
+        }
+
         const _spawn = spawn(`${http_interface}/pm2`, ['ping'], {
             shell: true,
-            env: {
-                PM2_API_PORT: this.satelliteSettings.pm2Port,
-                // PM2_HOME: this.pm2_home,
-                HOME: app.getPath('home'),
-                PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
-            }
+            env: env_var
         });
 
         _spawn.stderr.on('data', (data) => {
@@ -435,18 +447,25 @@ export class SatelliteApp {
      *
      */
     startSatellite() {
-        const env_var = {
+        let env_var: any = {
             MONGO_URL: `mongodb://localhost:${this.satelliteSettings.mongoPort}/scidap-satellite`,
             ROOT_URL: `${this.satelliteSettings.baseUrl}`,
             PORT: `${this.satelliteSettings.port}`,
             METEOR_SETTINGS: this.getSatelliteConf(),
             NODE_OPTIONS: '--trace-warnings --pending-deprecation',
             PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
+
         };
+
         if (this.satelliteSettings && this.satelliteSettings.proxy) {
-            env_var['https_proxy'] = `${this.satelliteSettings.proxy}`;
-            env_var['http_proxy'] = `${this.satelliteSettings.proxy}`;
+            env_var = {
+                ...env_var,
+                https_proxy: `${this.satelliteSettings.proxy}`,
+                http_proxy: `${this.satelliteSettings.proxy}`,
+                no_proxy: `${this.satelliteSettings.noProxy || ''}`
+            };
         }
+
         const options = {
             name: 'satellite',
             script: `${this.services_base_path}/../main.js`,
@@ -602,6 +621,23 @@ export class SatelliteApp {
         });
 
     }
+
+    /**
+     *
+     * @param a - version A '1.0.0'
+     * @param b - version B '1.0.1'
+     */
+    versionAisBiggerB(a: string, b: string): boolean {
+        const spltA = a.split('.');
+        const spltB = b.split('.');
+        for (let i = 0; i < spltA.length; i++) {
+            if (!spltB[i] || spltA[i] > spltB[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      *
      */
@@ -609,38 +645,40 @@ export class SatelliteApp {
 
         const latestUpdate = this.store.get('latestUpdateVersion');
         const appVersion = app.getVersion();
-        if (appVersion === latestUpdate) {
-            return;
-        }
 
-        this.airflowSettings = this.store.get('airflowSettings');
+        if (this.versionAisBiggerB('1.0.8', latestUpdate)) { // Updates for a specific version only!
 
-        this.store.set('latestUpdateVersion', appVersion);
+            this.airflowSettings = this.store.get('airflowSettings');
 
-        // need to update clean_dag_run.py, so it should be deleted before running cwl-airflow init
-        try {
-            await fs.promises.unlink(`${this.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`)
-        } catch (e) {
-            Log.info('Failed to remove clean_dag_run.py');
-        }
+            this.store.set('latestUpdateVersion', appVersion);
 
-        // need to guarantee sequential execution of the following commands therefore use &&
-        // to make sure the connection is updated, we need to delete it first
-        const init_commands = [
-            `cwl-airflow init --upgrade && \
+            // need to update clean_dag_run.py, so it should be deleted before running cwl-airflow init
+            try {
+                await fs.promises.unlink(`${this.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`);
+            } catch (e) {
+                Log.info('Failed to remove clean_dag_run.py');
+            }
+
+            // need to guarantee sequential execution of the following commands therefore use &&
+            // to make sure the connection is updated, we need to delete it first
+            const init_commands = [
+                `cwl-airflow init --upgrade && \
              airflow connections -d --conn_id process_report && \
              airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port}`
-        ];
-        await this.runCommands(init_commands);
+            ];
+            await this.runCommands(init_commands);
 
-        const airflowConfig: any = parse(fs.readFileSync(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
-        airflowConfig.core.dag_concurrency = 2;
-        airflowConfig.core.dags_are_paused_at_creation = 'False';
-        airflowConfig.core.max_active_runs_per_dag = 2;
-        airflowConfig.core.load_examples = 'False';
-        airflowConfig.core.hostname_callable = 'socket:gethostname';
-        airflowConfig.core.max_active_runs_per_dag = 1;
-        await fs.promises.writeFile(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
+            fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/tmp`, { recursive: true });
+
+            const airflowConfig: any = parse(fs.readFileSync(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
+            airflowConfig.core.dag_concurrency = 2;
+            airflowConfig.core.dags_are_paused_at_creation = 'False';
+            airflowConfig.core.load_examples = 'False';
+            airflowConfig.core.hostname_callable = 'socket:gethostname';
+            airflowConfig.core.max_active_runs_per_dag = 1;
+            airflowConfig.cwl.tmp_folder = join(this.satelliteSettings.scidapRoot, 'tmp');
+            await fs.promises.writeFile(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
+        }
     }
 
     /**
@@ -655,13 +693,6 @@ export class SatelliteApp {
 
         const self = this;
 
-        // need to update clean_dag_run.py, so it should be deleted before running cwl-airflow init
-        try {
-            fs.unlinkSync(`${this.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`)
-        } catch (e) {
-            Log.info('Failed to remove clean_dag_run.py');
-        }
-
         // need to guarantee sequential execution of the following commands therefore use &&
         // to make sure the connection is updated, we need to delete it first
         const init_commands = [
@@ -674,10 +705,10 @@ export class SatelliteApp {
         const airflowConfig: any = parse(fs.readFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
         airflowConfig.core.dag_concurrency = 2;
         airflowConfig.core.dags_are_paused_at_creation = 'False';
-        airflowConfig.core.max_active_runs_per_dag = 2;
         airflowConfig.core.load_examples = 'False';
         airflowConfig.core.hostname_callable = 'socket:gethostname';
         airflowConfig.core.max_active_runs_per_dag = 1;
+        airflowConfig.cwl.tmp_folder = join(this.satelliteSettings.scidapRoot, 'tmp');
         fs.writeFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
     }
 
@@ -687,6 +718,7 @@ export class SatelliteApp {
     async satelliteInit() {
         await this.airflowInit();
 
+        fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/tmp`, { recursive: true });
         fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/files`, { recursive: true });
         fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/mongodb`, { recursive: true });
         this.store.set('initComplete', true);
