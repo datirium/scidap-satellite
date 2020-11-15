@@ -1,7 +1,12 @@
 [clrInput] {
-    width: 100%;
+  width: 100%;
 }
 
 [clrCheckbox] {
-    width: 100%;
+  width: 100%;
+}
+
+// Override to make password full width
+::ng-deep .clr-input-wrapper {
+  min-width: 100% !important;
 }

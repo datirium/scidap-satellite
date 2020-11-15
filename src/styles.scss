@@ -7,3 +7,45 @@ html, body {
 
   height: 100%;
 }
+
+.form-flex {
+  width: 100%;
+
+  .clr-control-container {
+    display: block;
+    width: 100%;
+
+    // Override to make select full width
+    .clr-select-wrapper,
+    .clr-select {
+      width: 100%;
+    }
+
+    // Override to make search full width
+    .hf-search-wrapper > .hf-search,
+    .hf-search-select-input,
+    .hf-search-input-text-container {
+      width: 100%;
+    }
+
+    // Override to make input full width
+    .clr-input-wrapper > .clr-input {
+      width: 100%;
+    }
+
+    // Override to make password full width
+    .clr-input-wrapper {
+      width: 100%;
+
+      & > .clr-input-group {
+        max-width: 100%;
+        width: 100%;
+        padding-right: 0.4rem;
+
+        & > input {
+          width: calc(100% - 1rem);
+        }
+      }
+    }
+  }
+}

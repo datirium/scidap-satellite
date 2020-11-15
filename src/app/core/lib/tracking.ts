@@ -1,12 +1,22 @@
 'use strict';
 
-import { Observable ,  Subscriber ,  Subscription } from 'rxjs';
+import { Directive } from '@angular/core';
+import { Tracker } from 'meteor/tracker';
+
+import {
+    Observable,
+    Subscriber,
+    Subscription
+} from 'rxjs';
 
 import { MeteorObservable } from './meteor.observable';
 
+
+// TODO: Add Angular decorator.
+@Directive()
 export class Tracking {
 
-    protected __disposables: {dispose: string, track: Object, id?: string}[] = [];
+    protected __disposables: { dispose: string, track: Object, id?: string }[] = [];
 
     /**
      * Tracks the given value and disposes of it when the object gets destroyed
@@ -26,11 +36,11 @@ export class Tracking {
         const st = this.__disposables.find(d => d.id === id);
         if (st) {
             st.track[st.dispose]();
-            this.__disposables = this.__disposables.filter( e => e.id !== id);
+            this.__disposables = this.__disposables.filter(e => e.id !== id);
         }
         if (!track) { return; }
 
-        const o = this.getDispose(track);
+        let o = this.getDispose(track);
         o['id'] = id;
         this.__disposables.push(o);
     }
@@ -57,28 +67,18 @@ export class Tracking {
         };
         if (track instanceof Subscription) {
             dispose.dispose = 'unsubscribe';
-        } else
-
-        if (track instanceof Subscriber ) {
-          dispose.dispose = 'unsubscribe';
-        } else
-
-        if (typeof track['stop'] === 'function' && track['subscriptionId']) {
+        } else if (track instanceof Subscriber) {
+            dispose.dispose = 'unsubscribe';
+        } else if (typeof track['stop'] === 'function' && track['subscriptionId']) {
             dispose.dispose = 'stop';
-        } else
-
-        if (typeof track['stop'] === 'function' && track instanceof Tracker.Computation) {
+        } else if (typeof track['stop'] === 'function' && track instanceof Tracker.Computation) {
             dispose.dispose = 'stop';
-        } else
-
-        if (typeof track['destroy'] === 'function') {
+        } else if (typeof track['destroy'] === 'function') {
             dispose.dispose = 'destroy';
-        } else
-
-        if (typeof track['dispose'] === 'function') {
+        } else if (typeof track['dispose'] === 'function') {
             dispose.dispose = 'dispose';
         } else {
-          dispose.dispose = 'unsubscribe';
+            dispose.dispose = 'unsubscribe';
             console.log('track', track, track instanceof Subscription, track instanceof Subscriber);
             // throw new Error('Could not find a method that would destroy an object');
         }
@@ -87,6 +87,7 @@ export class Tracking {
     }
 
     ngOnDestroy(): void {
+        console.log('destroy', this);
         this.cleanup();
     }
 
