@@ -27,9 +27,12 @@
         "!**/*.ts",
         "!**/*.js.map",
         "!*.code-workspace",
+        "!.*",
         "!LICENSE.md",
         "!package.json",
         "!package-lock.json",
+        "!meteor.tar.bz2",
+        "!*.log",
         "!Services/",
         "!build-scripts/",
         "!src/",
@@ -43,6 +46,8 @@
         "!tslint.json",
         "!postinstall*.js",
         "!test*",
+        "!sign-cwl-airflow",
+        "!dev-app-update.yml",
         "!embedded.provisionprofile"
     ],
     "publish": [

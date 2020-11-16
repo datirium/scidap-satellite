@@ -29,7 +29,7 @@ build_biowardobe_ng() {
   else
     echo "Building biowardrobe-ng from $1"
     cd $1
-    meteor npm install
+    npm install
     AOT=1 ROLLUP=0 meteor build --directory "${SATDIR}" > ${WORKDIR}/biowardrobe-ng-${BIOWARDROBE_NG_VERSION}_build.log 2>&1 
     cd "${SATDIR}"
     mv bundle/* bundle/.node_version.txt .
@@ -41,15 +41,24 @@ build_biowardobe_ng() {
 
 
 # Setting up package versions
-NODE_VERSION="12.16.3"
-MONGO_VERSION="4.2.0"
+NODE_VERSION="12.19.0"
+MONGO_VERSION="4.2.10"
 ARIA2_VERSION="1.35.0"
 CWLAIRFLOW_VERSION="1.2.6"
 CWLAIRFLOW_PYTHON_VERSION="3.8"
 CWLAIRFLOW_MACOS_VERSION="10.15.7"
 BIOWARDROBE_NG_VERSION="2.0.0"
-BIOWARDROBE_NG_LOCAL_PATH=""        # if not "", this absolute path will be used and BIOWARDROBE_NG_VERSION will be ignored 
 SRA_TOOLKIT_VERSION="2.10.8"
+
+
+# Loading variables from .env if provided
+# Can be used for redefining package versions from above
+# and setting BIOWARDROBE_NG_LOCAL_PATH for building
+# BioWardrobe-NG from the local path
+if [ -e .env ]; then
+  echo "Loading variables from .env"
+  export $(egrep -v '^#' .env | xargs)
+fi
 
 
 # Preparing working directory
