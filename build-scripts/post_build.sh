@@ -23,6 +23,22 @@ download_and_extract() {
   fi
 }
 
+build_biowardobe_ng() {
+  if [ -e $SATDIR/main.js ]; then
+    warn "biowardrobe-ng has been already built. Skipping compilation"
+  else
+    echo "Building biowardrobe-ng from $1"
+    cd $1
+    npm install
+    AOT=1 ROLLUP=0 meteor build --directory "${SATDIR}" > ${WORKDIR}/biowardrobe-ng-${BIOWARDROBE_NG_VERSION}_build.log 2>&1 
+    cd "${SATDIR}"
+    mv bundle/* bundle/.node_version.txt .
+    rm -rf bundle
+    mkdir -p bin
+    chmod -R u+w ${SATDIR}
+  fi
+}
+
 
 # Setting up package versions
 NODE_VERSION="12.19.0"
@@ -35,6 +51,16 @@ BIOWARDROBE_NG_VERSION="2.0.0"
 SRA_TOOLKIT_VERSION="2.10.8"
 
 
+# Loading variables from .env if provided
+# Can be used for redefining package versions from above
+# and setting BIOWARDROBE_NG_LOCAL_PATH for building
+# BioWardrobe-NG from the local path
+if [ -e .env ]; then
+  echo "Loading variables from .env"
+  export $(egrep -v '^#' .env | xargs)
+fi
+
+
 # Preparing working directory
 rm -rf ../Services && mkdir -p ../Services
 mkdir -p ../build && cd ../build && mkdir -p satellite
@@ -42,23 +68,16 @@ WORKDIR=$(pwd)
 SATDIR=${WORKDIR}/satellite
 
 
-# Downloading and building BioWardrobe-NG
-cd ${WORKDIR}
-BIOWARDROBE_NG_URL="https://github.com/Barski-lab/biowardrobe-ng/archive/${BIOWARDROBE_NG_VERSION}.tar.gz"
-download_and_extract $BIOWARDROBE_NG_URL ${BIOWARDROBE_NG_VERSION}.tar.gz biowardrobe-ng-${BIOWARDROBE_NG_VERSION}
-if [ -e $SATDIR/main.js ]; then
-  warn "biowardrobe-ng-${BIOWARDROBE_NG_VERSION} has been already built. Skipping compilation"
+if [ -n "$BIOWARDROBE_NG_LOCAL_PATH" ]; then
+  # Building BioWardrobe-NG from the local path, BIOWARDROBE_NG_VERSION is not used
+  cd ${WORKDIR}
+  build_biowardobe_ng ${BIOWARDROBE_NG_LOCAL_PATH}
 else
-  echo "Building biowardrobe-ng-${BIOWARDROBE_NG_VERSION}"
-  cd biowardrobe-ng-${BIOWARDROBE_NG_VERSION}
-#  cd ../../../barski-lab/biowardrobe-ng
-  npm install
-  AOT=1 ROLLUP=0 meteor build --directory "${SATDIR}" > ${WORKDIR}/biowardrobe-ng-${BIOWARDROBE_NG_VERSION}_build.log 2>&1
-  cd "${SATDIR}"
-  mv bundle/* bundle/.node_version.txt .
-  rm -rf bundle
-  mkdir -p bin
-  chmod -R u+w ${SATDIR}
+  # Downloading and building BioWardrobe-NG from the GitHub release BIOWARDROBE_NG_VERSION
+  cd ${WORKDIR}
+  BIOWARDROBE_NG_URL="https://github.com/Barski-lab/biowardrobe-ng/archive/${BIOWARDROBE_NG_VERSION}.tar.gz"
+  download_and_extract $BIOWARDROBE_NG_URL ${BIOWARDROBE_NG_VERSION}.tar.gz biowardrobe-ng-${BIOWARDROBE_NG_VERSION}
+  build_biowardobe_ng biowardrobe-ng-${BIOWARDROBE_NG_VERSION}
 fi
 
 
