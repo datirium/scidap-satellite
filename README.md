@@ -45,7 +45,7 @@ To build relocatable `tar.gz` that can be run with PM2 on any Ubuntu >= 18.04 st
 and run the following commands. Use optional `.env` file to redefine default package versions if necessary.
 
 ```bash
-sudo apt install git g++ make curl libssl-dev   # we need libssl-dev for aria2c because we configured it --with-openssl
+sudo apt-get install git g++ make curl libssl-dev   # we need libssl-dev for aria2c because we configured it --with-openssl
 curl https://install.meteor.com/ | sh           # installing meteor with its own node 
 git clone https://github.com/datirium/scidap-satellite.git
 cd ./scidap-satellite/build-scripts
@@ -54,7 +54,7 @@ cd ./scidap-satellite/build-scripts
 
 To run relocatable `tar.gz` on any Ubuntu >= 18.04 use the following commands
 ```
-sudo apt install git nodejs npm
+sudo apt-get install git nodejs npm
 npm install -g pm2                # skip -g in case of permissions problems
 
 ... to be continued ...
