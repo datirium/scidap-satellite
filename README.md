@@ -39,14 +39,23 @@ Please follow [Angular-cli documentation](https://github.com/angular/angular-cli
 npm install -g @angular/cli
 ```
 
-## To build relocatable *tar.gz* that can be run with PM2 on any Ubuntu >= 18.04
+## Relocatable **tar.gz** for Ubuntu >= 18.04
 
-On a virtual machine with Ubuntu 18.04 run the following commands. Use optional `.env` file to redefine default package versions.
+To build relocatable `tar.gz` that can be run with PM2 on any Ubuntu >= 18.04 start virtual machine with Ubuntu 18.04
+and run the following commands. Use optional `.env` file to redefine default package versions if necessary.
 
 ```bash
-sudo apt install git g++ make curl libssl-dev   # we need libssl-dev for aria if we use --with-openssl
-curl https://install.meteor.com/ | sh
+sudo apt install git g++ make curl libssl-dev   # we need libssl-dev for aria2c because we configured it --with-openssl
+curl https://install.meteor.com/ | sh           # installing meteor with its own node 
 git clone https://github.com/datirium/scidap-satellite.git
 cd ./scidap-satellite/build-scripts
 ./post_build_ubuntu.sh
+```
+
+To run relocatable `tar.gz` on any Ubuntu >= 18.04 use the following commands
+```
+sudo apt install git nodejs npm
+npm install -g pm2                # skip -g in case of permissions problems
+
+... to be continued ...
 ```
