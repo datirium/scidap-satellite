@@ -1,90 +1,143 @@
-services_base_path = path.join(__dirname, '../Services/satellite/bin');
-airflow_base_path = path.join(__dirname, '../Services/cwl-airflow/');
-AIRFLOW_HOME = ""
-scidapRoot = ""
-mongoPort = 27017
-airflowAPIPort = 8080
-aria2cPort = 6800
-port = 3070
-proxy = ""
-noProxy = ""
-baseUrl = ""
-secret_token = ""
-triggerDag = "http://127.0.0.1:8080/api/experimental/dags/{dag_id}/dag_runs"
-sslCert = ""
-sslKey = ""
-scidapSSLPort = 0
-localFiles = ""
+// This file should be placed into the Services folder
+
+// script should be absolue path, otherwise it will be resolved
+// relative to the directory where pm2 start was run
+
+var path = require('path');
+var fs = require('fs');
 
 
-const aria_cmd_args = [
-  '--enable-rpc',
-  '--rpc-listen-all=false',
-  `--rpc-listen-port=${aria2cPort}`,
-  '--console-log-level=debug',
-  '--auto-file-renaming=false'
-];
-
-if (proxy) {
-  aria_cmd_args.push(`--all-proxy=${proxy}`);
-}
-
-let satellite_env_var = {
-  MONGO_URL: `mongodb://localhost:${mongoPort}/scidap-satellite`,
-  ROOT_URL: `${baseUrl}`,
-  PORT: `${port}`,
-  METEOR_SETTINGS: getSatelliteConf(),
-  NODE_OPTIONS: '--trace-warnings --pending-deprecation',
-  PATH: `${services_base_path}:${airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
-
-};
-
-if (proxy) {
-  satellite_env_var = {
-      ...satellite_env_var,
-      https_proxy: `${proxy}`,
-      http_proxy: `${proxy}`,
-      no_proxy: `${noProxy || ''}`
+function getAria2cArgs(satelliteSettings){
+  const aria2cArgs = [
+    '--enable-rpc',
+    '--rpc-listen-all=false',
+    `--rpc-listen-port=${satelliteSettings.aria2cPort}`,
+    '--console-log-level=debug',
+    '--auto-file-renaming=false'
+  ];  
+  if (satelliteSettings && satelliteSettings.proxy) {
+    aria2cArgs.push(`--all-proxy=${satelliteSettings.proxy}`);
   };
+  return aria2cArgs
 }
 
 
-function getSatelliteConf() {
-  const satelliteConf = {
-      ...SatelliteDefault,
-      base_url: baseUrl,
-      rc_server_token: secret_token,
-      systemRoot: scidapRoot,
+function getMongodArgs(satelliteSettings){
+  const mongodArgs = [
+    '--bind_ip=127.0.0.1',
+    `--port=${satelliteSettings.mongoPort}`,
+    `--dbpath=${satelliteSettings.scidapRoot}/mongodb`
+  ];
+  return mongodArgs
+}
+
+
+function getAirflowEnvVar(pathEnvVar, airflowSettings){
+  const airflowEnvVar = {
+    PATH: pathEnvVar,
+    AIRFLOW_HOME: airflowSettings.AIRFLOW_HOME,
+    LC_ALL: 'en_US.UTF-8',
+    LANG: 'en_US.UTF-8'
+  };
+  return airflowEnvVar
+}
+
+
+function getAirflowApiServerArgs(satelliteSettings){
+  const airflowApiServerArgs = [
+    'api',
+    `--port=${satelliteSettings.airflowAPIPort}`
+  ];
+  return airflowApiServerArgs
+}
+
+
+function getMeteorSettings(meteorDefaultSettingsJson, satelliteSettings, airflowSettings, rc_server_token){
+  const meteorDefaultSettings = JSON.parse(fs.readFileSync(meteorDefaultSettingsJson));
+  const meteorSettings = {
+      ...meteorDefaultSettings,
+      base_url: satelliteSettings.baseUrl,
+      rc_server_token: rc_server_token,
+      systemRoot: satelliteSettings.scidapRoot,
       airflow: {
-          trigger_dag: triggerDag,
-          dags_folder: `${AIRFLOW_HOME}/dags/`
+          trigger_dag: satelliteSettings.triggerDag,
+          dags_folder: `${airflowSettings.AIRFLOW_HOME}/dags/`                // won't work if airflow.cfg was updated manually
       },
-      logFile: `${AIRFLOW_HOME}/../satellite-service.log`,
+      logFile: `${airflowSettings.AIRFLOW_HOME}/../satellite-service.log`,    // maybe we can find better place for this
   };
-
-  if (sslCert && sslKey && scidapSSLPort) {
-      satelliteConf['SSL'] = {
-          'key': sslKey,
-          'cert': sslCert,
-          'port': scidapSSLPort
+  if (satelliteSettings.sslCert && satelliteSettings.sslKey && satelliteSettings.scidapSSLPort) {
+      meteorSettings['SSL'] = {
+          'key': satelliteSettings.sslKey,
+          'cert': satelliteSettings.sslCert,
+          'port': satelliteSettings.scidapSSLPort
       };
   }
-
-  if (localFiles) {
-      satelliteConf.remotes.localfiles = {
-          ...satelliteConf.remotes.localfiles,
-          base_directory: `${app.getPath('home')}`    // `${this.satelliteSettings.scidapRoot}/files`  We don't have getPath in PM2
+  if (satelliteSettings.localFiles) {
+      meteorSettings.remotes.localfiles = {
+          ...meteorSettings.remotes.localfiles,
+          base_directory: `${satelliteSettings.scidapRoot}/files`
       };
   } else {
-      satelliteConf.remotes.localfiles = {
+      meteorSettings.remotes.localfiles = {
           collection: {},
           publication: 'none'
       };
   }
-
-  return satelliteConf;
+  return meteorSettings;
 }
 
+
+function getSatelliteEnvVar(pathEnvVar, meteorDefaultSettingsJson, satelliteSettings, airflowSettings, rc_server_token){
+  let satelliteEnvVar = {
+    PATH: pathEnvVar,
+    MONGO_URL: `mongodb://localhost:${satelliteSettings.mongoPort}/scidap-satellite`,
+    ROOT_URL: satelliteSettings.baseUrl,
+    PORT: satelliteSettings.port,
+    METEOR_SETTINGS: getMeteorSettings(meteorDefaultSettingsJson, satelliteSettings, airflowSettings, rc_server_token),
+    NODE_OPTIONS: '--trace-warnings --pending-deprecation'
+  };
+  if (satelliteSettings && satelliteSettings.proxy) {
+    satelliteEnvVar = {
+      ...satelliteEnvVar,
+      https_proxy: satelliteSettings.proxy,
+      http_proxy: satelliteSettings.proxy,
+      no_proxy: satelliteSettings.noProxy || ''
+    };
+  };
+  return satelliteEnvVar
+}
+
+
+// variables that depend on the script location and should be initiated on every run
+const satelliteBin = path.join(__dirname, './satellite/bin');
+const cwlAirflowBin = path.join(__dirname, './cwl-airflow/bin');
+const pathEnvVar = `${satelliteBin}:${cwlAirflowBin}:/usr/bin:/bin:/usr/local/bin`
+const meteorDefaultSettingsJson = path.join(__dirname, 'meteor_default_settings.json');
+
+// variables that should be kept secret
+const rc_server_token = ""
+
+// variables that can be set in the separate configuration file
+const satelliteSettings = {
+  'port': 3069,
+  'scidapRoot': '/Users/tester/scidap',
+  'scidapSSLPort': 3070,
+  'airflowAPIPort': 8080,
+  'aria2cPort': 6800,
+  'mongoPort': 27017,
+  'pm2Port': 9615,
+  'baseUrl': 'http://localhost:3069/',
+  'sslCert': '',
+  'sslKey': '',
+  'triggerDag': 'http://127.0.0.1:8080/api/experimental/dags/{dag_id}/dag_runs',
+  'localFiles': true
+}
+const airflowSettings = { 
+  'AIRFLOW_HOME': '/Users/tester/Library/Application Support/scidap-satellite/airflow'
+}
+
+
+// we don't want to keep init_commands in airflowSettings as they depend on satelliteSettings
 
 // Add something that will run all airflow initdb, etc
 
@@ -93,130 +146,48 @@ module.exports = {
   apps : [
     {
       name: 'aria2c',
-      script: `${services_base_path}/aria2c`,
-      args: aria_cmd_args,
+      script: `${satelliteBin}/aria2c`,
+      args: getAria2cArgs(satelliteSettings),
       watch: false,
       exec_mode: 'fork_mode',
-      cwd: `${scidapRoot}/files`
+      cwd: `${satelliteSettings.scidapRoot}/files`
     },
     {
       name: 'mongod',
-      script: `${services_base_path}/mongod`,
-      args: [`--port=${mongoPort}`, '--bind_ip=127.0.0.1', `--dbpath=${scidapRoot}/mongodb`],
+      script: `${satelliteBin}/mongod`,
+      args: getMongodArgs(satelliteSettings),
       watch: false,
       exec_mode: 'fork_mode',
-      cwd: `${scidapRoot}/mongodb`
+      cwd: `${satelliteSettings.scidapRoot}/mongodb`
     },
     {
       name: 'airflow-scheduler',
-      script: `${airflow_base_path}/bin_portable/airflow`,
+      script: `${cwlAirflowBin}/airflow`,
       args: ['scheduler'],
       interpreter: 'bash',
       watch: false,
       exec_mode: 'fork_mode',
-      cwd: AIRFLOW_HOME,
-      env: {
-          PATH: `${services_base_path}:${airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`,
-          AIRFLOW_HOME: AIRFLOW_HOME,
-          LC_ALL: 'en_US.UTF-8',
-          LANG: 'en_US.UTF-8'
-      }
+      cwd: satelliteSettings.scidapRoot,
+      env: getAirflowEnvVar(pathEnvVar, airflowSettings)
     },
     {
       name: 'airflow-apiserver',
-      script: `${airflow_base_path}/bin_portable/cwl-airflow`,
-      args: ['api', `--port=${airflowAPIPort}`],
+      script: `${cwlAirflowBin}/cwl-airflow`,
+      args: getAirflowApiServerArgs(satelliteSettings),
       interpreter: 'bash',
       watch: false,
       exec_mode: 'fork_mode',
-      cwd: `${scidapRoot}`,
-      env: {
-          PATH: `${services_base_path}:${airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`,
-          AIRFLOW_HOME: AIRFLOW_HOME
-      }
+      cwd: satelliteSettings.scidapRoot,
+      env: getAirflowEnvVar(pathEnvVar, airflowSettings)
     },
     {
       name: 'satellite',
-      script: `${services_base_path}/../main.js`,
+      script: `${satelliteBin}/../main.js`,
       interpreter: 'node',
       watch: false,
       exec_mode: 'fork_mode',
-      cwd: `${scidapRoot}`,
-      env: satellite_env_var
+      cwd: satelliteSettings.scidapRoot,
+      env: getSatelliteEnvVar(pathEnvVar, meteorDefaultSettingsJson, satelliteSettings, airflowSettings, rc_server_token)
     }
   ]
 }
-
-
-export const SatelliteDefault = {
-  'name': 'SciDAP Satellite',
-  'logLevel': 'debug',
-  'base_url': 'https://10.17.109.169:3070/',
-  'rc_server': 'https://api-sync.scidap.com',
-  'rc_server_token': '',
-  'cors_package': true,
-  'email': {
-      'url': '',
-      'from': ''
-  },
-  'extra_users': [],
-  'public': {
-  },
-  'accounts': {
-      'sendVerificationEmail': true,
-      'forbidClientAccountCreation': true,
-      'loginExpirationInDays': 7
-  },
-  'systemRoot': '/scidap',
-  'airflow': {
-      'trigger_dag': 'http://127.0.0.1:8080/api/experimental/dags/{dag_id}/dag_runs',
-      'dags_folder': '/home/datirium/airflow/dags'
-  },
-  'ldap': {},
-  'oauth2server': {},
-  'download': {
-      'aria2': {
-          'host': 'localhost',
-          'port': 6800,
-          'secure': false,
-          'secret': '',
-          'path': '/jsonrpc'
-      }
-  },
-  'remotes': {
-      'postform': {
-          'collection': {},
-          'publication': 'none'
-      },
-      'localfiles': {
-          'caption': 'Local files',
-          'type': 'files',
-          'protocol': 'files',
-          'base_directory': '/scidap/upload',
-          'collection': {
-              'name': 'local_files_collection',
-              'nullConnection': true
-          },
-          'publication': 'local_files_collection',
-          'refreshSessionInterval': 180
-      },
-      'directurl': {
-          'caption': 'Direct URL',
-          'type': 'urls',
-          'protocol': [
-              'https',
-              'http',
-              'ftp'
-          ],
-          'refreshSessionInterval': 180
-      },
-      'geo': {
-          'caption': 'GEO',
-          'type': 'urls',
-          'protocol': [
-              'geo'
-          ],
-          'refreshSessionInterval': 180
-      }
-  }
-};
