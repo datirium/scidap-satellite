@@ -115,11 +115,12 @@ else
   ARIA2_URL="https://github.com/aria2/aria2/releases/download/release-${ARIA2_VERSION}/aria2-${ARIA2_VERSION}.tar.gz"
   download_and_extract $ARIA2_URL aria2-${ARIA2_VERSION}.tar.gz aria2-${ARIA2_VERSION}
   echo "Compiling aria2-${ARIA2_VERSION}"
-  cd aria2-${ARIA2_VERSION}                        # add --with-openssl
+  cd aria2-${ARIA2_VERSION}
   ./configure --disable-dependency-tracking \
       --enable-static=yes \
       --enable-shared=no \
       --prefix=${WORKDIR}/aria2-${ARIA2_VERSION} \
+      --with-openssl \
       --without-libssh2 \
       --without-libcares \
       --without-gnutls \
