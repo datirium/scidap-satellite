@@ -107,11 +107,15 @@ function getSatelliteEnvVar(pathEnvVar, meteorDefaultSettingsJson, satelliteSett
 
 
 function waitForInitConfiguration(pathEnvVar, satelliteSettings, airflowSettings){
-  fs.mkdirSync(satelliteSettings.scidapRoot, {recursive: true});  // need to create this folder before any other command is executed
+  try {
+    fs.mkdirSync(satelliteSettings.scidapRoot, {recursive: true});  // need to create this folder before any other command is executed
+  } catch (e) {
+    console.log(`${satelliteSettings.scidapRoot} directory already exist`);
+  }
   try {
     fs.unlinkSync(`${satelliteSettings.scidapRoot}/airflow/dags/clean_dag_run.py`);
   } catch (e) {
-    console.log('Failed to remove clean_dag_run.py');
+    console.log('clean_dag_run.py does not exist or have been already removed');
   }
   const command = `mkdir -p ${satelliteSettings.scidapRoot}/files && \
                    mkdir -p ${satelliteSettings.scidapRoot}/mongodb && \
