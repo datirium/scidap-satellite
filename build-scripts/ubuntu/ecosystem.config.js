@@ -107,6 +107,7 @@ function getSatelliteEnvVar(pathEnvVar, meteorDefaultSettingsJson, satelliteSett
 
 
 function waitForInitConfiguration(pathEnvVar, satelliteSettings, airflowSettings){
+  fs.mkdirSync(satelliteSettings.scidapRoot, {recursive: true});  // need to create this folder before any other command is executed
   try {
     fs.unlinkSync(`${satelliteSettings.scidapRoot}/airflow/dags/clean_dag_run.py`);
   } catch (e) {
@@ -124,7 +125,6 @@ function waitForInitConfiguration(pathEnvVar, satelliteSettings, airflowSettings
     {
       cwd: `${satelliteSettings.scidapRoot}`,
       shell: true,
-      stdio: 'inherit',
       env: {
           AIRFLOW_HOME: `${satelliteSettings.scidapRoot}/airflow`,
           PATH: pathEnvVar
