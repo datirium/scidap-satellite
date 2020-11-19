@@ -2,7 +2,7 @@ var path = require('path');
 var fs = require('fs');
 var child_process = require('child_process');
 var ini = require('ini');
-var os = require('os')
+var os = require('os');
 
 
 function getAria2cArgs(satelliteSettings){
