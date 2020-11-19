@@ -54,7 +54,7 @@ cd ./scidap-satellite/build-scripts
 
 To run relocatable `tar.gz` on any Ubuntu >= 18.04 use the following commands
 ```
-sudo apt-get install git nodejs npm
+sudo apt-get install git nodejs npm curl            # mongod doesn't work without curl
 npm install pm2
 ... to be continued ...
 ```
