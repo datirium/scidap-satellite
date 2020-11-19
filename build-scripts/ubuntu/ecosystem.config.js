@@ -2,6 +2,7 @@ var path = require('path');
 var fs = require('fs');
 var child_process = require('child_process');
 var ini = require('ini');
+var os = require('os')
 
 
 function getAria2cArgs(satelliteSettings){
@@ -150,7 +151,7 @@ const rc_server_token = ""
 // variables that can be set in the separate configuration file
 const satelliteSettings = {
   'port': 3069,
-  'scidapRoot': '/Users/tester/scidap',
+  'scidapRoot': path.join(os.homedir(), 'scidap'),
   'scidapSSLPort': 3070,
   'airflowAPIPort': 8080,
   'aria2cPort': 6800,
