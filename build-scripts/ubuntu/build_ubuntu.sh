@@ -18,7 +18,7 @@ download_and_extract() {
     warn "Location $EXTRACTED_NAME already exist. Skipping"
   else
     echo "Extracting $COMPRESSED_NAME"
-    tar -zxvf $COMPRESSED_NAME > ${EXTRACTED_NAME}_extraction.log 2>&1
+    tar -xvf $COMPRESSED_NAME > ${EXTRACTED_NAME}_extraction.log 2>&1
   fi
 }
 
