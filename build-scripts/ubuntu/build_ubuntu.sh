@@ -162,4 +162,4 @@ cd ../ubuntu_post_build
 cp ../ubuntu/ecosystem.config.js .
 cp ../ubuntu/meteor_default_settings.json .
 tar -czf scidap-satellite.tar.gz ./*
-rm -rf cwl-airflow ${SATDIR} ecosystem.config.js meteor_default_settings.json
+rm -rf cwl-airflow satellite ecosystem.config.js meteor_default_settings.json
