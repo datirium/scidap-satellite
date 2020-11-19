@@ -108,7 +108,7 @@ else
 fi
 
 
-# Downloading and compiling Aria2
+# Downloading Aria2
 if [ -e ${SATDIR}/bin/aria2c ]; then
   warn "Aria2c has been already compiled. Skipping"
 else
