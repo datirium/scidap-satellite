@@ -129,10 +129,14 @@ function waitForInitConfiguration(pathEnvVar, satelliteSettings, airflowSettings
       }
     }
   )
+  try {
+    fs.unlinkSync(`${satelliteSettings.scidapRoot}/airflow/dags/clean_dag_run.py`);
+  } catch (e) {
+    console.log('Failed to remove clean_dag_run.py');
+  }
   const airflowCfg = ini.parse(fs.readFileSync(`${satelliteSettings.scidapRoot}/airflow/airflow.cfg`, 'utf-8'));
   for (key in airflowSettings){
-    section = key.split(".")[0]
-    parameter = key.split(".")[1]
+    [section, parameter] = key.split(".")
     airflowCfg[section][parameter] = airflowSettings[key]
   };
   fs.writeFileSync(`${satelliteSettings.scidapRoot}/airflow/airflow.cfg`, ini.stringify(airflowCfg, {whitespace: true}));
