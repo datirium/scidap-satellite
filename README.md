@@ -57,9 +57,40 @@ cd ./build-scripts/ubuntu/
 
 After script finished running, you will find a compressed `scidap-satellite.tar.gz` in the `../ubuntu_post_build` folder. All the temporary data is kept in `../build` and can be removed unless you want to save some time when rerunning `build_ubuntu.sh` script.
 
-To run relocatable `tar.gz` on any Ubuntu >= 18.04 use the following commands
+To run relocatable `scidap-satellite.tar.gz` on clean Ubuntu >= 18.04 use the following commands
+```bash
+sudo apt-get install git nodejs npm curl              # mongod doesn't work without curl
+mkdir satellite
+mv scidap-satellite.tar.gz satellite                  # initial location of scidap-satellite.tar.gz might be different
+cd satellite
+tar xzf scidap-satellite.tar.gz
+npm install pm2                                       # you can also install pm2 globally
+                                                      # update ecosystem.config.js based on the recommendation below  
+./node_modules/pm2/bin/pm2 start ecosystem.config.js  # start ecosystem.config.js with PM2
 ```
-sudo apt-get install git nodejs npm curl            # mongod doesn't work without curl
-npm install pm2
-... to be continued ...
+
+The following parameters from `ecosystem.config.js` file can be updated
+
+```js
+const rc_server_token = ""
+const satelliteSettings = {
+  'port': 3069,
+  'scidapRoot': path.join(os.homedir(), 'scidap'),
+  'scidapSSLPort': 3070,
+  'airflowAPIPort': 8080,
+  'aria2cPort': 6800,
+  'mongoPort': 27017,
+  'pm2Port': 9615,
+  'baseUrl': 'http://localhost:3069/',
+  'sslCert': '',
+  'sslKey': '',
+  'triggerDag': 'http://127.0.0.1:8080/api/experimental/dags/{dag_id}/dag_runs',
+  'localFiles': true
+}
+const airflowSettings = { 
+  'core.dag_concurrency': 2,
+  'core.dags_are_paused_at_creation': 'False',
+  'core.load_examples': 'False',
+  'core.max_active_runs_per_dag': 1
+}
 ```
