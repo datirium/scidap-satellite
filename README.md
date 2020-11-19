@@ -45,7 +45,7 @@ To build relocatable `tar.gz` that can be run with PM2 on any Ubuntu >= 18.04 st
 and run the following commands. To redefine default program versions used in a script, provide an optional `.env` file in the same folder as `build_ubuntu.sh` script.
 
 ```bash
-sudo apt-get install git g++ make curl libssl-dev pkg-config   # we need libssl-dev and pkg-config for aria2c to be compiled --with-openssl
+sudo apt-get install git g++ make curl
 curl https://install.meteor.com/ | sh                          # installing meteor with its own node for building BioWardrobe-NG
 git clone https://github.com/datirium/scidap-satellite.git
 cd ./scidap-satellite/
