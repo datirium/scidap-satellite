@@ -63,7 +63,7 @@ fi
 
 
 # Preparing working directory
-rm -rf ../post_build && mkdir -p ../post_build
+rm -rf ../ubuntu_post_build && mkdir -p ../ubuntu_post_build
 mkdir -p ../build/satellite/bin && cd ../build/
 WORKDIR=$(pwd)
 SATDIR=${WORKDIR}/satellite
@@ -154,10 +154,10 @@ else
 fi
 
 
-# Moving installed programs to the post_build folder, copying configuration files. Compressing results
+# Moving installed programs to the ubuntu_post_build folder, copying configuration files. Compressing results
 cd ${WORKDIR}
-mv cwl-airflow ${SATDIR} ../post_build
-cp ecosystem.config.js ../post_build
-cp meteor_default_settings.json ../post_build
-cd ../post_build
+mv cwl-airflow ${SATDIR} ../ubuntu_post_build
+cp ecosystem.config.js ../ubuntu_post_build
+cp meteor_default_settings.json ../ubuntu_post_build
+cd ../ubuntu_post_build
 tar -czf scidap-satellite.tar.gz ./*
