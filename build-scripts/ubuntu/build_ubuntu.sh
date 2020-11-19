@@ -158,6 +158,6 @@ fi
 cd ${WORKDIR}
 mv cwl-airflow ${SATDIR} ../ubuntu_post_build
 cd ../ubuntu_post_build
-cp ../ubuntu/ecosystem.config.js ubuntu_post_build
-cp ../ubuntu/meteor_default_settings.json ubuntu_post_build
+cp ../ubuntu/ecosystem.config.js .
+cp ../ubuntu/meteor_default_settings.json .
 tar -czf scidap-satellite.tar.gz ./*
