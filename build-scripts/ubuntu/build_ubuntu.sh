@@ -112,24 +112,10 @@ fi
 if [ -e ${SATDIR}/bin/aria2c ]; then
   warn "Aria2c has been already compiled. Skipping"
 else
-  ARIA2_URL="https://github.com/aria2/aria2/releases/download/release-${ARIA2_VERSION}/aria2-${ARIA2_VERSION}.tar.gz"
-  download_and_extract $ARIA2_URL aria2-${ARIA2_VERSION}.tar.gz aria2-${ARIA2_VERSION}
-  echo "Compiling aria2-${ARIA2_VERSION}"
-  cd aria2-${ARIA2_VERSION}
-  ./configure --disable-dependency-tracking \
-      --enable-static=yes \
-      --enable-shared=no \
-      --prefix=${WORKDIR}/aria2-${ARIA2_VERSION} \
-      --with-openssl \
-      --without-libssh2 \
-      --without-libcares \
-      --without-gnutls \
-      --without-libgmp \
-      --without-libnettle \
-      --without-libgcrypt \
-      ARIA2_STATIC=yes > ${WORKDIR}/aria2-${ARIA2_VERSION}_build.log 2>&1
-  make -j 4 >> ${WORKDIR}/aria2-${ARIA2_VERSION}_build.log 2>&1
-  cp ./src/aria2c ${SATDIR}/bin/
+  ARIA2_URL="https://github.com/q3aql/aria2-static-builds/releases/download/v${ARIA2_VERSION}/aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1.tar.bz2"
+  download_and_extract $ARIA2_URL aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1.tar.bz2 aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1
+  echo "Copying aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1/aria2c"
+  cp aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1/aria2c ${SATDIR}/bin/
 fi
 
 
