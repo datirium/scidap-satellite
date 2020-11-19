@@ -160,4 +160,4 @@ mv cwl-airflow ${SATDIR} ../post_build
 cp ecosystem.config.js ../post_build
 cp meteor_default_settings.json ../post_build
 cd post_build
-tar -czvf scidap-satellite.tar.gz ./*
+tar -czf scidap-satellite.tar.gz ./*
