@@ -107,6 +107,11 @@ function getSatelliteEnvVar(pathEnvVar, meteorDefaultSettingsJson, satelliteSett
 
 
 function waitForInitConfiguration(pathEnvVar, satelliteSettings, airflowSettings){
+  try {
+    fs.unlinkSync(`${satelliteSettings.scidapRoot}/airflow/dags/clean_dag_run.py`);
+  } catch (e) {
+    console.log('Failed to remove clean_dag_run.py');
+  }
   const command = `mkdir -p ${satelliteSettings.scidapRoot}/files && \
                    mkdir -p ${satelliteSettings.scidapRoot}/mongodb && \
                    mkdir -p ${satelliteSettings.scidapRoot}/airflow && \
@@ -119,17 +124,13 @@ function waitForInitConfiguration(pathEnvVar, satelliteSettings, airflowSettings
     {
       cwd: `${satelliteSettings.scidapRoot}`,
       shell: true,
+      stdio: 'inherit',
       env: {
           AIRFLOW_HOME: `${satelliteSettings.scidapRoot}/airflow`,
           PATH: pathEnvVar
       }
     }
   )
-  try {
-    fs.unlinkSync(`${satelliteSettings.scidapRoot}/airflow/dags/clean_dag_run.py`);
-  } catch (e) {
-    console.log('Failed to remove clean_dag_run.py');
-  }
   const airflowCfg = ini.parse(fs.readFileSync(`${satelliteSettings.scidapRoot}/airflow/airflow.cfg`, 'utf-8'));
   for (key in airflowSettings){
     [section, parameter] = key.split(".")
