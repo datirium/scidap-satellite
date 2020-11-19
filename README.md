@@ -41,16 +41,21 @@ npm install -g @angular/cli
 
 ## Relocatable **tar.gz** for Ubuntu >= 18.04
 
-To build relocatable `tar.gz` that can be run with PM2 on any Ubuntu >= 18.04 start virtual machine with Ubuntu 18.04
-and run the following commands. Use optional `.env` file to redefine default package versions if necessary.
+To build relocatable `tar.gz` that can be run with PM2 on any Ubuntu >= 18.04 start clean virtual machine with Ubuntu 18.04
+and run the following commands. To redefine default program versions used in a script, provide an optional `.env` file in the same folder as `build_ubuntu.sh` script.
 
 ```bash
 sudo apt-get install git g++ make curl libssl-dev pkg-config   # we need libssl-dev and pkg-config for aria2c to be compiled --with-openssl
-curl https://install.meteor.com/ | sh                          # installing meteor with its own node 
+curl https://install.meteor.com/ | sh                          # installing meteor with its own node for building BioWardrobe-NG
 git clone https://github.com/datirium/scidap-satellite.git
-cd ./scidap-satellite/build-scripts
-./post_build_ubuntu.sh
+cd ./scidap-satellite/
+git checkout ubuntu_packaging                                  # this can be skipped when PR is merged
+git pull origin ubuntu_packaging                               # this can be skipped when PR is merged
+cd ./build-scripts/ubuntu/
+./build_ubuntu.sh
 ```
+
+After script finished running, you will find a compressed `scidap-satellite.tar.gz` in the `../ubuntu_post_build` folder. All the temporary data is kept in `../build` and can be removed unless you want to save some time when rerunning `build_ubuntu.sh` script.
 
 To run relocatable `tar.gz` on any Ubuntu >= 18.04 use the following commands
 ```
