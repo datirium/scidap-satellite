@@ -63,7 +63,7 @@ fi
 
 
 # Preparing working directory
-rm -rf ../Services && mkdir -p ../Services
+rm -rf ../post_build && mkdir -p ../post_build
 mkdir -p ../build/satellite/bin && cd ../build/
 WORKDIR=$(pwd)
 SATDIR=${WORKDIR}/satellite
@@ -154,6 +154,10 @@ else
 fi
 
 
-# Moving installed programs to the Services folder
+# Moving installed programs to the post_build folder, copying configuration files. Compressing results
 cd ${WORKDIR}
-mv cwl-airflow ${SATDIR} ../Services
+mv cwl-airflow ${SATDIR} ../post_build
+cp ecosystem.config.js ../post_build
+cp meteor_default_settings.json ../post_build
+cd post_build
+tar -czvf scidap-satellite.tar.gz ./*

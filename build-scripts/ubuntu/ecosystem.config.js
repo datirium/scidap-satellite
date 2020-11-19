@@ -1,8 +1,3 @@
-// This file should be placed into the Services folder
-
-// script should be absolue path, otherwise it will be resolved
-// relative to the directory where pm2 start was run
-
 var path = require('path');
 var fs = require('fs');
 var child_process = require('child_process');
