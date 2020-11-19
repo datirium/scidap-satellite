@@ -144,11 +144,11 @@ fi
 
 
 # Downloading SRA-Toolkit
-SRA_TOOLKIT_URL="http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_TOOLKIT_VERSION}/sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64.tar.gz"
-download_and_extract $SRA_TOOLKIT_URL sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64.tar.gz sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64
 if [ -e ${SATDIR}/bin/fastq-dump ]; then
   warn "fastq-dump has been already copied. Skipping"
 else
+  SRA_TOOLKIT_URL="http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_TOOLKIT_VERSION}/sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64.tar.gz"
+  download_and_extract $SRA_TOOLKIT_URL sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64.tar.gz sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64
   echo "Copying sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64/bin/fastq-dump"
   cp -L sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64/bin/fastq-dump ${SATDIR}/bin/
 fi
@@ -157,7 +157,7 @@ fi
 # Moving installed programs to the ubuntu_post_build folder, copying configuration files. Compressing results
 cd ${WORKDIR}
 mv cwl-airflow ${SATDIR} ../ubuntu_post_build
-cp ecosystem.config.js ../ubuntu_post_build
-cp meteor_default_settings.json ../ubuntu_post_build
 cd ../ubuntu_post_build
+cp ../ubuntu/ecosystem.config.js ubuntu_post_build
+cp ../ubuntu/meteor_default_settings.json ubuntu_post_build
 tar -czf scidap-satellite.tar.gz ./*
