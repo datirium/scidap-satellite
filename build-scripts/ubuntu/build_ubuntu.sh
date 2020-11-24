@@ -127,6 +127,8 @@ else
   download_and_extract $CWLAIRFLOW_URL python_${CWLAIRFLOW_PYTHON_VERSION}_with_cwl_airflow_master_ubuntu_${UBUNTU_VERSION}.tar.gz python3
   echo "Copying python3 to ${WORKDIR}/cwl-airflow"
   cp -r python3 cwl-airflow
+  # patch cwltool so it always use docker for javascript evaluation. The normal node causes troubles when running from pm2 (perhaps somehow related to subprocesses?)
+  sed -i -e 's/^    trynodes = ("nodejs", "node")/    trynodes = []/g' ./cwl-airflow/lib/python${CWLAIRFLOW_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
 fi
 
 
