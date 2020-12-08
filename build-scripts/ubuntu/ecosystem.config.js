@@ -161,7 +161,6 @@ const satelliteSettings = {
   'airflowAPIPort': 8080,
   'aria2cPort': 6800,
   'mongoPort': 27017,
-  'pm2Port': 9615,
   'baseUrl': 'http://localhost:3069/',
   'sslCert': '',
   'sslKey': '',
