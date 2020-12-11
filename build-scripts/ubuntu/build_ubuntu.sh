@@ -50,6 +50,7 @@ CWLAIRFLOW_PYTHON_VERSION="3.6"
 UBUNTU_VERSION="18.04"
 BIOWARDROBE_NG_VERSION="2.0.0"
 SRA_TOOLKIT_VERSION="2.10.8"
+POSTGRESQL_VERSION="10.15"
 
 
 # Loading variables from .env if provided
@@ -140,6 +141,21 @@ else
   download_and_extract $SRA_TOOLKIT_URL sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64.tar.gz sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64
   echo "Copying sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64/bin/fastq-dump"
   cp -L sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64/bin/fastq-dump ${SATDIR}/bin/
+fi
+
+
+# Downloading PostgreSQL
+if [ -e ${SATDIR}/bin/initdb ] && [ -e ${SATDIR}/bin/pg_ctl ] && [ -e ${SATDIR}/bin/pg_isready ] && [ -e ${SATDIR}/bin/postgres ] && [ -e ${SATDIR}/bin/psql ]; then
+  warn "PostgreSQL binaries have been already copied. Skipping"
+else
+  POSTGRESQL_URL="https://get.enterprisedb.com/postgresql/postgresql-${POSTGRESQL_VERSION}-1-linux-x64-binaries.tar.gz"
+  download_and_extract $POSTGRESQL_URL postgresql-${POSTGRESQL_VERSION}-1-linux-x64-binaries.tar.gz pgsql
+  echo "Copying PostgreSQL binaries: initdb, pg_ctl, pg_isready, postgres, psql"
+  cp -L pgsql/bin/initdb ${SATDIR}/bin/
+  cp -L pgsql/bin/pg_ctl ${SATDIR}/bin/
+  cp -L pgsql/bin/pg_isready ${SATDIR}/bin/
+  cp -L pgsql/bin/postgres ${SATDIR}/bin/
+  cp -L pgsql/bin/psql ${SATDIR}/bin/
 fi
 
 
