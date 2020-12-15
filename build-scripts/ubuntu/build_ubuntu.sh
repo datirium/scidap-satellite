@@ -159,7 +159,18 @@ else
 fi
 
 
-# Moving installed programs to the ubuntu_post_build folder, copying configuration files. Compressing results
+# Copying start scripts
+if [ -e ${SATDIR}/bin/start_postgres.sh ] && [ -e ${SATDIR}/bin/start_scheduler.sh ] && [ -e ${SATDIR}/bin/start_apiserver.sh ]; then
+  warn "Start scripts have been already copied. Skipping"
+else
+  echo "Copying start scripts: start_postgres.sh, start_scheduler.sh, start_apiserver.sh"
+  cp -L ../ubuntu/scripts/start_postgres.sh ${SATDIR}/bin/
+  cp -L ../ubuntu/scripts/start_scheduler.sh ${SATDIR}/bin/
+  cp -L ../ubuntu/scripts/start_apiserver.sh ${SATDIR}/bin/
+fi
+
+
+# Moving installed programs to the ubuntu_post_build folder, copying configuration files and scripts. Compressing results
 cd ${WORKDIR}
 mv cwl-airflow ${SATDIR} ../ubuntu_post_build
 cd ../ubuntu_post_build
