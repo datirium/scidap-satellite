@@ -26,5 +26,5 @@ createdb --owner "${PGUSER}"                                              # -h, 
 echo "Stop PostgreSQL server after required database has been created"
 pg_ctl stop -m smart                                                      # waits until all open connections are closed
 
-echo "Start PostgreSQL server through postgres as it's easier to keep it in the foreground"
-postgres "$@"
+echo "Start PostgreSQL server through postgres as it's easier to keep it in the foreground. Use -k '' by default to disable access through socket as we don't need it"
+postgres -k "" "$@"

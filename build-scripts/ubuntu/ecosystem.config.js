@@ -229,7 +229,7 @@ module.exports = {
     {
       name: 'postgres',
       script: path.join(satelliteBin, 'start_postgres.sh'),
-      args: ['-k ""'],                                                         // set -k to "" to disable access through socket as we don't need it
+      args: [],
       watch: false,
       exec_mode: 'fork_mode',
       cwd: path.join(satelliteSettings.scidapRoot, POSTGRES_DIR),
