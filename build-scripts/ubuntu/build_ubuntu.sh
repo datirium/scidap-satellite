@@ -151,6 +151,7 @@ if [ -e ${SATDIR}/bin/initdb ] && \
    [ -e ${SATDIR}/bin/pg_isready ] && \
    [ -e ${SATDIR}/bin/postgres ] && \
    [ -e ${SATDIR}/bin/psql ] && \
+   [ -e ${SATDIR}/bin/psql.bin ] && \
    [ -e ${SATDIR}/lib ] && \
    [ -e ${SATDIR}/share ]; then
   warn "PostgreSQL binaries, libs and shares have been already copied. Skipping"
@@ -164,6 +165,7 @@ else
   cp -L pgsql/bin/pg_isready ${SATDIR}/bin/
   cp -L pgsql/bin/postgres ${SATDIR}/bin/
   cp -L pgsql/bin/psql ${SATDIR}/bin/
+  cp -L pgsql/bin/psql.bin ${SATDIR}/bin/
   cp -r pgsql/lib ${SATDIR}/
   cp -r pgsql/share ${SATDIR}/
 fi
