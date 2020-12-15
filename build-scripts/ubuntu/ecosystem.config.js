@@ -141,7 +141,7 @@ function waitForInitConfiguration(pathEnvVar, satelliteSettings, airflowSettings
     path.join(satelliteSettings.scidapRoot, SATELLITE_DIR),
     path.join(satelliteSettings.scidapRoot, POSTGRES_DIR)
   ]
-  for (const folder in folders) {
+  for (folder of folders) {
     try {
       fs.mkdirSync(folder, {recursive: true});
     } catch (e) {
