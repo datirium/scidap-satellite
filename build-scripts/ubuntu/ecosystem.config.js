@@ -135,6 +135,7 @@ function waitForInitConfiguration(pathEnvVar, satelliteSettings, airflowSettings
   Patches airflow.cfg.
   */
   const folders = [
+    satelliteSettings.scidapRoot,                            // for node < 10.12.0 recursive won't work, so we need to at least create scidapRoot
     path.join(satelliteSettings.scidapRoot, FILES_DIR),
     path.join(satelliteSettings.scidapRoot, MONGODB_DIR),
     path.join(satelliteSettings.scidapRoot, AIRFLOW_DIR),
