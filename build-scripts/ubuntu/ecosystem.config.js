@@ -170,7 +170,7 @@ function waitForInitConfiguration(pathEnvVar, satelliteSettings, airflowSettings
   fs.writeFileSync(path.join(satelliteSettings.scidapRoot, AIRFLOW_DIR, 'airflow.cfg'), ini.stringify(airflowCfg, {whitespace: true}));
   const ncbi_dir = path.join(os.homedir(), '.ncbi')
   const mkfg_file = path.join(ncbi_dir, 'user-settings.mkfg')
-  const mkfg_file_backup = path.join(ncbi_dir, 'user-settings.mkfg.scidap.backup')
+  const mkfg_file_backup = path.join(ncbi_dir, 'user-settings.mkfg.backuped_by_scidap')
   child_process.spawnSync(
     `if [ ! -e ${mkfg_file} ]; then
        echo "Creating ${mkfg_file}"
@@ -183,23 +183,23 @@ function waitForInitConfiguration(pathEnvVar, satelliteSettings, airflowSettings
 
      if ! grep -q "/LIBS/GUID" ${mkfg_file}; then
        echo "Adding /LIBS/GUID"
-       echo '/LIBS/GUID = \`uuidgen\`' >> ${mkfg_file}
+       echo "/LIBS/GUID = '$(uuidgen)'" >> ${mkfg_file}
      fi
 
-     if ! grep -q '/http/proxy/enabled' ${mkfg_file}; then
+     if ! grep -q "/http/proxy/enabled" ${mkfg_file}; then
        echo "Adding proxy settings"
-       echo '/http/proxy/enabled = "${satelliteSettings.proxy?true:false}"' >> ${mkfg_file}
+       echo "/http/proxy/enabled = '${satelliteSettings.proxy?true:false}'" >> ${mkfg_file}
      else
        echo "Updating proxy settings"
-       sed -i -e 's/^\/http\/proxy\/enabled.*/\/http\/proxy\/enabled = "${satelliteSettings.proxy?true:false}"/g' ${mkfg_file}
+       sed -i -e "s/^\\/http\\/proxy\\/enabled.*/\\/http\\/proxy\\/enabled = '${satelliteSettings.proxy?true:false}'/g" ${mkfg_file}
      fi
 
-     if ! grep -q '/http/proxy/path' ${mkfg_file}; then
+     if ! grep -q "/http/proxy/path" ${mkfg_file}; then
        echo "Adding proxy path"
-       echo '/http/proxy/path = "${satelliteSettings.proxy?url.parse(satelliteSettings.proxy).host:""}"' >> ${mkfg_file}
+       echo "/http/proxy/path = '${satelliteSettings.proxy?url.parse(satelliteSettings.proxy).host:""}'" >> ${mkfg_file}
      else
        echo "Updating proxy path"
-       sed -i -e 's/^\/http\/proxy\/path.*/\/http\/proxy\/path = "${satelliteSettings.proxy?url.parse(satelliteSettings.proxy).host:""}"/g' ${mkfg_file}
+       sed -i -e "s/^\\/http\\/proxy\\/path.*/\\/http\\/proxy\\/path = '${satelliteSettings.proxy?url.parse(satelliteSettings.proxy).host:""}'/g" ${mkfg_file}
      fi`,
     [],
     {
