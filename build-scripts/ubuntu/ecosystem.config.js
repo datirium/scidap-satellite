@@ -3,6 +3,7 @@ const fs = require('fs');
 const child_process = require('child_process');
 const ini = require('ini');
 const os = require('os');
+const url = require('url');
 
 
 const FILES_DIR = "files";
@@ -21,7 +22,7 @@ function getAria2cArgs(satelliteSettings){
     '--console-log-level=debug',
     '--auto-file-renaming=false'
   ];  
-  if (satelliteSettings && satelliteSettings.proxy) {
+  if (satelliteSettings.proxy) {
     aria2cArgs.push(`--all-proxy=${satelliteSettings.proxy}`);
   };
   return aria2cArgs
@@ -81,7 +82,7 @@ function getSatelliteEnvVar(pathEnvVar, meteorDefaultSettingsJson, satelliteSett
     METEOR_SETTINGS: getMeteorSettings(meteorDefaultSettingsJson, satelliteSettings, rc_server_token),
     NODE_OPTIONS: '--trace-warnings --pending-deprecation'
   };
-  if (satelliteSettings && satelliteSettings.proxy) {
+  if (satelliteSettings.proxy) {
     satelliteEnvVar = {
       ...satelliteEnvVar,
       https_proxy: satelliteSettings.proxy,
@@ -133,6 +134,9 @@ function waitForInitConfiguration(pathEnvVar, satelliteSettings, airflowSettings
   Creates all required folders.
   Creates airflow.cfg by running airflow with the configured AIRFLOW_HOME.
   Patches airflow.cfg.
+  Checks if '~/.ncbi/user-settings.mkfg' exists. If not, creates it.
+  Checks if '~/.ncbi/user-settings.mkfg.scidap.backup' exists. If not, creates it.
+  Adds or updates proxy configurations in the user-settings.mkfg file based satelliteSettings.
   */
   const folders = [
     satelliteSettings.scidapRoot,                            // for node < 10.12.0 recursive won't work, so we need to at least create scidapRoot
@@ -164,6 +168,46 @@ function waitForInitConfiguration(pathEnvVar, satelliteSettings, airflowSettings
   };
   airflowCfg.core.sql_alchemy_conn = `postgresql+psycopg2://${databaseSettings.db_user}:${databaseSettings.db_password}@127.0.0.1:${databaseSettings.db_port}/${databaseSettings.db_name}`
   fs.writeFileSync(path.join(satelliteSettings.scidapRoot, AIRFLOW_DIR, 'airflow.cfg'), ini.stringify(airflowCfg, {whitespace: true}));
+  const ncbi_dir = path.join(os.homedir(), '.ncbi')
+  const mkfg_file = path.join(ncbi_dir, 'user-settings.mkfg')
+  const mkfg_file_backup = path.join(ncbi_dir, 'user-settings.mkfg.scidap.backup')
+  child_process.spawnSync(
+    `if [ ! -e ${mkfg_file} ]; then
+       echo "Creating ${mkfg_file}"
+       mkdir -p ${ncbi_dir}
+       touch ${mkfg_file}
+     elif [ ! -e ${mkfg_file_backup} ]; then
+       echo "Backing up ${mkfg_file} to ${mkfg_file_backup}"
+       cp ${mkfg_file} ${mkfg_file_backup}
+     fi
+
+     if ! grep -q "/LIBS/GUID" ${mkfg_file}; then
+       echo "Adding /LIBS/GUID"
+       echo '/LIBS/GUID = \`uuidgen\`' >> ${mkfg_file}
+     fi
+
+     if ! grep -q '/http/proxy/enabled' ${mkfg_file}; then
+       echo "Adding proxy settings"
+       echo '/http/proxy/enabled = "${satelliteSettings.proxy?true:false}"' >> ${mkfg_file}
+     else
+       echo "Updating proxy settings"
+       sed -i -e 's/^\/http\/proxy\/enabled.*/\/http\/proxy\/enabled = "${satelliteSettings.proxy?true:false}"/g' ${mkfg_file}
+     fi
+
+     if ! grep -q '/http/proxy/path' ${mkfg_file}; then
+       echo "Adding proxy path"
+       echo '/http/proxy/path = "${satelliteSettings.proxy?url.parse(satelliteSettings.proxy).host:""}"' >> ${mkfg_file}
+     else
+       echo "Updating proxy path"
+       sed -i -e 's/^\/http\/proxy\/path.*/\/http\/proxy\/path = "${satelliteSettings.proxy?url.parse(satelliteSettings.proxy).host:""}"/g' ${mkfg_file}
+     fi`,
+    [],
+    {
+      cwd: satelliteSettings.scidapRoot,
+      shell: true,
+      env: getAirflowEnvVar(pathEnvVar, satelliteSettings)  // we need only PATH from there
+    }
+  )
 }
 
 
