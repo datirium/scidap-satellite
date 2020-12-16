@@ -133,14 +133,20 @@ else
 fi
 
 
-# Downloading SRA-Toolkit
-if [ -e ${SATDIR}/bin/fastq-dump ]; then
+# Downloading SRA-Toolkit (need to copy some extra files as fastq-dump doesn't work without them)
+if [ -e ${SATDIR}/bin/fastq-dump ] && \
+   [ -e ${SATDIR}/bin/fastq-dump-orig.${SRA_TOOLKIT_VERSION} ] && \
+   [ -e ${SATDIR}/bin/vdb-config ] && \
+   [ -e ${SATDIR}/bin/vdb-config.${SRA_TOOLKIT_VERSION} ]; then
   warn "fastq-dump has been already copied. Skipping"
 else
   SRA_TOOLKIT_URL="http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_TOOLKIT_VERSION}/sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64.tar.gz"
   download_and_extract $SRA_TOOLKIT_URL sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64.tar.gz sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64
-  echo "Copying sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64/bin/fastq-dump"
+  echo "Copying fastq-dump and related files"
   cp -L sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64/bin/fastq-dump ${SATDIR}/bin/
+  cp -L sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64/bin/fastq-dump-orig.${SRA_TOOLKIT_VERSION} ${SATDIR}/bin/
+  cp -L sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64/bin/vdb-config ${SATDIR}/bin/
+  cp -L sratoolkit.${SRA_TOOLKIT_VERSION}-ubuntu64/bin/vdb-config.${SRA_TOOLKIT_VERSION} ${SATDIR}/bin/
 fi
 
 
