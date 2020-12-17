@@ -13,7 +13,7 @@ const AIRFLOW_DIR = "airflow";
 const SATELLITE_DIR = "satellite";
 const POSTGRES_DIR = "pgdata";
 const SETTINGS_LOCATIONS = [
-  process.env.SCIDAP_SETTING,
+  process.env.SCIDAP_SETTINGS,
   path.join(__dirname, '../scidap_settings.json'),
   path.join(os.homedir(), './.config/scidap-satellite/scidap_settings.json')
 ]
@@ -21,7 +21,7 @@ const SETTINGS_LOCATIONS = [
 
 function loadSettings(){
   console.log(`Populating settings with required default parameters`);
-  const settings = JSON.parse(fs.readFileSync(path.join(__dirname, './scidap_default_settings.json')));
+  var settings = JSON.parse(fs.readFileSync(path.join(__dirname, './scidap_default_settings.json')));
   for (location of SETTINGS_LOCATIONS){
     try {
       settings = JSON.parse(fs.readFileSync(location));
