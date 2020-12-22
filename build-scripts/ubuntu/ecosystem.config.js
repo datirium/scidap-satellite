@@ -14,14 +14,14 @@ const SATELLITE_DIR = "satellite";
 const POSTGRES_DIR = "pgdata";
 const SETTINGS_LOCATIONS = [
   process.env.SCIDAP_SETTINGS,
-  path.join(__dirname, '../scidap_settings.json'),
-  path.join(os.homedir(), './.config/scidap-satellite/scidap_settings.json')
+  path.resolve(__dirname, '../scidap_settings.json'),
+  path.resolve(os.homedir(), './.config/scidap-satellite/scidap_settings.json')
 ]
 
 
 function loadSettings(){
   console.log(`Populating settings with required default parameters`);
-  var settings = JSON.parse(fs.readFileSync(path.join(__dirname, './scidap_default_settings.json')));
+  var settings = JSON.parse(fs.readFileSync(path.resolve(__dirname, './scidap_default_settings.json')));
   for (location of SETTINGS_LOCATIONS){
     try {
       settings = JSON.parse(fs.readFileSync(location));
@@ -32,7 +32,7 @@ function loadSettings(){
     }
   }
   // in case scidapRoot was set as a relative path, we need to resolve it based on the homedir
-  settings.satelliteSettings.scidapRoot = path.join(os.homedir(), settings.satelliteSettings.scidapRoot)
+  settings.satelliteSettings.scidapRoot = path.resolve(os.homedir(), settings.satelliteSettings.scidapRoot)
   // set up meteor settings based on settings.satelliteSettings
   settings.meteorSettings = getMeteorSettings(settings)
   return settings;
@@ -58,7 +58,7 @@ function getMongodArgs(settings){
   const mongodArgs = [
     '--bind_ip', '127.0.0.1',
     '--port', settings.satelliteSettings.mongoPort,
-    '--dbpath', path.join(settings.satelliteSettings.scidapRoot, MONGODB_DIR)
+    '--dbpath', path.resolve(settings.satelliteSettings.scidapRoot, MONGODB_DIR)
   ];
   return mongodArgs
 }
@@ -77,7 +77,7 @@ function getPostgresEnvVar(pathEnvVar, settings){
     PATH: pathEnvVar,
     PGHOST: '127.0.0.1',
     PGPORT: settings.databaseSettings.db_port,
-    PGDATA: path.join(settings.satelliteSettings.scidapRoot, POSTGRES_DIR),
+    PGDATA: path.resolve(settings.satelliteSettings.scidapRoot, POSTGRES_DIR),
     PGUSER: settings.databaseSettings.db_user,
     PGPASSWORD: settings.databaseSettings.db_password,
     PGDATABASE: settings.databaseSettings.db_name
@@ -89,7 +89,7 @@ function getPostgresEnvVar(pathEnvVar, settings){
 function getAirflowEnvVar(pathEnvVar, settings){
   const airflowEnvVar = {
     PATH: pathEnvVar,
-    AIRFLOW_HOME: path.join(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR),
+    AIRFLOW_HOME: path.resolve(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR),
     PROCESS_REPORT_URL: `http://127.0.0.1:${settings.satelliteSettings.port}`,
     LC_ALL: 'en_US.UTF-8',
     LANG: 'en_US.UTF-8'
@@ -129,9 +129,9 @@ function getMeteorSettings(settings){
     systemRoot: settings.satelliteSettings.scidapRoot,
     airflow: {
       trigger_dag: `http://127.0.0.1:${settings.satelliteSettings.airflowAPIPort}/api/experimental/dags/{dag_id}/dag_runs`,
-      dags_folder: path.join(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR, 'dags')
+      dags_folder: path.resolve(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR, 'dags')
     },
-    logFile: path.join(settings.satelliteSettings.scidapRoot, SATELLITE_DIR, 'satellite-service.log')
+    logFile: path.resolve(settings.satelliteSettings.scidapRoot, SATELLITE_DIR, 'satellite-service.log')
   };
   if (settings.satelliteSettings.sslCert && settings.satelliteSettings.sslKey && settings.satelliteSettings.scidapSSLPort) {
     meteorSettings['SSL'] = {
@@ -144,7 +144,7 @@ function getMeteorSettings(settings){
     'caption': 'Local files',
     'type': 'files',
     'protocol': 'files',
-    'base_directory': path.join(settings.satelliteSettings.scidapRoot, FILES_DIR),
+    'base_directory': path.resolve(settings.satelliteSettings.scidapRoot, FILES_DIR),
     'collection': settings.satelliteSettings.localFiles?{'name': 'local_files_collection', 'nullConnection': true}:{},
     'publication': settings.satelliteSettings.localFiles?'local_files_collection':'none',
     'refreshSessionInterval': 180
@@ -174,37 +174,37 @@ function waitForInitConfiguration(pathEnvVar, settings){
   */
   const folders = [
     settings.satelliteSettings.scidapRoot,                            // for node < 10.12.0 recursive won't work, so we need to at least create scidapRoot
-    path.join(settings.satelliteSettings.scidapRoot, FILES_DIR),
-    path.join(settings.satelliteSettings.scidapRoot, MONGODB_DIR),
-    path.join(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR),
-    path.join(settings.satelliteSettings.scidapRoot, SATELLITE_DIR),
-    path.join(settings.satelliteSettings.scidapRoot, POSTGRES_DIR)
+    path.resolve(settings.satelliteSettings.scidapRoot, FILES_DIR),
+    path.resolve(settings.satelliteSettings.scidapRoot, MONGODB_DIR),
+    path.resolve(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR),
+    path.resolve(settings.satelliteSettings.scidapRoot, SATELLITE_DIR),
+    path.resolve(settings.satelliteSettings.scidapRoot, POSTGRES_DIR)
   ]
   for (folder of folders) {
     try {
       fs.mkdirSync(folder, {recursive: true});
     } catch (e) {
-      console.log(`${folder} directory already exist`);
+      console.log(`Failed to create directory ${folder} due to ${e}`);
     }
   }
   child_process.spawnSync(
     "airflow", [],
     {
-      cwd: path.join(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR),
+      cwd: path.resolve(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR),
       shell: true,
       env: getAirflowEnvVar(pathEnvVar, settings)
     }
   )
-  const airflowCfg = ini.parse(fs.readFileSync(path.join(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR, 'airflow.cfg'), 'utf-8'));
+  const airflowCfg = ini.parse(fs.readFileSync(path.resolve(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR, 'airflow.cfg'), 'utf-8'));
   for (key in settings.airflowSettings){
     [section, parameter] = key.split(".")
     airflowCfg[section][parameter] = settings.airflowSettings[key]
   };
   airflowCfg.core.sql_alchemy_conn = `postgresql+psycopg2://${settings.databaseSettings.db_user}:${settings.databaseSettings.db_password}@127.0.0.1:${settings.databaseSettings.db_port}/${settings.databaseSettings.db_name}`
-  fs.writeFileSync(path.join(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR, 'airflow.cfg'), ini.stringify(airflowCfg, {whitespace: true}));
-  const ncbi_dir = path.join(os.homedir(), '.ncbi')
-  const mkfg_file = path.join(ncbi_dir, 'user-settings.mkfg')
-  const mkfg_file_backup = path.join(ncbi_dir, 'user-settings.mkfg.backuped_by_scidap')
+  fs.writeFileSync(path.resolve(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR, 'airflow.cfg'), ini.stringify(airflowCfg, {whitespace: true}));
+  const ncbi_dir = path.resolve(os.homedir(), '.ncbi')
+  const mkfg_file = path.resolve(ncbi_dir, 'user-settings.mkfg')
+  const mkfg_file_backup = path.resolve(ncbi_dir, 'user-settings.mkfg.backuped_by_scidap')
   child_process.spawnSync(
     `if [ ! -e ${mkfg_file} ]; then
        echo "Creating ${mkfg_file}"
@@ -246,8 +246,8 @@ function waitForInitConfiguration(pathEnvVar, settings){
 
 
 // variables that depend on the script location and should be initiated on every run
-const satelliteBin = path.join(__dirname, './satellite/bin');
-const cwlAirflowBin = path.join(__dirname, './cwl-airflow/bin_portable');
+const satelliteBin = path.resolve(__dirname, './satellite/bin');
+const cwlAirflowBin = path.resolve(__dirname, './cwl-airflow/bin_portable');
 const pathEnvVar = `${satelliteBin}:${cwlAirflowBin}:/usr/bin:/bin:/usr/local/bin`
 
 
@@ -262,37 +262,37 @@ module.exports = {
   apps : [
     {
       name: 'aria2c',
-      script: path.join(satelliteBin, 'aria2c'),
+      script: path.resolve(satelliteBin, 'aria2c'),
       args: getAria2cArgs(settings),
       watch: false,
       exec_mode: 'fork_mode',
-      cwd: path.join(settings.satelliteSettings.scidapRoot, FILES_DIR)
+      cwd: path.resolve(settings.satelliteSettings.scidapRoot, FILES_DIR)
     },
     {
       name: 'mongod',
-      script: path.join(satelliteBin, 'mongod'),
+      script: path.resolve(satelliteBin, 'mongod'),
       args: getMongodArgs(settings),
       watch: false,
       exec_mode: 'fork_mode',
-      cwd: path.join(settings.satelliteSettings.scidapRoot, MONGODB_DIR)
+      cwd: path.resolve(settings.satelliteSettings.scidapRoot, MONGODB_DIR)
     },
     {
       name: 'postgres',
-      script: path.join(satelliteBin, 'start_postgres.sh'),
+      script: path.resolve(satelliteBin, 'start_postgres.sh'),
       args: [],
       watch: false,
       exec_mode: 'fork_mode',
-      cwd: path.join(settings.satelliteSettings.scidapRoot, POSTGRES_DIR),
+      cwd: path.resolve(settings.satelliteSettings.scidapRoot, POSTGRES_DIR),
       env: getPostgresEnvVar(pathEnvVar, settings)  // -D, -h and -p will be read from the environment variables
     },
     {
       name: 'airflow-scheduler',
-      script: path.join(satelliteBin, 'start_scheduler.sh'),
+      script: path.resolve(satelliteBin, 'start_scheduler.sh'),
       args: [],
       interpreter: 'bash',
       watch: false,
       exec_mode: 'fork_mode',
-      cwd: path.join(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR),
+      cwd: path.resolve(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR),
       env: {
         ...getPostgresEnvVar(pathEnvVar, settings),
         ...getAirflowEnvVar(pathEnvVar, settings)
@@ -300,12 +300,12 @@ module.exports = {
     },
     {
       name: 'airflow-apiserver',
-      script: path.join(satelliteBin, 'start_apiserver.sh'),
+      script: path.resolve(satelliteBin, 'start_apiserver.sh'),
       args: getAirflowApiServerArgs(settings),
       interpreter: 'bash',
       watch: false,
       exec_mode: 'fork_mode',
-      cwd: path.join(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR),
+      cwd: path.resolve(settings.satelliteSettings.scidapRoot, AIRFLOW_DIR),
       env: {
         ...getPostgresEnvVar(pathEnvVar, settings),
         ...getAirflowEnvVar(pathEnvVar, settings)
@@ -313,11 +313,11 @@ module.exports = {
     },
     {  // TODO make sure it's run after mongodb is available
       name: 'satellite',
-      script: path.join(satelliteBin, '../main.js'),
+      script: path.resolve(satelliteBin, '../main.js'),
       interpreter: 'node',
       watch: false,
       exec_mode: 'fork_mode',
-      cwd: path.join(settings.satelliteSettings.scidapRoot, SATELLITE_DIR),
+      cwd: path.resolve(settings.satelliteSettings.scidapRoot, SATELLITE_DIR),
       env: getSatelliteEnvVar(pathEnvVar, settings)
     }
   ]
