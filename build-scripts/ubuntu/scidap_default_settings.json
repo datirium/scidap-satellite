@@ -4,15 +4,17 @@
         "rcServer": "https://api-sync.scidap.com",
         "port": 3069,
         "scidapRoot": "./scidap",
-        "scidapSSLPort": 3070,
         "airflowAPIPort": 8080,
         "aria2cPort": 6800,
         "mongoPort": 27017,
         "mongoCollection": "scidap-satellite",
         "baseUrl": "http://localhost:3069/",
+        "scidapSSLPort": 3070,
         "sslCert": "",
         "sslKey": "",
-        "localFiles": true
+        "localFiles": true,
+        "proxy": "",
+        "noProxy": ""
     },
     "airflowSettings": {
         "core.executor": "LocalExecutor",
