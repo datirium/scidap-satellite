@@ -24,7 +24,7 @@ download_and_extract() {
 
 build_biowardobe_ng() {
   TEMP_PATH=$PATH
-  PATH="${WORKDIR}/node-v${NODE_VERSION}-linux-x64/bin:/bin:/usr/bin:/usr/local/bin"
+  PATH="${WORKDIR}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
   echo "Building biowardrobe-ng from $1"
   cd $1
   npm install > ${WORKDIR}/npm_install.log 2>&1
@@ -65,7 +65,7 @@ fi
 
 # Preparing working directory
 rm -rf ../ubuntu_post_build && mkdir -p ../ubuntu_post_build
-mkdir -p ../build/satellite/bin && cd ../build/
+mkdir -p ../build_ubuntu/satellite/bin && cd ../build_ubuntu
 WORKDIR=$(pwd)
 SATDIR=${WORKDIR}/satellite
 
@@ -178,13 +178,14 @@ fi
 
 
 # Copying start scripts
+cd ${WORKDIR}
 if [ -e ${SATDIR}/bin/start_postgres.sh ] && [ -e ${SATDIR}/bin/start_scheduler.sh ] && [ -e ${SATDIR}/bin/start_apiserver.sh ]; then
   warn "Start scripts have been already copied. Skipping"
 else
   echo "Copying start scripts: start_postgres.sh, start_scheduler.sh, start_apiserver.sh"
-  cp -L ../ubuntu/scripts/start_postgres.sh ${SATDIR}/bin/
-  cp -L ../ubuntu/scripts/start_scheduler.sh ${SATDIR}/bin/
-  cp -L ../ubuntu/scripts/start_apiserver.sh ${SATDIR}/bin/
+  cp -L ../build-scripts/start_scripts/start_postgres.sh ${SATDIR}/bin/
+  cp -L ../build-scripts/start_scripts/start_scheduler.sh ${SATDIR}/bin/
+  cp -L ../build-scripts/start_scripts/start_apiserver.sh ${SATDIR}/bin/
 fi
 
 
@@ -192,7 +193,7 @@ fi
 cd ${WORKDIR}
 mv cwl-airflow ${SATDIR} ../ubuntu_post_build
 cd ../ubuntu_post_build
-cp ../ubuntu/ecosystem.config.js .
-cp ../ubuntu/scidap_default_settings.json .
+cp ../build-scripts/configs/ecosystem.config.js .
+cp ../build-scripts/configs/scidap_default_settings.json .
 tar -czf scidap-satellite.tar.gz ./*
 rm -rf cwl-airflow satellite ecosystem.config.js scidap_default_settings.json
