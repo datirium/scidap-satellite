@@ -245,7 +245,7 @@ function waitForInitConfiguration(pathEnvVar, settings){
 }
 
 
-export function getConfiguration(cwd){
+function getConfiguration(cwd){
   /*
   All relative locations will be resolved based on the value of cwd
   */
@@ -260,8 +260,8 @@ export function getConfiguration(cwd){
   
   // might be different between Ubuntu and macOS
   // variables that depend on the script location and should be initiated on every run
-  const satelliteBin = path.resolve(cwd, './satellite/bin');
-  const cwlAirflowBin = path.resolve(cwd, './cwl-airflow/bin_portable');
+  const satelliteBin = path.resolve(cwd, '../satellite/bin');
+  const cwlAirflowBin = path.resolve(cwd, '../cwl-airflow/bin_portable');
   const pathEnvVar = `${satelliteBin}:${cwlAirflowBin}:/usr/bin:/bin:/usr/local/bin`
 
   // Load settings from the external file
@@ -336,4 +336,9 @@ export function getConfiguration(cwd){
   };
   
   return configuration;
+}
+
+
+module.exports = {
+  getConfiguration: getConfiguration
 }
