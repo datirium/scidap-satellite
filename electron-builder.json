@@ -59,7 +59,7 @@
             "url": "https://scidap.nyc3.digitaloceanspaces.com/releases/"
         }
     ],
-    "afterSign": "build-scripts/configs/notarize.js",
+    "afterSign": "build-scripts/utilities/notarize.js",
     "win": {
         "icon": "dist",
         "target": [

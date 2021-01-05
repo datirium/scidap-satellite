@@ -189,11 +189,14 @@ else
 fi
 
 
-# Moving installed programs to the ubuntu_post_build folder, copying configuration files and scripts. Compressing results
+# Moving installed programs to the ubuntu_post_build folder, copying configuration files and utilities. Compressing results
 cd ${WORKDIR}
 mv cwl-airflow ${SATDIR} ../ubuntu_post_build
 cd ../ubuntu_post_build
-cp ../build-scripts/configs/ecosystem.config.js .
-cp ../build-scripts/configs/scidap_default_settings.json .
+mkdir configs utilities
+cp ../build-scripts/configs/ecosystem.config.js ./configs/
+cp ../build-scripts/configs/scidap_default_settings.json ./configs/
+cp ../build-scripts/utilities/configure.js ./utilities/
+cp ../build-scripts/utilities/ini.js ./utilities/
 tar -czf scidap-satellite.tar.gz ./*
-rm -rf cwl-airflow satellite ecosystem.config.js scidap_default_settings.json
+rm -rf cwl-airflow satellite configs utilities

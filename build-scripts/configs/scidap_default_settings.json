@@ -1,4 +1,11 @@
 {
+    "defaultLocations": {
+        "files": "files",
+        "mongodb": "mongodb",
+        "airflow": "airflow",
+        "satellite": "satellite",
+        "pgdata": "pgdata"
+    },
     "satelliteSettings": {
         "rcServerToken": "",
         "rcServer": "https://api-sync.scidap.com",
