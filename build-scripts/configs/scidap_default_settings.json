@@ -30,6 +30,12 @@
         "core.load_examples": "False",
         "core.max_active_runs_per_dag": 1
     },
+    "aria2cSettings": {
+        "--console-log-level": "debug",
+        "--remove-control-file": true,
+        "--allow-overwrite": true,
+        "--auto-file-renaming": false
+    },
     "databaseSettings":{
         "db_port": 5432,
         "db_user": "airflow",

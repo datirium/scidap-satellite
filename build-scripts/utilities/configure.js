@@ -40,17 +40,16 @@ function getDefaultLocations(settings){
 
 
 function getAria2cArgs(settings){
-  const aria2cArgs = [
-    '--enable-rpc',
-    '--rpc-listen-all=false',
-    `--rpc-listen-port=${settings.satelliteSettings.aria2cPort}`,
-    '--console-log-level=debug',
-    '--auto-file-renaming=false'
-  ];  
-  if (settings.satelliteSettings.proxy) {
-    aria2cArgs.push(`--all-proxy=${settings.satelliteSettings.proxy}`);
+  let aria2cArgs = {
+    ...settings.aria2cSettings,
+    "--enable-rpc": true,
+    "--rpc-listen-all": false,
+    "--rpc-listen-port": settings.satelliteSettings.aria2cPort
   };
-  return aria2cArgs
+  if (settings.satelliteSettings.proxy) {
+    aria2cArgs["--all-proxy"] = settings.satelliteSettings.proxy;
+  };
+  return Object.keys(aria2cArgs).map((key) => `${key}=${aria2cArgs[key]}`);  // to return as array of "key=value" 
 }
 
 
