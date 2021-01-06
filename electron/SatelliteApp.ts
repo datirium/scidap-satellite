@@ -26,7 +26,9 @@ export class SatelliteApp {
     networkInterfaces = [];
     pm2MonitIntervalId;
     // pm2_home;
-    
+    cwd;
+    defaultSettingsLocation;
+
     public willQuitApp = false;
 
 
@@ -40,24 +42,23 @@ export class SatelliteApp {
 
         this.serve = args.some(val => val === '--serve');
         
-        let cwd = path.resolve(app.getAppPath(), '../Services/satellite');
-        let defaultSettingsLocation = path.resolve(app.getAppPath(), './build-scripts/configs/scidap_default_settings.json');
+        this.cwd = path.resolve(app.getAppPath(), '../Services/satellite');
+        this.defaultSettingsLocation = path.resolve(app.getAppPath(), './build-scripts/configs/scidap_default_settings.json');
         if (this.serve) {
             require('electron-reload')(`${__dirname}/../`, {
                 electron: require(`${__dirname}/../node_modules/electron`)
             });
-            cwd = path.resolve(__dirname, '../Services/satellite');
-            defaultSettingsLocation = path.resolve(__dirname, '../build-scripts/configs/scidap_default_settings.json');
+            this.cwd = path.resolve(__dirname, '../Services/satellite');
+            this.defaultSettingsLocation = path.resolve(__dirname, '../build-scripts/configs/scidap_default_settings.json');
         }
 
-        this.loadSettings(cwd, defaultSettingsLocation);
         // this.pm2_home = path.join(app.getPath('home'), '.pm2');
 
         if (this.store.get('initComplete', false)) {
             keytar.getPassword('scidap-satellite', 'token')
                 .then((token) => {
                     if (token) {
-                        Log.info('Pm2 started!');
+                        this.loadSettings(this.cwd, this.defaultSettingsLocation);
                         this.settings.satelliteSettings.rcServerToken = token;
                         this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
                     }
@@ -335,6 +336,7 @@ export class SatelliteApp {
 
 
     async chainStartPM2Services(): Promise<any> {
+        Log.info('Starting PM2 services');
         try {
             await this.connectToPM2();
             if (this.pm2MonitIntervalId) {
@@ -459,9 +461,10 @@ export class SatelliteApp {
         const token = await keytar.getPassword('scidap-satellite', 'token');
         if (token) {
             Log.info('Running initial configuration');
+            this.loadSettings(this.cwd, this.defaultSettingsLocation);               // reload settings in case something was changed
+            this.settings.satelliteSettings.rcServerToken = token;
             waitForInitConfiguration(this.settings);
             this.store.set('initComplete', true);
-            this.settings.satelliteSettings.rcServerToken = token;
             return await this.chainStartPM2Services();
         } else {
             return Promise.reject('Failed to run initial configuration: no token');
