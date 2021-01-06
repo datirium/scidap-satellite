@@ -246,20 +246,26 @@ function waitForInitConfiguration(settings){
 }
 
 
-function getSettings(cwd){
+function getSettings(cwd, customLocation){
   /*
-  Relative locations will be resolved based on __dirname if cwd was not provided
+  Relative locations will be resolved based on __dirname if cwd was not provided.
+  If customLocation is provided it have higher priority compared to other locations
   */
  
   cwd = cwd || __dirname;
+
   // might be different between Ubuntu and macOS
   const settings_locations = [
     process.env.SCIDAP_SETTINGS,
     path.resolve(cwd, '../../scidap_settings.json'),
     path.resolve(os.homedir(), './.config/scidap-satellite/scidap_settings.json'),  // might be different on mac
     path.resolve(cwd, '../configs/scidap_default_settings.json')                    // default settings should be always present
-  ]
-  
+  ];
+
+  if (customLocation){
+    settings_locations.unshift(customLocation);
+  };
+
   // might be different between Ubuntu and macOS
   // Load settings from the external file, add dynamically configured locations for executables
   const settings = {

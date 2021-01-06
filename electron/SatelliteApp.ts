@@ -40,16 +40,17 @@ export class SatelliteApp {
 
         this.serve = args.some(val => val === '--serve');
         
-        // cwd should point to the directory where configure.js is saved
-        let cwd = path.resolve(app.getAppPath(), '../Services/utilities');
+        let cwd = path.resolve(app.getAppPath(), '../Services/satellite');
+        let defaultSettingsLocation = path.resolve(app.getAppPath(), './build-scripts/configs/scidap_default_settings.json');
         if (this.serve) {
             require('electron-reload')(`${__dirname}/../`, {
                 electron: require(`${__dirname}/../node_modules/electron`)
             });
-            cwd = path.resolve(__dirname, '../Services/utilities');
+            cwd = path.resolve(__dirname, '../Services/satellite');
+            defaultSettingsLocation = path.resolve(__dirname, '../build-scripts/configs/scidap_default_settings.json');
         }
 
-        this.loadSettings(cwd);
+        this.loadSettings(cwd, defaultSettingsLocation);
         // this.pm2_home = path.join(app.getPath('home'), '.pm2');
 
         if (this.store.get('initComplete', false)) {
@@ -65,9 +66,9 @@ export class SatelliteApp {
     }
 
 
-    loadSettings(cwd) {
+    loadSettings(cwd, defaultSettingsLocation) {
         const skip_keys = ['executables']                            // want to have executables be dynamically changed based on app location
-        this.settings = getSettings(cwd);                            // load default settings
+        this.settings = getSettings(cwd, defaultSettingsLocation);   // load default settings
         for (const key in this.settings){                            // update defaults if they have been already redefined in config.json
             if (this.store.has(key) && !skip_keys.includes(key)) {
                 this.settings[key] = {

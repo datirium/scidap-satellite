@@ -191,13 +191,12 @@ else
 fi
 
 
-# Moving installed programs, configuration files and utilities to the Services folder
+# Moving installed programs to the Services folder
+# No need to copy configs and utilities from the
+# build-scripts folder as they will be copied by
+# the Electron builder
 cd ${WORKDIR}
 mv cwl-airflow ${SATDIR} ../Services
-mkdir ../Services/configs ../Services/utilities
-cp ../build-scripts/configs/scidap_default_settings.json ../Services/configs
-cp ../build-scripts/utilities/configure.js ../Services/utilities/
-cp ../build-scripts/utilities/ini.js ../Services/utilities/
 
 
 cd $WORKDIR

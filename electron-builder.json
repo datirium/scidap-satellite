@@ -12,6 +12,15 @@
             "filter": [
                 "**/*"
             ]
+        },
+        {
+            "from": "build-scripts",
+            "to": "Resources/app/build-scripts",
+            "filter": [
+                "**/scidap_default_settings.json",
+                "**/configure.js",
+                "**/ini.js"
+            ]
         }
     ],
     "extraResources": [
