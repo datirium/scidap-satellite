@@ -27,10 +27,8 @@
     "airflowSettings": {
         "core.executor": "LocalExecutor",
         "core.dag_concurrency": 2,
-        "core.dags_are_paused_at_creation": "False",
-        "core.load_examples": "False",
         "core.max_active_runs_per_dag": 1,
-        "core.hostname_callable": "socket:gethostname"
+        "core.hostname_callable": "socket.gethostname"
     },
     "aria2cSettings": {
         "--console-log-level": "debug",

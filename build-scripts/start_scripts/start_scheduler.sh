@@ -20,8 +20,8 @@ echo "Run initial configuration for CWL-Airflow"
 cwl-airflow init --upgrade
 
 echo "Recreate process_report connection"
-airflow connections -d --conn_id process_report
-airflow connections -a --conn_id process_report --conn_uri "${PROCESS_REPORT_URL}"
+airflow connections delete process_report
+airflow connections add process_report --conn-uri "${PROCESS_REPORT_URL}"
 
 echo "Start airflow scheduler"
 airflow scheduler "$@"

@@ -52,7 +52,7 @@ export class SatelliteApp {
         this.loadSettings(cwd);
         // this.pm2_home = path.join(app.getPath('home'), '.pm2');
 
-        if ( this.settings && this.store.get('initComplete', false) ) {
+        if (this.store.get('initComplete', false)) {
             keytar.getPassword('scidap-satellite', 'token')
                 .then((token) => {
                     if (token) {
@@ -326,7 +326,6 @@ export class SatelliteApp {
 
     async chainStartPM2Services(): Promise<any> {
         try {
-            await this.checkForAirflowUpdate();                      // in case CWL-Airflow has breaking changes and something need to be done before running it
             await this.connectToPM2();
             if (this.pm2MonitIntervalId) {
                 clearInterval(this.pm2MonitIntervalId);
@@ -446,26 +445,16 @@ export class SatelliteApp {
     }
 
 
-    async checkForAirflowUpdate() {
-        const latestUpdate = this.store.get('latestUpdateVersion', null);
-        if ( latestUpdate && this.versionAisBiggerB('1.0.8', latestUpdate) ){  // Updates for a specific version only
-            Log.info('Performing CWL-Airflow settings update');
-            await this.satelliteInit();
-            this.store.set('latestUpdateVersion', app.getVersion());
-        }
-    }
-
-
     async satelliteInit() {
         const token = await keytar.getPassword('scidap-satellite', 'token');
-        if (this.settings && token) {
+        if (token) {
             Log.info('Running initial configuration');
-            this.settings.satelliteSettings.rcServerToken = token;
             waitForInitConfiguration(this.settings);
             this.store.set('initComplete', true);
+            this.settings.satelliteSettings.rcServerToken = token;
             return await this.chainStartPM2Services();
         } else {
-            return Promise.reject('no token or settings not loaded');
+            return Promise.reject('Failed to run initial configuration: no token');
         }
     }
 
