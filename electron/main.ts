@@ -126,7 +126,7 @@ try {
      * change to once?
      */
     ipcMain.on('satellite-init', (event) => {
-        Log.info('init');
+        Log.info('satellite-init');
 
         satelliteApp.satelliteInit().then(() => {
             event.reply('satellite-init', 'complete');

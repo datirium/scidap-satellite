@@ -14,6 +14,7 @@
         "airflowAPIPort": 8080,
         "aria2cPort": 6800,
         "mongoPort": 27017,
+        "pm2Port": 9615,
         "mongoCollection": "scidap-satellite",
         "baseUrl": "http://localhost:3069/",
         "scidapSSLPort": 3070,
@@ -28,7 +29,8 @@
         "core.dag_concurrency": 2,
         "core.dags_are_paused_at_creation": "False",
         "core.load_examples": "False",
-        "core.max_active_runs_per_dag": 1
+        "core.max_active_runs_per_dag": 1,
+        "core.hostname_callable": "socket:gethostname"
     },
     "aria2cSettings": {
         "--console-log-level": "debug",

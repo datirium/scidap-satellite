@@ -119,15 +119,15 @@
                     </clr-input-container>
 
                     <clr-input-container>
-                        <label class="clr-col-3"> Airflow's API url:
-                            <div style="color: tomato" *ngIf="checkURLPort(satelliteSettings.triggerDag)">
+                        <label class="clr-col-3"> Airflow's API port:
+                            <div style="color: tomato" *ngIf="checkPort(satelliteSettings.airflowAPIPort)">
                                 <clr-icon shape="exclamation-circle"></clr-icon>
                                 <span>Port is in use!</span>
                             </div>
                         </label>
-                        <input clrInput type="text" class="clr-col-9" [(ngModel)]="satelliteSettings.triggerDag" name="triggerDag" />
-                        <clr-control-helper>Airflow's API url.</clr-control-helper>
-                        <clr-control-error>Error message2</clr-control-error>
+                        <input clrInput type="number" max=65535 min=1000 class="clr-col-9" [(ngModel)]="satelliteSettings.airflowAPIPort" name="airflowAPIPort" />
+                        <clr-control-helper>Airflow's API port.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
                     </clr-input-container>
 
                     <clr-input-container>

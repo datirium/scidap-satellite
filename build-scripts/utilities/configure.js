@@ -71,9 +71,9 @@ function getAirflowApiServerArgs(settings){
 }
 
 
-function getPostgresEnvVar(pathEnvVar, settings){
+function getPostgresEnvVar(settings){
   const postgresEnvVar = {
-    PATH: pathEnvVar,
+    PATH: settings.executables.pathEnvVar,
     PGHOST: '127.0.0.1',
     PGPORT: settings.databaseSettings.db_port,
     PGDATA: settings.defaultLocations.pgdata,
@@ -85,9 +85,9 @@ function getPostgresEnvVar(pathEnvVar, settings){
 }
 
 
-function getAirflowEnvVar(pathEnvVar, settings){
+function getAirflowEnvVar(settings){
   const airflowEnvVar = {
-    PATH: pathEnvVar,
+    PATH: settings.executables.pathEnvVar,
     AIRFLOW_HOME: settings.defaultLocations.airflow,
     PROCESS_REPORT_URL: `http://127.0.0.1:${settings.satelliteSettings.port}`,
     LC_ALL: 'en_US.UTF-8',
@@ -97,13 +97,14 @@ function getAirflowEnvVar(pathEnvVar, settings){
 }
 
 
-function getSatelliteEnvVar(pathEnvVar, settings){
+function getSatelliteEnvVar(settings){
   let satelliteEnvVar = {
-    PATH: pathEnvVar,
+    PATH: settings.executables.pathEnvVar,
     MONGO_URL: `mongodb://localhost:${settings.satelliteSettings.mongoPort}/${settings.satelliteSettings.mongoCollection}`,
     ROOT_URL: settings.satelliteSettings.baseUrl,
     PORT: settings.satelliteSettings.port,
-    METEOR_SETTINGS: settings.meteorSettings,
+    // we need to re-evaluate meteorSettings, because on macOS rcServerToken was not loaded from the config file and therefore was not present when we run getSettings
+    METEOR_SETTINGS: getMeteorSettings(settings),
     NODE_OPTIONS: '--trace-warnings --pending-deprecation'
   };
   if (settings.satelliteSettings.proxy) {
@@ -161,7 +162,7 @@ function getMeteorSettings(settings){
 }
 
 
-function waitForInitConfiguration(pathEnvVar, settings){
+function waitForInitConfiguration(settings){
   /*
   Creates all required folders.
   Creates airflow.cfg by running airflow with the configured AIRFLOW_HOME.
@@ -171,6 +172,7 @@ function waitForInitConfiguration(pathEnvVar, settings){
   Adds or updates proxy configurations in the user-settings.mkfg file based on
   settings.satelliteSettings.
   */
+
   const folders = [
     settings.satelliteSettings.scidapRoot,                            // for node < 10.12.0 recursive won't work, so we need to at least create scidapRoot
     settings.defaultLocations.files,
@@ -191,7 +193,7 @@ function waitForInitConfiguration(pathEnvVar, settings){
     {
       cwd: settings.defaultLocations.airflow,
       shell: true,
-      env: getAirflowEnvVar(pathEnvVar, settings)
+      env: getAirflowEnvVar(settings)
     }
   )
   const airflowCfg = ini.parse(fs.readFileSync(path.resolve(settings.defaultLocations.airflow, 'airflow.cfg'), 'utf-8'));
@@ -238,42 +240,54 @@ function waitForInitConfiguration(pathEnvVar, settings){
     {
       cwd: settings.satelliteSettings.scidapRoot,
       shell: true,
-      env: getAirflowEnvVar(pathEnvVar, settings)  // we need only PATH from there
+      env: getAirflowEnvVar(settings)  // we need only PATH from there
     }
   )
 }
 
 
-function getConfiguration(cwd){
+function getSettings(cwd){
   /*
-  All relative locations will be resolved based on the value of cwd
+  Relative locations will be resolved based on __dirname if cwd was not provided
   */
-
+ 
+  cwd = cwd || __dirname;
   // might be different between Ubuntu and macOS
   const settings_locations = [
     process.env.SCIDAP_SETTINGS,
     path.resolve(cwd, '../../scidap_settings.json'),
-    path.resolve(os.homedir(), './.config/scidap-satellite/scidap_settings.json'),
-    path.resolve(cwd, './scidap_default_settings.json')                       // default settings should be always present
+    path.resolve(os.homedir(), './.config/scidap-satellite/scidap_settings.json'),  // might be different on mac
+    path.resolve(cwd, '../configs/scidap_default_settings.json')                    // default settings should be always present
   ]
   
   // might be different between Ubuntu and macOS
-  // variables that depend on the script location and should be initiated on every run
-  const satelliteBin = path.resolve(cwd, '../satellite/bin');
-  const cwlAirflowBin = path.resolve(cwd, '../cwl-airflow/bin_portable');
-  const pathEnvVar = `${satelliteBin}:${cwlAirflowBin}:/usr/bin:/bin:/usr/local/bin`
+  // Load settings from the external file, add dynamically configured locations for executables
+  const settings = {
+    ...loadSettings(settings_locations),
+    executables: {
+      aria2c: path.resolve(cwd, '../satellite/bin/aria2c'),
+      mongod: path.resolve(cwd, '../satellite/bin/mongod'),
+      startPostgres: path.resolve(cwd, '../satellite/bin/start_postgres.sh'),
+      startScheduler: path.resolve(cwd, '../satellite/bin/start_scheduler.sh'),
+      startApiserver: path.resolve(cwd, '../satellite/bin/start_apiserver.sh'),
+      startSatellite: path.resolve(cwd, '../satellite/main.js'),
+      satelliteBin: path.resolve(cwd, '../satellite/bin'),
+      cwlAirflowBin: path.resolve(cwd, '../cwl-airflow/bin_portable'),
+      pathEnvVar: `${ path.resolve(cwd, '../satellite/bin') }:${ path.resolve(cwd, '../cwl-airflow/bin_portable') }:/usr/bin:/bin:/usr/local/bin`  // maybe add to the original PATH to make it universal, might be different on mac
+    }
+  }
+  
+  return settings;
+}
 
-  // Load settings from the external file
-  const settings = loadSettings(settings_locations);
 
-  // waiting for initial configuration to finish running
-  waitForInitConfiguration(pathEnvVar, settings);
+function getRunConfiguration(settings){
 
   const configuration = {
-    apps : [
+    apps: [
       {
         name: 'aria2c',
-        script: path.resolve(satelliteBin, 'aria2c'),
+        script: settings.executables.aria2c,
         args: getAria2cArgs(settings),
         watch: false,
         exec_mode: 'fork_mode',
@@ -281,7 +295,7 @@ function getConfiguration(cwd){
       },
       {
         name: 'mongod',
-        script: path.resolve(satelliteBin, 'mongod'),
+        script: settings.executables.mongod,
         args: getMongodArgs(settings),
         watch: false,
         exec_mode: 'fork_mode',
@@ -289,47 +303,47 @@ function getConfiguration(cwd){
       },
       {
         name: 'postgres',
-        script: path.resolve(satelliteBin, 'start_postgres.sh'),
+        script: settings.executables.startPostgres,
         args: [],
         watch: false,
         exec_mode: 'fork_mode',
         cwd: settings.defaultLocations.pgdata,
-        env: getPostgresEnvVar(pathEnvVar, settings)  // -D, -h and -p will be read from the environment variables
+        env: getPostgresEnvVar(settings)  // -D, -h and -p will be read from the environment variables
       },
       {
         name: 'airflow-scheduler',
-        script: path.resolve(satelliteBin, 'start_scheduler.sh'),
+        script: settings.executables.startScheduler,
         args: [],
         interpreter: 'bash',
         watch: false,
         exec_mode: 'fork_mode',
         cwd: settings.defaultLocations.airflow,
         env: {
-          ...getPostgresEnvVar(pathEnvVar, settings),
-          ...getAirflowEnvVar(pathEnvVar, settings)
+          ...getPostgresEnvVar(settings),
+          ...getAirflowEnvVar(settings)
         }
       },
       {
         name: 'airflow-apiserver',
-        script: path.resolve(satelliteBin, 'start_apiserver.sh'),
+        script: settings.executables.startApiserver,
         args: getAirflowApiServerArgs(settings),
         interpreter: 'bash',
         watch: false,
         exec_mode: 'fork_mode',
         cwd: settings.defaultLocations.airflow,
         env: {
-          ...getPostgresEnvVar(pathEnvVar, settings),
-          ...getAirflowEnvVar(pathEnvVar, settings)
+          ...getPostgresEnvVar(settings),
+          ...getAirflowEnvVar(settings)
         }
       },
       {  // TODO make sure it's run after mongodb is available
         name: 'satellite',
-        script: path.resolve(satelliteBin, '../main.js'),
+        script: settings.executables.startSatellite,
         interpreter: 'node',
         watch: false,
         exec_mode: 'fork_mode',
         cwd: settings.defaultLocations.satellite,
-        env: getSatelliteEnvVar(pathEnvVar, settings)
+        env: getSatelliteEnvVar(settings)
       }
     ]
   };
@@ -339,5 +353,7 @@ function getConfiguration(cwd){
 
 
 module.exports = {
-  getConfiguration: getConfiguration
+  waitForInitConfiguration: waitForInitConfiguration,
+  getSettings: getSettings,
+  getRunConfiguration: getRunConfiguration
 }

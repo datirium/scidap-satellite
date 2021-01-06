@@ -191,9 +191,13 @@ else
 fi
 
 
-# Moving installed programs to the Services folder
+# Moving installed programs, configuration files and utilities to the Services folder
 cd ${WORKDIR}
 mv cwl-airflow ${SATDIR} ../Services
+mkdir ../Services/configs ../Services/utilities
+cp ../build-scripts/configs/scidap_default_settings.json ../Services/configs
+cp ../build-scripts/utilities/configure.js ../Services/utilities/
+cp ../build-scripts/utilities/ini.js ../Services/utilities/
 
 
 cd $WORKDIR
