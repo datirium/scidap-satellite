@@ -53,6 +53,7 @@ export class SatelliteApp {
         }
 
         // this.pm2_home = path.join(app.getPath('home'), '.pm2');
+        this.runUpdate();
 
         if (this.store.get('initComplete', false)) {
             keytar.getPassword('scidap-satellite', 'token')
@@ -63,6 +64,17 @@ export class SatelliteApp {
                         this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
                     }
                 });
+        }
+    }
+
+
+    runUpdate() {
+        const latestUpdate = this.store.get('latestUpdateVersion', null);
+        if ( !latestUpdate || this.versionAisBiggerB('1.0.10', latestUpdate) ){
+            Log.info('Running settings update');
+            this.loadSettings(this.cwd, this.defaultSettingsLocation);
+            waitForInitConfiguration(this.settings);
+            this.store.set('latestUpdateVersion', app.getVersion());
         }
     }
 
