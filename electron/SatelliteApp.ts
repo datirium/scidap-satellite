@@ -81,10 +81,13 @@ export class SatelliteApp {
 
 
     loadSettings(cwd, defaultSettingsLocation) {
-        const skip_keys = ['executables']                                // want to have executables be dynamically changed based on app location
+        const skip_keys = ['executables']                                // executables are dynamically changed based on app location, so we don't need to save them
         this.settings = getSettings(cwd, defaultSettingsLocation);       // load default settings
         for (const key in this.settings){                                // update defaults if they have been already redefined in config.json
-            if (this.store.has(key) && !skip_keys.includes(key)) {
+            if (skip_keys.includes(key)){                                // skipped keys won't be saved into config.json
+                continue;
+            }
+            if (this.store.has(key)) {
                 let settingsFromStore = this.store.get(key);
                 if (key == 'airflowSettings'){                           // need to treat airflowSettings differently from what is was in the previous versions
                     settingsFromStore = Object.keys(settingsFromStore)
