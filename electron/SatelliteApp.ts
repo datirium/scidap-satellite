@@ -8,6 +8,7 @@ import * as url from 'url';
 import * as os from 'os';
 import * as keytar from 'keytar';
 
+const semver = require('semver')
 const pm2 = require('pm2');
 const Log = require('electron-log');
 const args = process.argv.slice(1);
@@ -70,7 +71,7 @@ export class SatelliteApp {
 
     runUpdate() {
         const latestUpdate = this.store.get('latestUpdateVersion', null);
-        if ( !latestUpdate || this.versionAisBiggerB('1.0.10', latestUpdate) ){
+        if ( !latestUpdate || semver.gt('1.0.10', latestUpdate) ){
             Log.info('Running settings update');
             this.loadSettings(this.cwd, this.defaultSettingsLocation);
             waitForInitConfiguration(this.settings);
@@ -449,23 +450,6 @@ export class SatelliteApp {
                 return resolve();
             });
         });
-    }
-
-
-    /**
-     *
-     * @param a - version A '1.0.0'
-     * @param b - version B '1.0.1'
-     */
-    versionAisBiggerB(a: string, b: string): boolean {
-        const spltA = a.split('.');
-        const spltB = b.split('.');
-        for (let i = 0; i < spltA.length; i++) {
-            if (!spltB[i] || spltA[i] > spltB[i]) {
-                return true;
-            }
-        }
-        return false;
     }
 
 

@@ -113,6 +113,7 @@
     "meteor-node-stubs": "^1.0.1",
     "mongo-express": "^1.0.0-alpha.1",
     "pm2": "^4.5.0",
+    "semver": "^7.3.4",
     "tcp-port-used": "^1.0.1"
   }
 }
