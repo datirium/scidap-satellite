@@ -203,6 +203,7 @@ systemctl stop mongodb
 ```
 3. Start only `mongod` using PM2 `--only` parameter and restore database from the the dump
 ```
+pm2 start ecosystem.config.js --only mongod
 mongorestore
 ```
 4. Start all services using PM2
