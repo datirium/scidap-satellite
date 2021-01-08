@@ -130,6 +130,8 @@ else
   cp -r python3 cwl-airflow
   # patch cwltool so it always use docker for javascript evaluation. The normal node causes troubles when running from pm2 (perhaps somehow related to subprocesses?)
   sed -i -e 's/^    trynodes = ("nodejs", "node")/    trynodes = []/g' ./cwl-airflow/lib/python${CWLAIRFLOW_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
+  # patch cwltool to have longer timeout for javascript evaluation as hardcoded 30 sec is not enough when starting multiple containers simultaniously
+  sed -i -e '160i\ \ \ \ timeout = 120' ./cwl-airflow/lib/python${CWLAIRFLOW_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
 fi
 
 
