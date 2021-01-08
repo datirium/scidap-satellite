@@ -18,6 +18,8 @@ src/**/*.js
 /Services
 /Services/*
 /build
+/build_ubuntu
+/ubuntu_post_build
 
 /electron/**/*.js
 /electron/**/*.js.map

@@ -126,7 +126,7 @@ try {
      * change to once?
      */
     ipcMain.on('satellite-init', (event) => {
-        Log.info('init');
+        Log.info('satellite-init');
 
         satelliteApp.satelliteInit().then(() => {
             event.reply('satellite-init', 'complete');
@@ -164,7 +164,7 @@ try {
         satelliteApp.disconnectPM2().then(() => {
             return satelliteApp.killPM2_2();
         }).then(() => {
-            return satelliteApp.chainStartPM2Services();
+            return satelliteApp.satelliteInit();          // need to run initial configuration because we need to reload setting and when implemented react on changed scidapRoot
         }).then(() => {
             event.reply('restart-programs', 'complete');
         }).catch((err) => {

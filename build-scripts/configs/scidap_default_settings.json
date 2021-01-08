@@ -1,0 +1,87 @@
+{
+    "defaultLocations": {
+        "files": "files",
+        "mongodb": "mongodb",
+        "airflow": "airflow",
+        "satellite": "satellite",
+        "pgdata": "pgdata"
+    },
+    "satelliteSettings": {
+        "rcServerToken": "",
+        "rcServer": "https://api-sync.scidap.com",
+        "port": 3069,
+        "scidapRoot": "./scidap",
+        "airflowAPIPort": 8080,
+        "aria2cPort": 6800,
+        "mongoPort": 27017,
+        "pm2Port": 9615,
+        "mongoCollection": "scidap-satellite",
+        "baseUrl": "http://localhost:3069/",
+        "scidapSSLPort": 3070,
+        "sslCert": "",
+        "sslKey": "",
+        "localFiles": true,
+        "proxy": "",
+        "noProxy": ""
+    },
+    "airflowSettings": {
+        "core.executor": "LocalExecutor",
+        "core.dag_concurrency": 2,
+        "core.max_active_runs_per_dag": 1,
+        "core.hostname_callable": "socket.gethostname"
+    },
+    "aria2cSettings": {
+        "--console-log-level": "debug",
+        "--remove-control-file": true,
+        "--allow-overwrite": true,
+        "--auto-file-renaming": false
+    },
+    "databaseSettings":{
+        "db_port": 5432,
+        "db_user": "airflow",
+        "db_password": "airflow",
+        "db_name": "airflow"
+    },
+    "meteorSettings": {
+        "logLevel": "debug",
+        "cors_package": true,
+        "email": {
+            "url": "",
+            "from": ""
+        },
+        "extra_users": [],
+        "public": {
+        },
+        "accounts": {
+            "sendVerificationEmail": true,
+            "forbidClientAccountCreation": true,
+            "loginExpirationInDays": 7
+        },
+        "ldap": {},
+        "oauth2server": {},
+        "remotes": {
+            "postform": {
+                "collection": {},
+                "publication": "none"
+            },
+            "directurl": {
+                "caption": "Direct URL",
+                "type": "urls",
+                "protocol": [
+                    "https",
+                    "http",
+                    "ftp"
+                ],
+                "refreshSessionInterval": 180
+            },
+            "geo": {
+                "caption": "GEO",
+                "type": "urls",
+                "protocol": [
+                    "geo"
+                ],
+                "refreshSessionInterval": 180
+            }
+        }
+    }
+}

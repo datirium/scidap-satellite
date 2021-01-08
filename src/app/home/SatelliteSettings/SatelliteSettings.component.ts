@@ -15,69 +15,27 @@ export class SatelliteSettingsComponent implements OnInit {
     commonSettings;
     advancedSettings;
 
-    dataDirectory;
+    satelliteSettings: any = {};
 
-    globalSettings = {};
-
-    airflowSettings: any = {};
     portchecked = {};
     portcheck;
-    skipng;
-    satelliteSettings = {
-        port: 3069,
-        scidapRoot: '',
-        scidapSSLPort: 3070,
-        airflowAPIPort: 8080,
-        aria2cPort: 6800,
-        mongoPort: 27017,
-        pm2Port: 9615,
-        baseUrl: 'http://localhost:3069/',
-        proxy: '',
-        noProxy: '',
-        sslCert: '',
-        sslKey: '',
-        triggerDag: 'http://127.0.0.1:8080/api/experimental/dags/{dag_id}/dag_runs',
-        localFiles: true
-    };
-
+    skipng;    // maybe don't need it here
+    
     public store = new Store();
 
     constructor(
         public _electronService: ElectronService,
         private _zone: NgZone
     ) {
-        this.portcheck = this._electronService.remote.require('tcp-port-used');
-        this.satelliteSettings = {
-            ...this.satelliteSettings,
-            scidapRoot: this._electronService.remote.app.getPath('home') + '/scidap'
-        };
 
-        this.airflowSettings = {
-            ...this.airflowSettings,
-            AIRFLOW_HOME: this._electronService.remote.app.getPath('userData') + '/airflow',
-            init_commands: [
-                `cwl-airflow init --upgrade && \
-                 airflow connections -d --conn_id process_report && \
-                 airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port}`
-            ]
-        };
+        this.portcheck = this._electronService.remote.require('tcp-port-used');
 
         if (this.store.has('skipng')) {
             this.skipng = this.store.get('skipng');
         }
 
-        if (this.store.has('airflowSettings')) {
-            this.airflowSettings = {
-                ...this.airflowSettings,
-                ...this.store.get('airflowSettings')
-            };
-        }
-        if (this.store.has('satelliteSettings')) {
-            this.satelliteSettings = {
-                ...this.satelliteSettings,
-                ...this.store.get('satelliteSettings')
-            };
-        }
+        this.satelliteSettings = this.store.get('satelliteSettings', null)
+
     }
 
     ngOnInit() {
@@ -104,13 +62,6 @@ export class SatelliteSettingsComponent implements OnInit {
     }
 
     doSave() {
-        const url = new URL(this.satelliteSettings.triggerDag);
-        if (!url.port) {
-            url.port = '8080';
-        }
-        this.satelliteSettings.airflowAPIPort = parseInt(url.port, 10);
-
-        this.store.set('airflowSettings', this.airflowSettings);
         this.store.set('satelliteSettings', this.satelliteSettings);
     }
 

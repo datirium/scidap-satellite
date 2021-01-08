@@ -12,6 +12,15 @@
             "filter": [
                 "**/*"
             ]
+        },
+        {
+            "from": "build-scripts",
+            "to": "Resources/app/build-scripts",
+            "filter": [
+                "**/scidap_default_settings.json",
+                "**/configure.js",
+                "**/ini.js"
+            ]
         }
     ],
     "extraResources": [
@@ -59,7 +68,7 @@
             "url": "https://scidap.nyc3.digitaloceanspaces.com/releases/"
         }
     ],
-    "afterSign": "build-scripts/notarize.js",
+    "afterSign": "build-scripts/utilities/notarize.js",
     "win": {
         "icon": "dist",
         "target": [
@@ -84,8 +93,8 @@
         ],
         "hardenedRuntime": true,
         "gatekeeperAssess": false,
-        "entitlements": "./build-scripts/entitlements.mac.inherit.plist",
-        "entitlementsInherit": "./build-scripts/entitlements.mac.inherit.plist",
+        "entitlements": "./build-scripts/configs/entitlements.mac.inherit.plist",
+        "entitlementsInherit": "./build-scripts/configs/entitlements.mac.inherit.plist",
         "provisioningProfile": "embedded.provisionprofile",
         "extendInfo": {
             "ElectronTeamID": "WW49A8Y53S"
