@@ -341,7 +341,7 @@ export class SatelliteApp {
             interpreter: 'node',
             watch: false,
             exec_mode: 'fork_mode',
-            cwd: `${this.settings.satelliteSettings.scidapRoot}`,
+            cwd: `${this.settings.satelliteSettings.systemRoot}`,
             env: {
                 ME_CONFIG_BASICAUTH_USERNAME: '',
                 PATH: this.settings.executables.pathEnvVar

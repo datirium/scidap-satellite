@@ -12,28 +12,25 @@ function loadSettings(settings_locations){
     try {
       settings = JSON.parse(fs.readFileSync(location));
       console.log(`Successfully loaded settings from ${location}`);
+      settings.loadedFrom = location;                                // need to know from which file we loaded these settings
       break;
     } catch (e) {
       console.log(`Failed to load settings from ${location}`);
     }
   };
-  // in case scidapRoot was set as a relative path, we need to resolve it based on the homedir
-  settings.satelliteSettings.scidapRoot = path.resolve(os.homedir(), settings.satelliteSettings.scidapRoot);
-  // in case defaultLocations were set as a relative path, we need to resolve them based on settings.satelliteSettings.scidapRoot
+  // in case systemRoot was set as a relative path, we need to resolve it based on the homedir
+  settings.satelliteSettings.systemRoot = path.resolve(os.homedir(), settings.satelliteSettings.systemRoot);
+  // in case defaultLocations were set as a relative path,
+  // we need to resolve them based on settings.satelliteSettings.systemRoot
   settings.defaultLocations = getDefaultLocations(settings);
-  // set up meteor settings based on settings.satelliteSettings
-  settings.meteorSettings = getMeteorSettings(settings);
   return settings;
 }
 
 
 function getDefaultLocations(settings){
-  const defaultLocations = {
-    files: path.resolve(settings.satelliteSettings.scidapRoot, settings.defaultLocations.files),
-    mongodb: path.resolve(settings.satelliteSettings.scidapRoot, settings.defaultLocations.mongodb),
-    airflow: path.resolve(settings.satelliteSettings.scidapRoot, settings.defaultLocations.airflow),
-    satellite: path.resolve(settings.satelliteSettings.scidapRoot, settings.defaultLocations.satellite),
-    pgdata: path.resolve(settings.satelliteSettings.scidapRoot, settings.defaultLocations.pgdata)
+  const defaultLocations = {};
+  for (const [key, value] of Object.entries(settings.defaultLocations)) {
+    defaultLocations[key] = path.resolve(settings.satelliteSettings.systemRoot, value)
   };
   return defaultLocations
 }
@@ -50,16 +47,6 @@ function getAria2cArgs(settings){
     aria2cArgs["--all-proxy"] = settings.satelliteSettings.proxy;
   };
   return Object.keys(aria2cArgs).map((key) => `${key}=${aria2cArgs[key]}`);  // to return as array of "key=value" 
-}
-
-
-function getMongodArgs(settings){
-  const mongodArgs = [
-    '--bind_ip', '127.0.0.1',
-    '--port', settings.satelliteSettings.mongoPort,
-    '--dbpath', settings.defaultLocations.mongodb
-  ];
-  return mongodArgs
 }
 
 
@@ -97,59 +84,59 @@ function getAirflowEnvVar(settings){
 }
 
 
-function getSatelliteEnvVar(settings){
-  let satelliteEnvVar = {
+function getNjsClientEnvVar(settings){
+
+  const njsClientSettingsLocation = path.resolve(    // we want to dynamically rectreate NJS-Client settings file, because from Electron App we read token after we read settings
+    path.dirname(settings.loadedFrom),               // keep NJS-Client settings alognside the file from where we loaded main settings
+    'njs_client_settings.json'
+  )
+  saveNjsClientSettings(settings, njsClientSettingsLocation);
+
+  let njsClientEnvVar = {
     PATH: settings.executables.pathEnvVar,
-    MONGO_URL: `mongodb://localhost:${settings.satelliteSettings.mongoPort}/${settings.satelliteSettings.mongoCollection}`,
-    ROOT_URL: settings.satelliteSettings.baseUrl,
-    PORT: settings.satelliteSettings.port,
-    // we need to re-evaluate meteorSettings, because on macOS rcServerToken was not loaded from the config file and therefore was not present when we run getSettings
-    METEOR_SETTINGS: getMeteorSettings(settings),
-    NODE_OPTIONS: '--trace-warnings --pending-deprecation'
+    SSL_CONN: settings.satelliteSettings.enableSSL,
+    CONFIG_FILE: njsClientSettingsLocation,
+    NODE_OPTIONS: '--trace-warnings --pending-deprecation'   // why do we need it? Should be keep it for NestJS too?
   };
   if (settings.satelliteSettings.proxy) {
-    satelliteEnvVar = {
-      ...satelliteEnvVar,
+    njsClientEnvVar = {
+      ...njsClientEnvVar,
       https_proxy: settings.satelliteSettings.proxy,
       http_proxy: settings.satelliteSettings.proxy,
       no_proxy: settings.satelliteSettings.noProxy || ''
     };
   };
-  return satelliteEnvVar
+  return njsClientEnvVar
 }
 
 
-function getMeteorSettings(settings){
-  const meteorSettings = {
-    ...settings.meteorSettings,
-    name: 'scidap-satellite',
-    base_url: settings.satelliteSettings.baseUrl,
-    rc_server_token: settings.satelliteSettings.rcServerToken,
-    rc_server: settings.satelliteSettings.rcServer,
-    systemRoot: settings.satelliteSettings.scidapRoot,
-    airflow: {
-      trigger_dag: `http://127.0.0.1:${settings.satelliteSettings.airflowAPIPort}/api/experimental/dags/{dag_id}/dag_runs`,
-      dags_folder: path.resolve(settings.defaultLocations.airflow, 'dags')
-    },
-    logFile: path.resolve(settings.defaultLocations.satellite, 'satellite-service.log')
+function saveJwtLocation(settings, location){
+  const rcServerTokenData = {
+    jwt: settings.satelliteSettings.rcServerToken
   };
-  if (settings.satelliteSettings.sslCert && settings.satelliteSettings.sslKey && settings.satelliteSettings.scidapSSLPort) {
-    meteorSettings['SSL'] = {
-      'key': settings.satelliteSettings.sslKey,
-      'cert': settings.satelliteSettings.sslCert,
-      'port': settings.satelliteSettings.scidapSSLPort
-    };
-  }
-  meteorSettings.remotes.localfiles = {
-    'caption': 'Local files',
-    'type': 'files',
-    'protocol': 'files',
-    'base_directory': settings.defaultLocations.files,
-    'collection': settings.satelliteSettings.localFiles?{'name': 'local_files_collection', 'nullConnection': true}:{},
-    'publication': settings.satelliteSettings.localFiles?'local_files_collection':'none',
-    'refreshSessionInterval': 180
-  }
-  meteorSettings.download = {
+  fs.writeFileSync(location, JSON.stringify(rcServerTokenData), {mode: 0o600});  // creates or overwrites file with -rw------- permissions
+}
+
+
+function saveNjsClientSettings(settings, location){
+  /*
+  Ignores settings.satelliteSettings.localFiles as it's not implemented in
+  NJS-Client. settings.satelliteSettings.enableSSL will be used as environment
+  variable. Exports settings as json file to the provided location. JWT token
+  is saved at the same directory as location.
+  */
+  const rcServerTokenLocation = path.resolve(
+    path.dirname(location),                     // keep file with JWT token alognside the NJS-Client settings file
+    'rc_server_token.json'
+  );
+  saveJwtLocation(settings, rcServerTokenLocation)
+  const njsClientSettings = {
+      jwtLocation: rcServerTokenLocation,
+      port: settings.satelliteSettings.port,
+      airflowAPIPort: settings.satelliteSettings.airflowAPIPort,
+      systemRoot: settings.satelliteSettings.systemRoot
+  };
+  njsClientSettings.download = {
     'aria2': {
       'host': 'localhost',
       'port': settings.satelliteSettings.aria2cPort,
@@ -157,8 +144,11 @@ function getMeteorSettings(settings){
       'secret': '',
       'path': '/jsonrpc'
     }
-  }
-  return meteorSettings;
+  };
+  if (settings.satelliteSettings.remotes) {
+    njsClientSettings.remotes = settings.satelliteSettings.remotes;
+  };
+  fs.writeFileSync(location, JSON.stringify(njsClientSettings), {mode: 0o600});  // creates or overwrites file with -rw------- permissions
 }
 
 
@@ -174,12 +164,8 @@ function waitForInitConfiguration(settings){
   */
 
   const folders = [
-    settings.satelliteSettings.scidapRoot,                            // for node < 10.12.0 recursive won't work, so we need to at least create scidapRoot
-    settings.defaultLocations.files,
-    settings.defaultLocations.mongodb,
-    settings.defaultLocations.airflow,
-    settings.defaultLocations.satellite,
-    settings.defaultLocations.pgdata
+    settings.satelliteSettings.systemRoot,                            // for node < 10.12.0 recursive won't work, so we need to at least create systemRoot
+    ...Object.values(settings.defaultLocations)
   ]
   for (folder of folders) {
     try {
@@ -238,7 +224,7 @@ function waitForInitConfiguration(settings){
      fi`,
     [],
     {
-      cwd: settings.satelliteSettings.scidapRoot,
+      cwd: settings.satelliteSettings.systemRoot,
       shell: true,
       env: getAirflowEnvVar(settings)  // we need only PATH from there
     }
@@ -272,12 +258,11 @@ function getSettings(cwd, customLocation){
     ...loadSettings(settings_locations),
     executables: {
       aria2c: path.resolve(cwd, '../satellite/bin/aria2c'),
-      mongod: path.resolve(cwd, '../satellite/bin/mongod'),
       startPostgres: path.resolve(cwd, '../satellite/bin/start_postgres.sh'),
       startScheduler: path.resolve(cwd, '../satellite/bin/start_scheduler.sh'),
       startApiserver: path.resolve(cwd, '../satellite/bin/start_apiserver.sh'),
-      startSatellite: path.resolve(cwd, '../satellite/main.js'),
-      satelliteBin: path.resolve(cwd, '../satellite/bin'),
+      startNjsClient: path.resolve(cwd, '../satellite/dist/src/main.js'),
+      satelliteBin: path.resolve(cwd, '../satellite/bin'),                       // not used directly, but added just in case
       cwlAirflowBin: path.resolve(cwd, '../cwl-airflow/bin_portable'),
       pathEnvVar: `${ path.resolve(cwd, '../satellite/bin') }:${ path.resolve(cwd, '../cwl-airflow/bin_portable') }:/usr/bin:/bin:/usr/local/bin`  // maybe add to the original PATH to make it universal, might be different on mac
     }
@@ -298,14 +283,6 @@ function getRunConfiguration(settings){
         watch: false,
         exec_mode: 'fork_mode',
         cwd: settings.defaultLocations.files
-      },
-      {
-        name: 'mongod',
-        script: settings.executables.mongod,
-        args: getMongodArgs(settings),
-        watch: false,
-        exec_mode: 'fork_mode',
-        cwd: settings.defaultLocations.mongodb
       },
       {
         name: 'postgres',
@@ -342,18 +319,18 @@ function getRunConfiguration(settings){
           ...getAirflowEnvVar(settings)
         }
       },
-      {  // TODO make sure it's run after mongodb is available
-        name: 'satellite',
-        script: settings.executables.startSatellite,
+      {
+        name: 'njs-client',
+        script: settings.executables.startNjsClient,
         interpreter: 'node',
         watch: false,
         exec_mode: 'fork_mode',
         cwd: settings.defaultLocations.satellite,
-        env: getSatelliteEnvVar(settings)
+        env: getNjsClientEnvVar(settings)
       }
     ]
   };
-  
+
   return configuration;
 }
 

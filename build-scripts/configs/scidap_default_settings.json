@@ -1,7 +1,6 @@
 {
     "defaultLocations": {
         "files": "files",
-        "mongodb": "mongodb",
         "airflow": "airflow",
         "satellite": "satellite",
         "pgdata": "pgdata"
@@ -10,19 +9,29 @@
         "rcServerToken": "",
         "rcServer": "https://api-sync.scidap.com",
         "port": 3069,
-        "scidapRoot": "./scidap",
         "airflowAPIPort": 8080,
+        "systemRoot": "./scidap",
         "aria2cPort": 6800,
-        "mongoPort": 27017,
         "pm2Port": 9615,
-        "mongoCollection": "scidap-satellite",
         "baseUrl": "http://localhost:3069/",
-        "scidapSSLPort": 3070,
-        "sslCert": "",
-        "sslKey": "",
+        "enableSSL": false,
         "localFiles": true,
         "proxy": "",
-        "noProxy": ""
+        "noProxy": "",
+        "remotes": {
+            "directurl": {
+                "protocol": [
+                    "ftp",
+                    "http",
+                    "https"
+                ],
+                "caption": "ftp"
+            },
+            "geo": {
+                "protocol": "geo",
+                "caption": "geo"
+            }
+        }
     },
     "airflowSettings": {
         "core.executor": "LocalExecutor",
@@ -41,47 +50,5 @@
         "db_user": "airflow",
         "db_password": "airflow",
         "db_name": "airflow"
-    },
-    "meteorSettings": {
-        "logLevel": "debug",
-        "cors_package": true,
-        "email": {
-            "url": "",
-            "from": ""
-        },
-        "extra_users": [],
-        "public": {
-        },
-        "accounts": {
-            "sendVerificationEmail": true,
-            "forbidClientAccountCreation": true,
-            "loginExpirationInDays": 7
-        },
-        "ldap": {},
-        "oauth2server": {},
-        "remotes": {
-            "postform": {
-                "collection": {},
-                "publication": "none"
-            },
-            "directurl": {
-                "caption": "Direct URL",
-                "type": "urls",
-                "protocol": [
-                    "https",
-                    "http",
-                    "ftp"
-                ],
-                "refreshSessionInterval": 180
-            },
-            "geo": {
-                "caption": "GEO",
-                "type": "urls",
-                "protocol": [
-                    "geo"
-                ],
-                "refreshSessionInterval": 180
-            }
-        }
     }
 }
