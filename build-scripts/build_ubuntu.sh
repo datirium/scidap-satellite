@@ -22,20 +22,15 @@ download_and_extract() {
   fi
 }
 
-build_biowardobe_ng() {
+build_njs_client() {
   TEMP_PATH=$PATH
-  PATH="${WORKDIR}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
-  echo "Building biowardrobe-ng from $1"
+  PATH="${WORKDIR}/node-v${NODE_VERSION}-darwin-x64/bin:${PATH}"
+  echo "Building njs-client from $1"
   cd $1
   npm install > ${WORKDIR}/npm_install.log 2>&1
-  AOT=1 ROLLUP=0 meteor build --directory "${SATDIR}" > ${WORKDIR}/biowardrobe_ng_build.log 2>&1 
-  cd "${SATDIR}"
-  mv bundle/* bundle/.node_version.txt .
-  rm -rf bundle
-  chmod -R u+w ${SATDIR}
-  echo "Installing node modules"
-  cd ${SATDIR}/programs/server
-  npm install >> ${WORKDIR}/npm_install.log 2>&1
+  npm run build > ${WORKDIR}/npm_build.log 2>&1
+  mv dist node_modules ${SATDIR}                                  # need only these two folders
+  chmod -R u+w ${SATDIR}                                          # maybe we don't need it anymore?
   cd ${WORKDIR}
   PATH=$TEMP_PATH
 }
@@ -43,20 +38,22 @@ build_biowardobe_ng() {
 
 # Setting up package versions
 NODE_VERSION="12.19.0"
-MONGO_VERSION="4.2.10"
 ARIA2_VERSION="1.35.0"
 CWLAIRFLOW_VERSION="1.2.10"
 CWLAIRFLOW_PYTHON_VERSION="3.6"
 UBUNTU_VERSION="18.04"
-BIOWARDROBE_NG_VERSION="2.0.2"
+NJS_CLIENT_VERSION="2c6f5d81ccb5"       # do not use tags as even when downloading from tags Bitbucket will still include commit id in the folder name when extracted
 SRA_TOOLKIT_VERSION="2.10.9"
 POSTGRESQL_VERSION="10.15"
 
 
-# Loading variables from .env if provided
+# Loading variables from .env if it was provided.
 # Can be used for redefining package versions from above
-# and setting BIOWARDROBE_NG_LOCAL_PATH for building
-# BioWardrobe-NG from the local path
+# and setting NJS_CLIENT_LOCAL_PATH for building njs-client
+# from the local directory. NJS_CLIENT_LOCAL_PATH should point to
+# the scidap-satellite subdir as we don't need to build apisync.
+# Alternatively, to download njs-client from Bitbucket valid
+# BITBUCKET_USER and BITBUCKET_PASS should be set in .env
 if [ -e .env ]; then
   echo "Loading variables from .env"
   export $(egrep -v '^#' .env | xargs)
@@ -81,18 +78,19 @@ else
 fi
 
 
-# Downloadind and compiling biowardrobe-ng, installing node modules
-if [ -e ${SATDIR}/main.js ]; then
-  warn "biowardrobe-ng has been already built. Skipping"
+# Downloadind and building njs-client, installing node modules
+if [ -e ${SATDIR}/dist/src/main.js ]; then
+  warn "njs-client has been already built. Skipping"
 else
-  if [ -n "$BIOWARDROBE_NG_LOCAL_PATH" ]; then
-    # Building BioWardrobe-NG from the local path, BIOWARDROBE_NG_VERSION is not used
-    build_biowardobe_ng ${BIOWARDROBE_NG_LOCAL_PATH}
+  if [ -n "$NJS_CLIENT_LOCAL_PATH" ]; then
+    # Building njs-client from the local path, NJS_CLIENT_VERSION is not used
+    build_njs_client ${NJS_CLIENT_LOCAL_PATH}
   else
-    # Downloading and building BioWardrobe-NG from the GitHub release BIOWARDROBE_NG_VERSION
-    BIOWARDROBE_NG_URL="https://github.com/Barski-lab/biowardrobe-ng/archive/${BIOWARDROBE_NG_VERSION}.tar.gz"
-    download_and_extract $BIOWARDROBE_NG_URL ${BIOWARDROBE_NG_VERSION}.tar.gz biowardrobe-ng-${BIOWARDROBE_NG_VERSION}
-    build_biowardobe_ng biowardrobe-ng-${BIOWARDROBE_NG_VERSION}
+    # Downloading and building njs-client release/tag NJS_CLIENT_VERSION
+    # from Bitbucket using provided BITBUCKET_USER and BITBUCKET_PASS
+    NJS_CLIENT_URL="https://${BITBUCKET_USER}:${BITBUCKET_PASS}@bitbucket.org/datirium/scidapsatelliteinteractions/get/${NJS_CLIENT_VERSION}.tar.gz"
+    download_and_extract $NJS_CLIENT_URL ${NJS_CLIENT_VERSION}.tar.gz datirium-scidapsatelliteinteractions-${NJS_CLIENT_VERSION}
+    build_njs_client datirium-scidapsatelliteinteractions-${NJS_CLIENT_VERSION}/scidap-satellite  # need subdir from the repository
   fi
 fi
 
