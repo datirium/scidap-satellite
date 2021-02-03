@@ -71,38 +71,48 @@ export class SatelliteApp {
 
     runUpdate() {
         const latestUpdate = this.store.get('latestUpdateVersion', null);
-        if ( !latestUpdate || semver.gt('1.0.10', latestUpdate) ){
+        if ( !latestUpdate || semver.gt('1.0.11', latestUpdate) ){
             Log.info('Running settings update');
+            this.removeDeprecatedSettings();
             this.loadSettings(this.cwd, this.defaultSettingsLocation);
-            waitForInitConfiguration(this.settings);
+            waitForInitConfiguration(this.settings);                     // the only time consuming part
             this.store.set('latestUpdateVersion', app.getVersion());
         }
     }
 
 
+    removeDeprecatedSettings() {
+        const removeKeys = [                                             // deprecated or refactored keys that should be either removed or restored to their defaults
+            'defaultLocations',
+            'meteorSettings',
+            'airflowSettings'
+        ];
+        for (const key of removeKeys){
+            Log.info(`Remove deprecated or refactored settings for ${key}`);
+            this.store.delete(key);
+        };
+    }
+
+
     loadSettings(cwd, defaultSettingsLocation) {
-        const skip_keys = ['executables']                                // executables are dynamically changed based on app location, so we don't need to save them
+        const skipKeys = [
+            'executables',                                               // executables can be dynamically changed
+            'defaultLocations',                                          // defaultLocations defines folder names within scidapRoot, so we don't want users to change them
+            'loadedFrom'                                                 // technical field, not required to be changed by users
+        ]
         this.settings = getSettings(cwd, defaultSettingsLocation);       // load default settings
         for (const key in this.settings){                                // update defaults if they have been already redefined in config.json
-            if (skip_keys.includes(key)){                                // skipped keys won't be saved into config.json
+            if (skipKeys.includes(key)){                                 // skipped keys won't be saved into config.json
                 continue;
             }
             if (this.store.has(key)) {
                 let settingsFromStore = this.store.get(key);
-                if (key == 'airflowSettings'){                           // need to treat airflowSettings differently from what is was in the previous versions
-                    settingsFromStore = Object.keys(settingsFromStore)
-                        .filter((param) => param.includes("."))          // to filter out AIRFLOW_HOME and other old settings. All new should follow "section.key" format
-                        .reduce((filtered, param) => {
-                            filtered[param] = settingsFromStore[param];
-                            return filtered;
-                          }, {})
-                }
                 this.settings[key] = {
                     ...this.settings[key],
                     ...settingsFromStore
                 };
             };
-            this.store.set(key, this.settings[key]);                  // save either defaults or not changed data to config.json
+            this.store.set(key, this.settings[key]);                     // save either defaults or not changed data to config.json
         }
     }
 
@@ -328,29 +338,6 @@ export class SatelliteApp {
         });
     }
 
-
-    startPM2MongoExpress() {
-        let mongo_express_path = path.join(this.settings.executables.satelliteBin, '../../../', 'app/node_modules/mongo-express/');
-        if (this.serve) {
-            mongo_express_path = path.join(this.settings.executables.satelliteBin, '../../../', 'node_modules/mongo-express/');
-        }
-        const options = {
-            name: 'mongo-express',
-            script: `${mongo_express_path}/app.js`,
-            args: ['-a', '-U', `mongodb://localhost:${this.settings.satelliteSettings.mongoPort}/scidap-satellite`, '--port', 27083],
-            interpreter: 'node',
-            watch: false,
-            exec_mode: 'fork_mode',
-            cwd: `${this.settings.satelliteSettings.systemRoot}`,
-            env: {
-                ME_CONFIG_BASICAUTH_USERNAME: '',
-                PATH: this.settings.executables.pathEnvVar
-            }
-        };
-        return this.startPM2(options);
-    }
-
-
     async chainStartPM2Services(): Promise<any> {
         Log.info('Starting PM2 services');
         try {
@@ -363,8 +350,7 @@ export class SatelliteApp {
                     this.send('pm2-monit', processDescriptionList);
                 });
             }, 1000);
-            await this.startPM2(getRunConfiguration(this.settings));
-            return await this.startPM2MongoExpress();
+            return await this.startPM2(getRunConfiguration(this.settings));
         } catch (error) {
             Log.info(error);
         }

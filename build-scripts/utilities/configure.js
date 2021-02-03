@@ -77,8 +77,13 @@ function getAirflowEnvVar(settings){
     PATH: settings.executables.pathEnvVar,
     AIRFLOW_HOME: settings.defaultLocations.airflow,
     PROCESS_REPORT_URL: `http://127.0.0.1:${settings.satelliteSettings.port}`,
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: `postgresql+psycopg2://${settings.databaseSettings.db_user}:${settings.databaseSettings.db_password}@127.0.0.1:${settings.databaseSettings.db_port}/${settings.databaseSettings.db_name}`,
     LC_ALL: 'en_US.UTF-8',
     LANG: 'en_US.UTF-8'
+  };
+  for (key in settings.airflowSettings){
+    [section, parameter] = key.split(".");
+    airflowEnvVar[`AIRFLOW__${section.toUpperCase()}__${parameter.toUpperCase()}`] = settings.airflowSettings[key];
   };
   return airflowEnvVar
 }
@@ -156,8 +161,7 @@ function saveNjsClientSettings(settings, location){
 function waitForInitConfiguration(settings){
   /*
   Creates all required folders.
-  Creates airflow.cfg by running airflow with the configured AIRFLOW_HOME.
-  Patches airflow.cfg.
+  Creates airflow.cfg by running airflow with the configured AIRFLOW_HOME (maybe we don't need this step).
   Checks if '~/.ncbi/user-settings.mkfg' exists. If not, creates it.
   Checks if '~/.ncbi/user-settings.mkfg.scidap.backup' exists. If not, creates it.
   Adds or updates proxy configurations in the user-settings.mkfg file based on
@@ -175,21 +179,14 @@ function waitForInitConfiguration(settings){
       console.log(`Failed to create directory ${folder} due to ${e}`);
     }
   }
-  child_process.spawnSync(
+  child_process.spawnSync(                         // Need to leave it like this untill we make sure that api server is run after scheduler and they both don't create airflow.cfg
     "airflow", [],
     {
       cwd: settings.defaultLocations.airflow,
       shell: true,
       env: getAirflowEnvVar(settings)
     }
-  )
-  const airflowCfg = ini.parse(fs.readFileSync(path.resolve(settings.defaultLocations.airflow, 'airflow.cfg'), 'utf-8'));
-  for (key in settings.airflowSettings){
-    [section, parameter] = key.split(".")
-    airflowCfg[section][parameter] = settings.airflowSettings[key]
-  };
-  airflowCfg.core.sql_alchemy_conn = `postgresql+psycopg2://${settings.databaseSettings.db_user}:${settings.databaseSettings.db_password}@127.0.0.1:${settings.databaseSettings.db_port}/${settings.databaseSettings.db_name}`
-  fs.writeFileSync(path.resolve(settings.defaultLocations.airflow, 'airflow.cfg'), ini.stringify(airflowCfg, {whitespace: true}));
+  );
   const ncbi_dir = path.resolve(os.homedir(), '.ncbi')
   const mkfg_file = path.resolve(ncbi_dir, 'user-settings.mkfg')
   const mkfg_file_backup = path.resolve(ncbi_dir, 'user-settings.mkfg.backuped_by_scidap')

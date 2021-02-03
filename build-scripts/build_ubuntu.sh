@@ -42,7 +42,7 @@ ARIA2_VERSION="1.35.0"
 CWLAIRFLOW_VERSION="1.2.10"
 CWLAIRFLOW_PYTHON_VERSION="3.6"
 UBUNTU_VERSION="18.04"
-NJS_CLIENT_VERSION="1dda328eb9b9"       # do not use tags as even when downloading from tags Bitbucket will still include commit id in the folder name when extracted
+NJS_CLIENT_VERSION="e9737c5e0391"       # do not use tags as even when downloading from tags Bitbucket will still include commit id in the folder name when extracted
 SRA_TOOLKIT_VERSION="2.10.9"
 POSTGRESQL_VERSION="10.15"
 
@@ -129,7 +129,7 @@ else
   # patch cwltool so it always use docker for javascript evaluation. The normal node causes troubles when running from pm2 (perhaps somehow related to subprocesses?)
   sed -i -e 's/^    trynodes = ("nodejs", "node")/    trynodes = []/g' ./cwl-airflow/lib/python${CWLAIRFLOW_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
   # patch cwltool to have longer timeout for javascript evaluation as hardcoded 30 sec is not enough when starting multiple containers simultaniously
-  sed -i -e '160i\ \ \ \ timeout = 120' ./cwl-airflow/lib/python${CWLAIRFLOW_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
+  sed -i -e '160i\ \ \ \ timeout = 360' ./cwl-airflow/lib/python${CWLAIRFLOW_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
 fi
 
 
