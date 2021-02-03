@@ -14,7 +14,7 @@
         "aria2cPort": 6800,
         "pm2Port": 9615,
         "baseUrl": "http://localhost:3069/",
-        "enableSSL": false,
+        "enableSSL": true,
         "localFiles": true,
         "proxy": "",
         "noProxy": "",
