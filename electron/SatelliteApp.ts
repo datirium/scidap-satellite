@@ -62,6 +62,7 @@ export class SatelliteApp {
                     if (token) {
                         this.loadSettings(this.cwd, this.defaultSettingsLocation);
                         this.settings.satelliteSettings.rcServerToken = token;
+                        this.settings.loadedFrom = this.store.path;  // need to overwrite loadedFrom to place NJS-Client config and token near config.json
                         this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
                     }
                 });
@@ -448,6 +449,7 @@ export class SatelliteApp {
             Log.info('Running initial configuration');
             this.loadSettings(this.cwd, this.defaultSettingsLocation);               // reload settings in case something was changed
             this.settings.satelliteSettings.rcServerToken = token;
+            this.settings.loadedFrom = this.store.path;                              // need to overwrite loadedFrom to place NJS-Client config and token near config.json
             waitForInitConfiguration(this.settings);
             this.store.set('initComplete', true);
             return await this.chainStartPM2Services();
