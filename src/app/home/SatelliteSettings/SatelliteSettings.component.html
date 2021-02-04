@@ -9,10 +9,28 @@
 
                     <clr-input-container>
                         <label class="clr-col-3"> Satellite data directory:
-                            <button class="btn btn-outline" (click)="openDirectoryDialog()">select</button>
+                            <button class="btn btn-outline" (click)="openDirectoryDialog(1)">select</button>
                         </label>
                         <input clrInput type="text" class="clr-col-9" placeholder="Select satellite data directory path" [(ngModel)]="satelliteSettings.systemRoot" name="systemRoot" required />
-                        <clr-control-helper>Please choose satellite's data directory. Where all analysis results will be stored.</clr-control-helper>
+                        <clr-control-helper>Please choose satellite data directory to store analyses results.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Airflow data directory:
+                            <button class="btn btn-outline" (click)="openDirectoryDialog(2)">select</button>
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" placeholder="Select airflow data directory path" [(ngModel)]="defaultLocations.airflow" name="airflow" required />
+                        <clr-control-helper>Please choose airflow data directory to store airflow configuration files.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Database data directory:
+                            <button class="btn btn-outline" (click)="openDirectoryDialog(3)">select</button>
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" placeholder="Select database data directory path" [(ngModel)]="defaultLocations.pgdata" name="pgdata" required />
+                        <clr-control-helper>Please choose database data directory to store metadata database files.</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 

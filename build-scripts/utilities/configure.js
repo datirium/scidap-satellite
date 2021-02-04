@@ -279,7 +279,7 @@ function getRunConfiguration(settings){
         args: getAria2cArgs(settings),
         watch: false,
         exec_mode: 'fork_mode',
-        cwd: settings.defaultLocations.files
+        cwd: settings.defaultLocations.airflow
       },
       {
         name: 'postgres',
@@ -287,7 +287,7 @@ function getRunConfiguration(settings){
         args: [],
         watch: false,
         exec_mode: 'fork_mode',
-        cwd: settings.defaultLocations.pgdata,
+        cwd: settings.defaultLocations.airflow,
         env: getPostgresEnvVar(settings)  // -D, -h and -p will be read from the environment variables
       },
       {
@@ -322,7 +322,7 @@ function getRunConfiguration(settings){
         interpreter: 'node',
         watch: false,
         exec_mode: 'fork_mode',
-        cwd: settings.defaultLocations.satellite,
+        cwd: settings.defaultLocations.airflow,
         env: getNjsClientEnvVar(settings)
       }
     ]

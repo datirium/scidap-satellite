@@ -1,8 +1,6 @@
 {
     "defaultLocations": {
-        "files": "files",
         "airflow": "airflow",
-        "satellite": "satellite",
         "pgdata": "pgdata"
     },
     "satelliteSettings": {

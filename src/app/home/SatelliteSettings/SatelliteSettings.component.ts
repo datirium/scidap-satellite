@@ -16,6 +16,7 @@ export class SatelliteSettingsComponent implements OnInit {
     advancedSettings;
 
     satelliteSettings: any = {};
+    defaultLocations: any = {};
 
     portchecked = {};
     portcheck;
@@ -35,6 +36,7 @@ export class SatelliteSettingsComponent implements OnInit {
         }
 
         this.satelliteSettings = this.store.get('satelliteSettings', null)
+        this.defaultLocations = this.store.get('defaultLocations', null)
 
     }
 
@@ -43,10 +45,16 @@ export class SatelliteSettingsComponent implements OnInit {
     }
 
 
-    openDirectoryDialog() {
+    openDirectoryDialog(v) {
         this._electronService.remote.dialog.showOpenDialog({ properties: ['openDirectory'] }).then(({ filePaths, ...other }) => {
             console.log(filePaths, other);
-            this.satelliteSettings.systemRoot = filePaths[0];
+            if (1 === v) {
+                this.satelliteSettings.systemRoot = filePaths[0];
+            } else if (2 === v) {
+                this.defaultLocations.airflow = filePaths[0];
+            } else {
+                this.defaultLocations.pgdata = filePaths[0];
+            }
         });
     }
 
@@ -63,6 +71,7 @@ export class SatelliteSettingsComponent implements OnInit {
 
     doSave() {
         this.store.set('satelliteSettings', this.satelliteSettings);
+        this.store.set('defaultLocations', this.defaultLocations);
     }
 
     doFinish() {

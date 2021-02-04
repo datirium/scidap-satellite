@@ -116,7 +116,6 @@ export class SatelliteApp {
     loadSettings(cwd, defaultSettingsLocation) {
         const skipKeys = [
             'executables',                                               // executables can be dynamically changed
-            'defaultLocations',                                          // defaultLocations defines folder names within scidapRoot, so we don't want users to change them
             'loadedFrom'                                                 // technical field, not required to be changed by users
         ]
         this.settings = getSettings(cwd, defaultSettingsLocation);       // load default settings
