@@ -37,7 +37,7 @@
                     <a [routerLink]="[ '/home/settings' ]" routerLinkActive="active" clrDropdownItem>Settings</a>
                     <div class="dropdown-divider" role="separator"></div>
                     <a (click)="doWebUiWindow()" clrDropdownItem>Aria2 WebUi</a>
-                    <a (click)="doMongoExpressWindow()" clrDropdownItem>Mongo Express</a>
+                    <!-- <a (click)="doMongoExpressWindow()" clrDropdownItem>Mongo Express</a> -->
                     <div class="dropdown-divider" role="separator"></div>
                     <a (click)="_electronService.remote.app.quit()" clrDropdownItem>Quit</a>
                 </clr-dropdown-menu>

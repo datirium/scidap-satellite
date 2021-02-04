@@ -209,9 +209,9 @@ export class ElectronService extends Tracking {
         this.ipcRenderer.send('webui-window');
     }
 
-    mongoExpressWindow() {
-        this.ipcRenderer.send('mongo-express-window');
-    }
+    // mongoExpressWindow() {
+    //     this.ipcRenderer.send('mongo-express-window');
+    // }
 
 
     installUpdates() {

@@ -50,16 +50,16 @@ export class SatelliteSettingsComponent implements OnInit {
         });
     }
 
-    openCertDialog(v) {
-        this._electronService.remote.dialog.showOpenDialog({ properties: ['openFile'] }).then(({ filePaths, ...other }) => {
-            console.log(filePaths, other);
-            if (1 === v) {
-                this.satelliteSettings.sslCert = filePaths[0];
-            } else {
-                this.satelliteSettings.sslKey = filePaths[0];
-            }
-        });
-    }
+    // openCertDialog(v) {
+    //     this._electronService.remote.dialog.showOpenDialog({ properties: ['openFile'] }).then(({ filePaths, ...other }) => {
+    //         console.log(filePaths, other);
+    //         if (1 === v) {
+    //             this.satelliteSettings.sslCert = filePaths[0];
+    //         } else {
+    //             this.satelliteSettings.sslKey = filePaths[0];
+    //         }
+    //     });
+    // }
 
     doSave() {
         this.store.set('satelliteSettings', this.satelliteSettings);

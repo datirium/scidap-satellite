@@ -83,7 +83,7 @@ export class SatelliteApp {
 
 
     removeDeprecatedSettings() {
-        const removeKeys = [                                             // deprecated or refactored keys that should be either removed or restored to their defaults
+        let removeKeys = [                                                    // deprecated or refactored keys that should be either removed or restored to their defaults
             'defaultLocations',
             'meteorSettings',
             'airflowSettings'
@@ -92,6 +92,24 @@ export class SatelliteApp {
             Log.info(`Remove deprecated or refactored settings for ${key}`);
             this.store.delete(key);
         };
+        if (this.store.has("satelliteSettings")) {                                     // need to remove deprecated fields
+            let satelliteSettings = this.store.get("satelliteSettings");
+            removeKeys = [
+                'scidapRoot',                                                          // replaced by systemRoot
+                'mongoPort',                                                           // no MongoDB anymore
+                'mongoCollection',
+                'scidapSSLPort',                                                       // replaced by enableSSL
+                'sslCert',
+                'sslKey'
+            ];
+            satelliteSettings = Object.keys(satelliteSettings)
+            .filter((param) => !removeKeys.includes(param))                            // filter out all removeKeys
+            .reduce((filtered, param) => {
+                filtered[param] = satelliteSettings[param];
+                return filtered;
+              }, {})
+            this.store.set("satelliteSettings", satelliteSettings);
+        }
     }
 
 
@@ -200,35 +218,35 @@ export class SatelliteApp {
     }
 
 
-    createMongoExpressWindow() {
-        if (this.mongoExpressWin) {
-            return;
-        }
+    // createMongoExpressWindow() {
+    //     if (this.mongoExpressWin) {
+    //         return;
+    //     }
 
-        const { x, y, width, height } = this.store.get('windowBounds');
+    //     const { x, y, width, height } = this.store.get('windowBounds');
 
-        // Create the browser window.
-        this.mongoExpressWin = new BrowserWindow({
-            x,
-            y,
-            width,
-            height,
-            title: 'Mongo Express',
-            webPreferences: {
-                nodeIntegration: true,
-            },
-            tabbingIdentifier: 'SciDAP'
-        });
+    //     // Create the browser window.
+    //     this.mongoExpressWin = new BrowserWindow({
+    //         x,
+    //         y,
+    //         width,
+    //         height,
+    //         title: 'Mongo Express',
+    //         webPreferences: {
+    //             nodeIntegration: true,
+    //         },
+    //         tabbingIdentifier: 'SciDAP'
+    //     });
 
 
-        this.mongoExpressWin.loadURL('http://localhost:27083/');
+    //     this.mongoExpressWin.loadURL('http://localhost:27083/');
 
-        this.mongoExpressWin.on('closed', () => {
-            this.mongoExpressWin = null;
-        });
+    //     this.mongoExpressWin.on('closed', () => {
+    //         this.mongoExpressWin = null;
+    //     });
 
-        return this.mongoExpressWin;
-    }
+    //     return this.mongoExpressWin;
+    // }
 
 
     windowEvents() {
