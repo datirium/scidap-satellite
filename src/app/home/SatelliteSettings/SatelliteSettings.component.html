@@ -16,24 +16,6 @@
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 
-                    <clr-input-container>
-                        <label class="clr-col-3"> Airflow data directory:
-                            <button class="btn btn-outline" (click)="openDirectoryDialog(2)">select</button>
-                        </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="Select airflow data directory path" [(ngModel)]="defaultLocations.airflow" name="airflow" required />
-                        <clr-control-helper>Please choose airflow data directory to store airflow configuration files.</clr-control-helper>
-                        <clr-control-error></clr-control-error>
-                    </clr-input-container>
-
-                    <clr-input-container>
-                        <label class="clr-col-3"> Database data directory:
-                            <button class="btn btn-outline" (click)="openDirectoryDialog(3)">select</button>
-                        </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="Select database data directory path" [(ngModel)]="defaultLocations.pgdata" name="pgdata" required />
-                        <clr-control-helper>Please choose database data directory to store metadata database files.</clr-control-helper>
-                        <clr-control-error></clr-control-error>
-                    </clr-input-container>
-
                     <clr-checkbox-container>
                         <label class="clr-col-3"> Enable local files module: </label>
                         <clr-checkbox-wrapper>
@@ -70,11 +52,38 @@
             <button clrTabLink>Advanced</button>
             <ng-template [(clrIfActive)]="advancedSettings">
                 <clr-tab-content>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Airflow data directory:
+                            <button class="btn btn-outline" (click)="openDirectoryDialog(2)">select</button>
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" placeholder="Select airflow data directory path" [(ngModel)]="defaultLocations.airflow" name="airflow" required />
+                        <clr-control-helper>Please choose airflow data directory to store airflow configuration files.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Database data directory:
+                            <button class="btn btn-outline" (click)="openDirectoryDialog(3)">select</button>
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" placeholder="Select database data directory path" [(ngModel)]="defaultLocations.pgdata" name="pgdata" required />
+                        <clr-control-helper>Please choose database data directory to store metadata database files.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
                     <clr-input-container>
                         <label class="clr-col-3"> Satellite public url:
                         </label>
                         <input clrInput type="text" class="clr-col-9" placeholder="https://127.0.0.1:3070/" [(ngModel)]="satelliteSettings.baseUrl" name="baseUrl" required />
                         <clr-control-helper>URL to satellite that can be accessed from other computers. By default just local computer can access.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> API-Sync url:
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" placeholder="SERVER:PORT" [(ngModel)]="satelliteSettings.rcServer" name="rcServer" required />
+                        <clr-control-helper>URL to API-Sync to configure connection to the production or development server</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 

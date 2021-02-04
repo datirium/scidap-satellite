@@ -130,6 +130,7 @@ function saveNjsClientSettings(settings, location){
   variable. Exports settings as json file to the provided location. JWT token
   is saved at the same directory as location.
   */
+
   const rcServerTokenLocation = path.resolve(
     path.dirname(location),                     // keep file with JWT token alognside the NJS-Client settings file
     'rc_server_token.json'
@@ -139,7 +140,7 @@ function saveNjsClientSettings(settings, location){
       jwtLocation: rcServerTokenLocation,
       port: settings.satelliteSettings.port,
       airflowAPIPort: settings.satelliteSettings.airflowAPIPort,
-      systemRoot: settings.satelliteSettings.systemRoot
+      systemRoot: settings.satelliteSettings.systemRoot + "/"  // patch to avoid bug in NJS-Client (remove if not needed)
   };
   njsClientSettings.download = {
     'aria2': {
