@@ -3,7 +3,6 @@ const fs = require('fs');
 const child_process = require('child_process');
 const os = require('os');
 const url = require('url');
-const ini = require('ini');
 const process = require('process');
 
 
