@@ -54,11 +54,11 @@
                 <clr-tab-content>
 
                     <clr-input-container>
-                        <label class="clr-col-3"> Airflow data directory:
+                        <label class="clr-col-3"> Temporary data directory:
                             <button class="btn btn-outline" (click)="openDirectoryDialog(2)">select</button>
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="Select airflow data directory path" [(ngModel)]="defaultLocations.airflow" name="airflow" required />
-                        <clr-control-helper>Please choose airflow data directory to store airflow configuration files.</clr-control-helper>
+                        <input clrInput type="text" class="clr-col-9" placeholder="Select temporary data directory path" [(ngModel)]="airflowSettings.cwl__tmp_folder" name="airflow" required />
+                        <clr-control-helper>Please choose data directory to store temporary data.</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 

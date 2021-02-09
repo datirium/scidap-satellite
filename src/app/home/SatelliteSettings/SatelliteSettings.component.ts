@@ -17,6 +17,7 @@ export class SatelliteSettingsComponent implements OnInit {
 
     satelliteSettings: any = {};
     defaultLocations: any = {};
+    airflowSettings: any = {};
 
     portchecked = {};
     portcheck;
@@ -37,6 +38,7 @@ export class SatelliteSettingsComponent implements OnInit {
 
         this.satelliteSettings = this.store.get('satelliteSettings', null)
         this.defaultLocations = this.store.get('defaultLocations', null)
+        this.airflowSettings = this.store.get('airflowSettings', null)
 
     }
 
@@ -51,7 +53,7 @@ export class SatelliteSettingsComponent implements OnInit {
             if (1 === v) {
                 this.satelliteSettings.systemRoot = filePaths[0];
             } else if (2 === v) {
-                this.defaultLocations.airflow = filePaths[0];
+                this.airflowSettings.cwl__tmp_folder = filePaths[0];
             } else {
                 this.defaultLocations.pgdata = filePaths[0];
             }
@@ -72,6 +74,7 @@ export class SatelliteSettingsComponent implements OnInit {
     doSave() {
         this.store.set('satelliteSettings', this.satelliteSettings);
         this.store.set('defaultLocations', this.defaultLocations);
+        this.store.set('airflowSettings', this.airflowSettings);
     }
 
     doFinish() {

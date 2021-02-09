@@ -32,10 +32,10 @@
         }
     },
     "airflowSettings": {
-        "core.executor": "LocalExecutor",
-        "core.dag_concurrency": 2,
-        "core.max_active_runs_per_dag": 1,
-        "core.hostname_callable": "socket.gethostname"
+        "core__executor": "LocalExecutor",
+        "core__dag_concurrency": 2,
+        "core__max_active_runs_per_dag": 1,
+        "core__hostname_callable": "socket.gethostname"
     },
     "aria2cSettings": {
         "--console-log-level": "debug",

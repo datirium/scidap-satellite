@@ -62,7 +62,6 @@ export class SatelliteApp {
                     if (token) {
                         this.loadSettings(this.cwd, this.defaultSettingsLocation);
                         this.settings.satelliteSettings.rcServerToken = token;
-                        this.settings.loadedFrom = this.store.path;  // need to overwrite loadedFrom to place NJS-Client config and token near config.json
                         this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
                     }
                 });
@@ -72,7 +71,7 @@ export class SatelliteApp {
 
     runUpdate() {
         const latestUpdate = this.store.get('latestUpdateVersion', null);
-        if ( !latestUpdate || semver.gt('1.0.11', latestUpdate) ){
+        if ( !latestUpdate || semver.gt('1.0.12', latestUpdate) ){
             Log.info('Running settings update');
             this.removeDeprecatedSettings();
             this.loadSettings(this.cwd, this.defaultSettingsLocation);
@@ -83,7 +82,7 @@ export class SatelliteApp {
 
 
     removeDeprecatedSettings() {
-        let removeKeys = [                                                    // deprecated or refactored keys that should be either removed or restored to their defaults
+        let removeKeys = [                                                             // deprecated or refactored keys that should be either removed or restored to their defaults
             'defaultLocations',
             'meteorSettings',
             'airflowSettings'
@@ -115,12 +114,18 @@ export class SatelliteApp {
 
     loadSettings(cwd, defaultSettingsLocation) {
         const skipKeys = [
-            'executables',                                               // executables can be dynamically changed
-            'loadedFrom'                                                 // technical field, not required to be changed by users
-        ]
-        this.settings = getSettings(cwd, defaultSettingsLocation);       // load default settings
-        for (const key in this.settings){                                // update defaults if they have been already redefined in config.json
-            if (skipKeys.includes(key)){                                 // skipped keys won't be saved into config.json
+            'executables',                                                                          // executables can be dynamically changed
+            'loadedFrom'                                                                            // we don't want to save it in config.json as it's more like a techinical field
+        ];
+        this.settings = getSettings(cwd, defaultSettingsLocation);                                  // load default settings
+        this.settings.loadedFrom = this.store.path;                                                 // need to overwrite the default loadedFrom to place NJS-Client config and token near config.json
+        this.settings.defaultLocations.airflow = path.resolve(app.getPath('userData'), 'airflow');  // need to overwrite the default airflow folder location to place it within ~/Library/Application\ Support/scidap-satellite
+        this.settings.airflowSettings = {                                                           // need to overwrite the defaultcwl_tmp_folder location to place it within ~/scidap folder
+            ...this.settings.airflowSettings,
+            "cwl__tmp_folder": path.resolve(this.settings.satelliteSettings.systemRoot, "cwl_tmp_folder")
+        };
+        for (const key in this.settings){                                                           // update defaults if they have been already redefined in config.json
+            if (skipKeys.includes(key)){                                                            // skipped keys won't be saved into config.json
                 continue;
             }
             if (this.store.has(key)) {
@@ -466,7 +471,6 @@ export class SatelliteApp {
             Log.info('Running initial configuration');
             this.loadSettings(this.cwd, this.defaultSettingsLocation);               // reload settings in case something was changed
             this.settings.satelliteSettings.rcServerToken = token;
-            this.settings.loadedFrom = this.store.path;                              // need to overwrite loadedFrom to place NJS-Client config and token near config.json
             waitForInitConfiguration(this.settings);
             this.store.set('initComplete', true);
             return await this.chainStartPM2Services();
