@@ -33,7 +33,8 @@
     },
     "airflowSettings": {
         "core__executor": "LocalExecutor",
-        "core__dag_concurrency": 2,
+        "core__parallelism": 1,
+        "core__dag_concurrency": 1,
         "core__max_active_runs_per_dag": 1,
         "core__hostname_callable": "socket.gethostname"
     },
