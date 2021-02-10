@@ -37,7 +37,7 @@ build_njs_client() {
 
 
 # Setting up package versions
-NODE_VERSION="12.19.0"
+NODE_VERSION="12.20.1"
 ARIA2_VERSION="1.35.0"
 CWLAIRFLOW_VERSION="1.2.10"
 CWLAIRFLOW_PYTHON_VERSION="3.8"
