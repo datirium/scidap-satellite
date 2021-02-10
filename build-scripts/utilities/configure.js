@@ -101,7 +101,6 @@ function getNjsClientEnvVar(settings){
     SSL_CONN: settings.satelliteSettings.enableSSL,
     API_URL: settings.satelliteSettings.rcServer,
     CONFIG_FILE: njsClientSettingsLocation,
-    NODE_ENV: 'development',
     NODE_OPTIONS: '--trace-warnings --pending-deprecation'   // why do we need it? Should be keep it for NestJS too?
   };
   if (settings.satelliteSettings.proxy) {
