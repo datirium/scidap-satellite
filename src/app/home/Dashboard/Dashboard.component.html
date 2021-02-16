@@ -1,12 +1,11 @@
 <div class="clr-row" style="padding: 12px;">
-  <div *ngIf="isAllUp" class="alert alert-info clr-col-xl-6 clr-col-12" role="alert">
+  <div *ngIf="isAllUp && isDockerUp" class="alert alert-info clr-col-xl-6 clr-col-12" role="alert">
     <div class="alert-items">
       <div class="alert-item static">
         <div class="alert-icon-wrapper">
           <clr-icon class="alert-icon" shape="info-circle"></clr-icon>
         </div>
-        <span class="alert-text">All processes included in the installation are up and running. This satellite can be now controlled from <strong>scidap.com</strong>
-          To function properly SciDAP satellite needs <strong>Docker</strong> to be installed, started and configured to have at least 20GB of RAM and 6 CPUs! </span>
+        <span class="alert-text">All processes included in the installation are up and running. This satellite can be now controlled from <strong>scidap.com</strong></span>
         <div class="alert-actions">
           <a class="alert-action" (click)="_electronService.openExternal('https://scidap.com/login')">Open scidap.com</a>
 
@@ -15,6 +14,18 @@
       </div>
     </div>
   </div>
+
+  <div *ngIf="isDockerUp === false" class="alert alert-danger clr-col-xl-6 clr-col-12" role="alert">
+    <div class="alert-items">
+      <div class="alert-item static">
+        <div class="alert-icon-wrapper">
+          <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+        </div>
+        <span class="alert-text">To function properly SciDAP satellite needs <strong>Docker</strong> to be installed, started and configured to have at least 20GB of RAM and 6 CPUs</span>
+      </div>
+    </div>
+  </div>
+
   <div class="clr-col-xl-6 clr-col-12">&nbsp;</div>
 </div>
 

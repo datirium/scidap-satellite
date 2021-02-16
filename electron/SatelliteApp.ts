@@ -1,7 +1,7 @@
 import { BrowserWindow, screen as electronScreen, ipcMain, app } from 'electron';
 
 const Store = require('electron-store');
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 
 import * as path from 'path';
 import * as url from 'url';
@@ -25,7 +25,9 @@ export class SatelliteApp {
     serve;
     settings;
     networkInterfaces = [];
+    isDockerUp;
     pm2MonitIntervalId;
+    dockerMonitIntervalId;
     // pm2_home;
     cwd;
     defaultSettingsLocation;
@@ -275,6 +277,23 @@ export class SatelliteApp {
     }
 
 
+    async checkDocker() {
+        let env_var: any = {
+            HOME: app.getPath('home'),
+            PATH: this.settings.executables.pathEnvVar
+        };
+        exec("docker ps", {env: env_var}, (error) => {
+            if (error) {
+                this.isDockerUp = false;
+                this.send('docker-monit', false);;
+            } else {
+                this.isDockerUp = true;
+                this.send('docker-monit', true);;
+            }
+        });
+    }
+
+
     async connectToPM2() {
         let http_interface = path.join(this.settings.executables.satelliteBin, '../../../', 'app/node_modules/pm2/bin/');
         if (this.serve) {
@@ -373,6 +392,15 @@ export class SatelliteApp {
                     this.send('pm2-monit', processDescriptionList);
                 });
             }, 1000);
+            if (this.dockerMonitIntervalId) {
+                clearInterval(this.dockerMonitIntervalId);
+            };
+            this.dockerMonitIntervalId = setInterval(() => {
+                this.checkDocker();
+            }, 3000);
+            while (!this.isDockerUp) {
+                await new Promise(resolve => setTimeout(resolve, 3000));
+            }
             return await this.startPM2(getRunConfiguration(this.settings));
         } catch (error) {
             Log.info(error);

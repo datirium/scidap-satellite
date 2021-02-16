@@ -34,6 +34,7 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
     _satelliteSettings;
 
     pm2Monit;
+    dockerMonit;
     pm2MonitAdopted = {};
     token;
     pm2;
@@ -58,6 +59,12 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
             });
         });
 
+        this.tracked = this._electronService.dockerMonit().subscribe((list) => {
+            this._zone.run(() => {
+                this.dockerMonit = list.args[0];  // always true/false
+            });
+        });
+
     }
 
     get isAllUp(): boolean {
@@ -65,6 +72,10 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
             return false;
         }
         return !this.pm2Monit.find((process) => process.pm2_env.status !== 'online');
+    }
+
+    get isDockerUp(): boolean {
+        return this.dockerMonit;
     }
 
     ngOnInit() {

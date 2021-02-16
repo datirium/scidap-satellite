@@ -273,6 +273,18 @@ export class ElectronService extends Tracking {
         });
     }
 
+    dockerMonit() {
+        return Observable.create((observer: Subscriber<any>) => {
+            this.ipcRenderer.on('docker-monit', (d, ...args) => {
+                observer.next({args});
+            });
+            return () => {
+                this.ipcRenderer.removeAllListeners('docker-monit');
+                observer.complete();
+            };
+        });
+    }
+
     openExternal(url) {
         this.shell.openExternal(url);
     }
