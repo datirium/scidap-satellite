@@ -76,7 +76,7 @@
     "conventional-changelog-cli": "2.1.1",
     "core-js": "3.7.0",
     "dotenv": "^8.2.0",
-    "electron": "^10.1.5",
+    "electron": "^11.2.3",
     "electron-builder": "^22.9.1",
     "electron-notarize": "^1.0.0",
     "electron-reload": "1.5.0",
@@ -93,27 +93,26 @@
     "node-abi": "^2.19.1",
     "npm-run-all": "4.1.5",
     "rxjs": "6.6.3",
-    "spectron": "12.0.0",
+    "spectron": "13.0.0",
     "ts-node": "9.0.0",
     "tslib": "^2.0.0",
     "tslint": "~6.1.0",
     "typescript": "4.0.5",
     "wait-on": "5.2.0",
-    "webdriver-manager": "12.1.7",
+    "webdriver-manager": "12.1.8",
     "zone.js": "^0.11.3"
   },
   "engines": {
     "node": ">=10.9.0"
   },
   "dependencies": {
-    "electron-log": "^4.3.0",
-    "electron-store": "^6.0.1",
+    "electron-log": "^4.3.1",
+    "electron-store": "^7.0.2",
     "electron-updater": "^4.3.5",
-    "keytar": "^7.0.0",
+    "keytar": "^7.4.0",
     "meteor-node-stubs": "^1.0.1",
-    "mongo-express": "^1.0.0-alpha.1",
-    "pm2": "^4.5.0",
+    "pm2": "^4.5.4",
     "semver": "^7.3.4",
-    "tcp-port-used": "^1.0.1"
+    "tcp-port-used": "^1.0.2"
   }
 }
