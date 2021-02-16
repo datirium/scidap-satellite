@@ -100,6 +100,7 @@ function getNjsClientEnvVar(settings){
     PATH: settings.executables.pathEnvVar,
     SSL_CONN: settings.satelliteSettings.enableSSL,
     API_URL: settings.satelliteSettings.rcServer,
+    SATELLITE_TOKEN: settings.satelliteSettings.rcServerToken,
     CONFIG_FILE: njsClientSettingsLocation,
     NODE_OPTIONS: '--trace-warnings --pending-deprecation'   // why do we need it? Should be keep it for NestJS too?
   };
@@ -115,29 +116,14 @@ function getNjsClientEnvVar(settings){
 }
 
 
-function saveJwtLocation(settings, location){
-  const rcServerTokenData = {
-    jwt: settings.satelliteSettings.rcServerToken
-  };
-  fs.writeFileSync(location, JSON.stringify(rcServerTokenData), {mode: 0o600});  // creates or overwrites file with -rw------- permissions
-}
-
-
 function saveNjsClientSettings(settings, location){
   /*
   Ignores settings.satelliteSettings.localFiles as it's not implemented in
   NJS-Client. settings.satelliteSettings.enableSSL will be used as environment
-  variable. Exports settings as json file to the provided location. JWT token
-  is saved at the same directory as location.
+  variable. Exports settings as json file to the provided location.
   */
 
-  const rcServerTokenLocation = path.resolve(
-    path.dirname(location),                     // keep file with JWT token alognside the NJS-Client settings file
-    'rc_server_token.json'
-  );
-  saveJwtLocation(settings, rcServerTokenLocation)
   const njsClientSettings = {
-      jwtLocation: rcServerTokenLocation,
       port: settings.satelliteSettings.port,
       airflowAPIPort: settings.satelliteSettings.airflowAPIPort,
       systemRoot: settings.satelliteSettings.systemRoot + "/"  // patch to avoid bug in NJS-Client (remove if not needed)

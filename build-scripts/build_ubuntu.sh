@@ -42,7 +42,7 @@ ARIA2_VERSION="1.35.0"
 CWLAIRFLOW_VERSION="1.2.10"
 CWLAIRFLOW_PYTHON_VERSION="3.6"
 UBUNTU_VERSION="18.04"
-NJS_CLIENT_VERSION="670b5d31023a"       # do not use tags as even when downloading from tags Bitbucket will still include commit id in the folder name when extracted
+NJS_CLIENT_VERSION="041014eff5a4"       # do not use tags as even when downloading from tags Bitbucket will still include commit id in the folder name when extracted
 SRA_TOOLKIT_VERSION="2.10.9"
 POSTGRESQL_VERSION="10.15"
 
