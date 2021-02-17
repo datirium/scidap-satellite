@@ -44,7 +44,7 @@ export class SatelliteApp {
         });
 
         this.serve = args.some(val => val === '--serve');
-        
+
         this.cwd = path.resolve(app.getAppPath(), '../Services/satellite');
         this.defaultSettingsLocation = path.resolve(app.getAppPath(), './build-scripts/configs/scidap_default_settings.json');
         if (this.serve) {
@@ -62,10 +62,15 @@ export class SatelliteApp {
             keytar.getPassword('scidap-satellite', 'token')
                 .then((token) => {
                     if (token) {
+                        Log.debug('Token is good');
                         this.loadSettings(this.cwd, this.defaultSettingsLocation);
                         this.settings.satelliteSettings.rcServerToken = token;
                         this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
+                    } else {
+                        Log.debug('No token');
                     }
+                }).catch((err) => {
+                    Log.error(`Get token error ${err}`);
                 });
         }
     }
@@ -73,7 +78,7 @@ export class SatelliteApp {
 
     runUpdate() {
         const latestUpdate = this.store.get('latestUpdateVersion', null);
-        if ( !latestUpdate || semver.gt('1.0.12', latestUpdate) ){
+        if (!latestUpdate || semver.gt('1.0.12', latestUpdate)) {
             Log.info('Running settings update');
             this.removeDeprecatedSettings();
             this.loadSettings(this.cwd, this.defaultSettingsLocation);
@@ -89,7 +94,7 @@ export class SatelliteApp {
             'meteorSettings',
             'airflowSettings'
         ];
-        for (const key of removeKeys){
+        for (const key of removeKeys) {
             Log.info(`Remove deprecated or refactored settings for ${key}`);
             this.store.delete(key);
         };
@@ -104,11 +109,11 @@ export class SatelliteApp {
                 'sslKey'
             ];
             satelliteSettings = Object.keys(satelliteSettings)
-            .filter((param) => !removeKeys.includes(param))                            // filter out all removeKeys
-            .reduce((filtered, param) => {
-                filtered[param] = satelliteSettings[param];
-                return filtered;
-              }, {})
+                .filter((param) => !removeKeys.includes(param))                            // filter out all removeKeys
+                .reduce((filtered, param) => {
+                    filtered[param] = satelliteSettings[param];
+                    return filtered;
+                }, {})
             this.store.set("satelliteSettings", satelliteSettings);
         }
     }
@@ -126,8 +131,8 @@ export class SatelliteApp {
             ...this.settings.airflowSettings,
             "cwl__tmp_folder": path.resolve(this.settings.satelliteSettings.systemRoot, "cwl_tmp_folder")
         };
-        for (const key in this.settings){                                                           // update defaults if they have been already redefined in config.json
-            if (skipKeys.includes(key)){                                                            // skipped keys won't be saved into config.json
+        for (const key in this.settings) {                                                           // update defaults if they have been already redefined in config.json
+            if (skipKeys.includes(key)) {                                                            // skipped keys won't be saved into config.json
                 continue;
             }
             if (this.store.has(key)) {
@@ -277,19 +282,36 @@ export class SatelliteApp {
     }
 
 
-    async checkDocker() {
-        let env_var: any = {
+    /**
+     * resolves when docker is up
+     */
+    async checkDockerIsUp() {
+        const env_var: any = {
             HOME: app.getPath('home'),
             PATH: this.settings.executables.pathEnvVar
         };
-        exec("docker ps", {env: env_var}, (error) => {
-            if (error) {
-                this.isDockerUp = false;
-                this.send('docker-monit', false);;
-            } else {
-                this.isDockerUp = true;
-                this.send('docker-monit', true);;
-            }
+
+        return new Promise((resolve, reject) => {
+            const dockerMonitorIntervalId = setInterval(() => {
+                /**
+                 * Maybe docker stat and send all the changes to show mem usage etc?
+                 */
+                exec("docker ps", { env: env_var }, (error, stdout, stderr) => {
+                    if (error) {
+                        this.isDockerUp = false;
+                        this.send('docker-monit', false);
+                    }
+                    if (stderr) {
+                        this.isDockerUp = false;
+                        this.send('docker-monit', false);
+                    } else {
+                        clearInterval(dockerMonitorIntervalId);
+                        this.isDockerUp = true;
+                        this.send('docker-monit', true);
+                        resolve(stdout);
+                    }
+                });
+            }, 2000);
         });
     }
 
@@ -380,6 +402,9 @@ export class SatelliteApp {
         });
     }
 
+    /**
+     * Starts all the services
+     */
     async chainStartPM2Services(): Promise<any> {
         Log.info('Starting PM2 services');
         try {
@@ -392,15 +417,16 @@ export class SatelliteApp {
                     this.send('pm2-monit', processDescriptionList);
                 });
             }, 1000);
-            if (this.dockerMonitIntervalId) {
-                clearInterval(this.dockerMonitIntervalId);
-            };
-            this.dockerMonitIntervalId = setInterval(() => {
-                this.checkDocker();
-            }, 3000);
-            while (!this.isDockerUp) {
-                await new Promise(resolve => setTimeout(resolve, 3000));
-            }
+            // if (this.dockerMonitIntervalId) {
+            //     clearInterval(this.dockerMonitIntervalId);
+            // };
+            // this.dockerMonitIntervalId = setInterval(() => {
+            //     this.checkDocker();
+            // }, 3000);
+            // while (!this.isDockerUp) {
+            //     await new Promise(resolve => setTimeout(resolve, 3000));
+            // }
+            await this.checkDockerIsUp();
             return await this.startPM2(getRunConfiguration(this.settings));
         } catch (error) {
             Log.info(error);

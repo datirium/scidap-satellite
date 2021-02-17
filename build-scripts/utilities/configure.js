@@ -45,7 +45,7 @@ function getAria2cArgs(settings){
   if (settings.satelliteSettings.proxy) {
     aria2cArgs["--all-proxy"] = settings.satelliteSettings.proxy;
   };
-  return Object.keys(aria2cArgs).map((key) => `${key}=${aria2cArgs[key]}`);  // to return as array of "key=value" 
+  return Object.keys(aria2cArgs).map((key) => `${key}=${aria2cArgs[key]}`);  // to return as array of "key=value"
 }
 
 
@@ -165,7 +165,7 @@ function waitForInitConfiguration(settings){
       console.log(`Failed to create directory ${folder} due to ${e}`);
     }
   }
-  child_process.spawnSync(                         // Need to leave it like this untill we make sure that api server is run after scheduler and they both don't create airflow.cfg
+  child_process.spawnSync(                         // Need to leave it like this until we make sure that api server is run after scheduler and they both don't create airflow.cfg
     "airflow", [],
     {
       cwd: settings.defaultLocations.airflow,
@@ -221,7 +221,7 @@ function getSettings(cwd, customLocation){
   Relative locations will be resolved based on __dirname if cwd was not provided.
   If customLocation is provided it have higher priority compared to other locations
   */
- 
+
   cwd = cwd || __dirname;
 
   // might be different between Ubuntu and macOS
@@ -251,7 +251,7 @@ function getSettings(cwd, customLocation){
       pathEnvVar: `${ path.resolve(cwd, '../satellite/bin') }:${ path.resolve(cwd, '../cwl-airflow/bin_portable') }:/usr/bin:/bin:/usr/local/bin:/usr/sbin`  // maybe add to the original PATH to make it universal, might be different on mac
     }
   }
-  
+
   return settings;
 }
 
