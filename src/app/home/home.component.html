@@ -102,6 +102,26 @@
         </div>
     </clr-modal>
 
+
+    <!--
+
+                Modal token is missing
+
+    -->
+    <clr-modal [(clrModalOpen)]="tokenIsMissing" class="modal-backdrop" [clrModalClosable]='false' [clrModalSize]="'lg'">
+        <h3 class="modal-title">Satellite authentication failed. Token not found</h3>
+        <div class="modal-body">
+            <app-login [(message)]="loginData">
+                <div error-message *ngIf="errorMessage" class="error active">
+                    {{errorMessage}}
+                </div>
+            </app-login>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" (click)="doLogin(false)">Login</button>
+        </div>
+    </clr-modal>
+
     <div class="content-container">
         <div class="content-area">
             <router-outlet></router-outlet>

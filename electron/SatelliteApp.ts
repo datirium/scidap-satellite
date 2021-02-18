@@ -28,6 +28,7 @@ export class SatelliteApp {
     isDockerUp;
     pm2MonitIntervalId;
     dockerMonitIntervalId;
+    tokenMonitorIntervalId;
     // pm2_home;
     cwd;
     defaultSettingsLocation;
@@ -59,20 +60,38 @@ export class SatelliteApp {
         this.runUpdate();
 
         if (this.store.get('initComplete', false)) {
-            keytar.getPassword('scidap-satellite', 'token')
+            this.getToken()                            // waits until token can be retrieved from the keychain
                 .then((token) => {
-                    if (token) {
-                        Log.debug('Token is good');
-                        this.loadSettings(this.cwd, this.defaultSettingsLocation);
-                        this.settings.satelliteSettings.rcServerToken = token;
-                        this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
-                    } else {
-                        Log.debug('No token');
-                    }
+                    this.loadSettings(this.cwd, this.defaultSettingsLocation);
+                    this.settings.satelliteSettings.rcServerToken = token;
+                    this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
                 }).catch((err) => {
-                    Log.error(`Get token error ${err}`);
+                    Log.error(`Got error ${err}`);
                 });
         }
+    }
+
+
+    /**
+     * resolves when token is found
+     */
+    getToken() {
+        return new Promise((resolve, reject) => {
+            const tokenMonitorIntervalId = setInterval(() => {
+                keytar.getPassword('scidap-satellite', 'token')
+                    .then((token) => {
+                        if (token) {
+                            Log.info('Token is found');
+                            clearInterval(tokenMonitorIntervalId);
+                            this.send('token-monit', true);
+                            resolve(token);
+                        } else {
+                            Log.info('Token not found');
+                            this.send('token-monit', false);
+                        }
+                    });
+            }, 2000);
+        });
     }
 
 
@@ -417,15 +436,6 @@ export class SatelliteApp {
                     this.send('pm2-monit', processDescriptionList);
                 });
             }, 1000);
-            // if (this.dockerMonitIntervalId) {
-            //     clearInterval(this.dockerMonitIntervalId);
-            // };
-            // this.dockerMonitIntervalId = setInterval(() => {
-            //     this.checkDocker();
-            // }, 3000);
-            // while (!this.isDockerUp) {
-            //     await new Promise(resolve => setTimeout(resolve, 3000));
-            // }
             await this.checkDockerIsUp();
             return await this.startPM2(getRunConfiguration(this.settings));
         } catch (error) {
@@ -519,18 +529,21 @@ export class SatelliteApp {
     }
 
 
+    /**
+     * It used to fail when token wasn't found, now it will wait for it.
+     * After user enter his email/password and token will be saved, this
+     * function will continue execution.
+     */
     async satelliteInit() {
-        const token = await keytar.getPassword('scidap-satellite', 'token');
-        if (token) {
-            Log.info('Running initial configuration');
-            this.loadSettings(this.cwd, this.defaultSettingsLocation);               // reload settings in case something was changed
-            this.settings.satelliteSettings.rcServerToken = token;
-            waitForInitConfiguration(this.settings);
-            this.store.set('initComplete', true);
-            return await this.chainStartPM2Services();
-        } else {
-            return Promise.reject('Failed to run initial configuration: no token');
-        }
+        this.getToken()                                                      // waits until token can be retrieved from the keychain
+            .then((token) => {
+                Log.info('Running initial configuration');
+                this.loadSettings(this.cwd, this.defaultSettingsLocation);   // reload settings in case something was changed
+                this.settings.satelliteSettings.rcServerToken = token;
+                waitForInitConfiguration(this.settings);
+                this.store.set('initComplete', true);
+                return this.chainStartPM2Services();
+            })
     }
 
 

@@ -43,6 +43,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
 
     public cogBadge = false;
     public updateAvailable = false;
+    public tokenIsMissing = false;
     public updateNotAvailable = false;
     readyToInstall = false;
 
@@ -113,6 +114,11 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
         super();
 
         this.keytar = this._electronService.remote.require('keytar');
+        this.tracked = this._electronService.tokenMonit().subscribe((list) => {
+            this._zone.run(() => {
+                this.tokenIsMissing = !list.args[0];  // always true/false
+            });
+        });
         this.subscribeUpdates();
         this.restoreSaved();
     }
@@ -245,7 +251,7 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
     /**
      *
      */
-    doLogin() {
+    doLogin(runFromWizard = true) {
         if (this.loginData && this.loginData.email && this.loginData.password) {
             console.log('Login data:', this.loginData.email, this.loginData.password !== '');
             this.tracked = this._electronService.login(this.loginData.email, this.loginData.password)
@@ -283,7 +289,17 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
                                 this.satIdAssigned = true;
                             }
                             this._submitting = false;
-                            setTimeout(() => this.changeState(2), 10);
+                            if (runFromWizard) {
+                                setTimeout(() => this.changeState(2), 10);
+                            } else {
+                                this.tracked = this._electronService.satCreateGetToken().subscribe(
+                                    (token) => {
+                                        if (token && !token.error) {
+                                            this.keytar.setPassword('scidap-satellite', 'token', token);
+                                        }
+                                    }
+                                );
+                            }
                         });
                     });
 
