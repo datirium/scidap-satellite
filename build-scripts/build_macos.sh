@@ -37,15 +37,15 @@ build_njs_client() {
 
 
 # Setting up package versions
-NODE_VERSION="12.20.1"
+NODE_VERSION="12.20.2"
 ARIA2_VERSION="1.35.0"
 CWLAIRFLOW_VERSION="1.2.10"
 CWLAIRFLOW_PYTHON_VERSION="3.8"
 CWLAIRFLOW_MACOS_VERSION="11.0.1"
-NJS_CLIENT_VERSION="041014eff5a4"       # do not use tags as even when downloading from tags Bitbucket will still include commit id in the folder name when extracted
+NJS_CLIENT_VERSION="master"
 SRA_TOOLKIT_VERSION="2.10.9"
 POSTGRESQL_VERSION="13.1"
-ARIA2_WEBUI_VERSION="dddf776a18b095ac373a22b28135c5dd6858496b"
+ARIA2_WEBUI_VERSION="master"
 
 
 # Loading variables from .env if it was provided.
@@ -190,10 +190,13 @@ cd $WORKDIR
 if [ -e "webui-aria2" ]; then
   warn "webui-aria2 has been already istalled. Skipping installation"
 else
+  TEMP_PATH=$PATH
+  PATH="${WORKDIR}/node-v${NODE_VERSION}-darwin-x64/bin:${PATH}"
   git clone https://github.com/ziahamza/webui-aria2
   cd webui-aria2
   git checkout ${ARIA2_WEBUI_VERSION}
   npm install
   npm i node-sass
   npm run build
+  PATH=$TEMP_PATH
 fi
