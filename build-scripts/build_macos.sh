@@ -195,8 +195,8 @@ else
   git clone https://github.com/ziahamza/webui-aria2
   cd webui-aria2
   git checkout ${ARIA2_WEBUI_VERSION}
-  npm install
-  npm i node-sass
-  npm run build
+  npm install > ${WORKDIR}/webui_aria2_npm_install.log 2>&1
+  npm i node-sass > ${WORKDIR}/node_sass_npm_install.log 2>&1
+  npm run build > ${WORKDIR}/webui_aria2_npm_build.log 2>&1
   PATH=$TEMP_PATH
 fi
