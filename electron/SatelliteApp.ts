@@ -9,6 +9,7 @@ import * as os from 'os';
 import * as keytar from 'keytar';
 
 const semver = require('semver')
+const xbytes = require('xbytes');
 const pm2 = require('pm2');
 const Log = require('electron-log');
 const args = process.argv.slice(1);
@@ -25,7 +26,6 @@ export class SatelliteApp {
     serve;
     settings;
     networkInterfaces = [];
-    isDockerUp;
     pm2MonitIntervalId;
     dockerMonitIntervalId;
     tokenMonitorIntervalId;
@@ -302,6 +302,30 @@ export class SatelliteApp {
 
 
     /**
+     * Parses formatted docker stats stdout into JSON object
+     */
+    parseDockerStats(raw_data){
+        let dockerStats = raw_data.split('\n')
+            .filter(line => !!line)                                                                    // to skip empty lines
+            .reduce((collected, line) => {
+                const [containerId, cpuUsagePerc, memUsagePerc, memInfoIEC, pids] = line.split('\t');
+                if (containerId) {                                                                     // sometime docker stats reports empty container id when it just started
+                    const [memUsageIEC, memLimitIEC] = memInfoIEC.replace(/\s/g,'').split('/');        // need to remove spaces
+                    collected[containerId] = {
+                        cpuUsagePerc: parseFloat(cpuUsagePerc),
+                        memUsagePerc: parseFloat(memUsagePerc),
+                        memUsageMB: parseInt(xbytes.parse(memUsageIEC).convertTo('MB')),               // Docker reports in IEC format - KiB, MiB, TiB, etc, we need MB
+                        memLimitMB: parseInt(xbytes.parse(memLimitIEC).convertTo('MB')),
+                        pids: parseInt(pids)
+                    };
+                };
+                return collected;
+            }, {});
+        return dockerStats;
+    }
+
+
+    /**
      * resolves when docker is up
      */
     async checkDockerIsUp() {
@@ -310,26 +334,24 @@ export class SatelliteApp {
             PATH: this.settings.executables.pathEnvVar
         };
 
+        if (this.dockerMonitIntervalId) {                // to prevent from running several intervals
+            clearInterval(this.dockerMonitIntervalId);
+        };
         return new Promise((resolve, reject) => {
-            const dockerMonitorIntervalId = setInterval(() => {
-                /**
-                 * Maybe docker stat and send all the changes to show mem usage etc?
-                 */
-                exec("docker ps", { env: env_var }, (error, stdout, stderr) => {
-                    if (error) {
-                        this.isDockerUp = false;
-                        this.send('docker-monit', false);
+            this.dockerMonitIntervalId = setInterval(() => {
+                exec(
+                    'docker stats --no-stream --format "{{.ID}}\t{{.CPUPerc}}\t{{.MemPerc}}\t{{.MemUsage}}\t{{.PIDs}}"',
+                    { env: env_var },
+                    (error, stdout, stderr) => {
+                        if (error || stderr) {
+                            this.send('docker-monit', null);                  // null for docker is not running
+                        } else {
+                            let dockerStats = this.parseDockerStats(stdout);
+                            this.send('docker-monit', dockerStats);           // either {} or real docker statistics
+                            resolve(dockerStats);                             // promises cannot recur, so it's safe to resolve it multiple times
+                        }
                     }
-                    if (stderr) {
-                        this.isDockerUp = false;
-                        this.send('docker-monit', false);
-                    } else {
-                        clearInterval(dockerMonitorIntervalId);
-                        this.isDockerUp = true;
-                        this.send('docker-monit', true);
-                        resolve(stdout);
-                    }
-                });
+                );
             }, 2000);
         });
     }

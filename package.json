@@ -113,6 +113,7 @@
     "meteor-node-stubs": "^1.0.1",
     "pm2": "^4.5.4",
     "semver": "^7.3.4",
-    "tcp-port-used": "^1.0.2"
+    "tcp-port-used": "^1.0.2",
+    "xbytes": "^1.7.0"
   }
 }

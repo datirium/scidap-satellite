@@ -61,7 +61,7 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
 
         this.tracked = this._electronService.dockerMonit().subscribe((list) => {
             this._zone.run(() => {
-                this.dockerMonit = list.args[0];  // always true/false
+                this.dockerMonit = list.args[0];  // either null when docker is not running or object with docker statistics (could be also {})
             });
         });
 
@@ -75,7 +75,7 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
     }
 
     get isDockerUp(): boolean {
-        return this.dockerMonit;
+        return this.dockerMonit !== null;
     }
 
     ngOnInit() {
