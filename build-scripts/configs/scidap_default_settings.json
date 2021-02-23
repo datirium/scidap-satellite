@@ -49,5 +49,6 @@
         "db_user": "airflow",
         "db_password": "airflow",
         "db_name": "airflow"
-    }
+    },
+    "simulation": false
 }

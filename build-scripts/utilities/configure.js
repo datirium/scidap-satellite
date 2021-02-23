@@ -53,6 +53,9 @@ function getAirflowApiServerArgs(settings){
   const airflowApiServerArgs = [
     '--port', settings.satelliteSettings.airflowAPIPort
   ];
+  if (settings.simulation) {
+    airflowApiServerArgs.push('--simulation')
+  };
   return airflowApiServerArgs
 }
 
