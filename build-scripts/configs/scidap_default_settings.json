@@ -50,5 +50,7 @@
         "db_password": "airflow",
         "db_name": "airflow"
     },
-    "simulation": false
+    "devel":{
+        "simulation": false
+    }
 }
