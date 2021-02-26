@@ -1,5 +1,6 @@
-<div class="clr-row" style="padding: 12px;">
-  <div *ngIf="isAllUp && isDockerUp" class="alert alert-info clr-col-xl-6 clr-col-12" role="alert">
+<div class="clr-row">
+
+  <div *ngIf="isAllUp && isDockerUp" class="alert alert-info clr-col-xl-12 clr-col-12" role="alert">
     <div class="alert-items">
       <div class="alert-item static">
         <div class="alert-icon-wrapper">
@@ -15,7 +16,7 @@
     </div>
   </div>
 
-  <div *ngIf="isDockerUp === false" class="alert alert-danger clr-col-xl-6 clr-col-12" role="alert">
+  <div *ngIf="isDockerUp === false" class="alert alert-danger clr-col-xl-12 clr-col-12" role="alert">
     <div class="alert-items">
       <div class="alert-item static">
         <div class="alert-icon-wrapper">
@@ -26,11 +27,12 @@
     </div>
   </div>
 
-  <!-- <div *ngIf="isDockerUp" class="clr-col-xl-6 clr-col-12">
-    <docker-stats [stats]="dockerMonit"></docker-stats>
-  </div> -->
+  <div class="clr-break-row"></div>
 
-  <div class="clr-col-xl-6 clr-col-12">&nbsp;</div>
+  <div *ngIf="isDockerUp" class="clr-col-xl-6 clr-col-12">
+    <docker-stats [stats]="dockerMonit"></docker-stats>
+  </div>
+
 </div>
 
 <div class="clr-row">
