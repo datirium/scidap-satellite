@@ -4,22 +4,22 @@ export const chartMemUsageMBConfig = () => (
       type: 'area',
       height: 150
     },
+    title: {
+      text: null
+    },
+    time: {
+      useUTC: false
+    },    
     plotOptions: {
-      series: {
-          enableMouseTracking: false
-      },
       area: {
         marker: {
           enabled: false
         }
-    }
+      },
+      series: {
+        enableMouseTracking: false
+      }
     },
-    time: {
-      useUTC: false
-    },
-    title: {
-      text: null
-    },    
     xAxis: {
       type: 'datetime',
       tickPixelInterval: 150
@@ -28,14 +28,22 @@ export const chartMemUsageMBConfig = () => (
       title: {
         text: 'Memory, MB'
       },
-      plotLines: [{
-        value: 0,
-        width: 1,
-        color: '#808080'
-      }],
       min: 0,
       max: 100
     },
+    series: [
+      {
+        name: 'Memory',
+        color: {
+          linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+          stops: [
+            [0, '#666ad1'],
+            [1, '#d1d9ff']
+          ]
+        },
+        data: []
+      }
+    ],
     legend: {
       enabled: false
     },
@@ -44,20 +52,7 @@ export const chartMemUsageMBConfig = () => (
     },
     credits: {
       enabled: false
-    },
-    series: [
-      {
-        name: 'Memory',
-        data: [],
-        color: {
-          linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
-          stops: [
-            [0, '#666ad1'],
-            [1, '#d1d9ff']
-          ]
-        }
-      }
-    ]
+    }
   }
 );
 
@@ -67,14 +62,19 @@ export const chartMemCpuUsagePercConfig = () => (
       type: 'bullet',
       height: 150
     },
+    title: {
+      text: null
+    },
     plotOptions: {
+      area: {
+        marker: {
+          enabled: false
+        }
+      },
       series: {
         enableMouseTracking: false
       }
     },
-    title: {
-      text: null
-    },    
     xAxis: {
       title: {
         text: 'Mem & CPU'
@@ -84,22 +84,14 @@ export const chartMemCpuUsagePercConfig = () => (
       }
     },
     yAxis: {
-      opposite: true,
-      gridLineWidth: 1,
-      labels: {
-        format: '{value}%'
-      },
       title: null,
       min: 0,
-      max: 100
+      max: 100,
+      labels: { format: '{value}%' },
+      opposite: true
     },
     series: [
       {
-        data: [{
-          y: 0,
-          target: 0
-        }],
-        borderWidth: 0,
         color: {
           linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
           stops: [
@@ -109,14 +101,15 @@ export const chartMemCpuUsagePercConfig = () => (
         },
         targetOptions: {
           width: '120%'
-        }
+        },
+        data: [
+          {
+            y: 0,
+            target: 0
+          }
+        ]
       },
       {
-        data: [{
-          y: 0,
-          target: 0
-        }],
-        borderWidth: 0,
         color: {
           linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
           stops: [
@@ -126,16 +119,22 @@ export const chartMemCpuUsagePercConfig = () => (
         },
         targetOptions: {
           width: '120%'
-        }
+        },
+        data: [
+          {
+            y: 0,
+            target: 0
+          }
+        ]
       }
     ],
-    credits: {
-      enabled: false
-    },
     legend: {
       enabled: false
     },
     exporting: {
+      enabled: false
+    },
+    credits: {
       enabled: false
     }
   }
