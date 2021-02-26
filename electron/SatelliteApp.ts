@@ -305,10 +305,16 @@ export class SatelliteApp {
      * Parses formatted docker stats stdout into JSON object
      */
     parseDockerStats(raw_data){
+        let nCPU = 1;                                                                                  // number of CPUs available for Docker
         let dockerStats = raw_data.split('\n')
             .filter(line => !!line)                                                                    // to skip empty lines
             .reduce((collected, line) => {
-                const [containerId, cpuUsagePerc, memUsagePerc, memInfoIEC, pids] = line.split('\t');
+                let raw_params = line.split('\t');
+                if (raw_params.length == 1){                                                           // if only one item is present it's nCPU
+                    nCPU = parseInt(raw_params[0]);
+                    return collected;
+                };
+                const [containerId, cpuUsagePerc, memUsagePerc, memInfoIEC, pids] = raw_params;
                 if (containerId) {                                                                     // sometime docker stats reports empty container id when it just started
                     const [memUsageIEC, memLimitIEC] = memInfoIEC.replace(/\s/g,'').split('/');        // need to remove spaces
                     collected[containerId] = {
@@ -316,6 +322,8 @@ export class SatelliteApp {
                         memUsagePerc: parseFloat(memUsagePerc),
                         memUsageMB: parseInt(xbytes.parse(memUsageIEC).convertTo('MB')),               // Docker reports in IEC format - KiB, MiB, TiB, etc, we need MB
                         memLimitMB: parseInt(xbytes.parse(memLimitIEC).convertTo('MB')),
+                        cpuLimitNum: nCPU,
+                        cpuUsageFrac: parseFloat(cpuUsagePerc)/nCPU,                                   // scaled to the number of CPUs available
                         pids: parseInt(pids)
                     };
                 };
@@ -340,7 +348,7 @@ export class SatelliteApp {
         return new Promise((resolve, reject) => {
             this.dockerMonitIntervalId = setInterval(() => {
                 exec(
-                    'docker stats --no-stream --format "{{.ID}}\t{{.CPUPerc}}\t{{.MemPerc}}\t{{.MemUsage}}\t{{.PIDs}}"',
+                    'docker info --format "{{.NCPU}}" && docker stats --no-stream --format "{{.ID}}\t{{.CPUPerc}}\t{{.MemPerc}}\t{{.MemUsage}}\t{{.PIDs}}"',
                     { env: env_var },
                     (error, stdout, stderr) => {
                         if (error || stderr) {
