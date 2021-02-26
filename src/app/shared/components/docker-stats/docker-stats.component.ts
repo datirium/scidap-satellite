@@ -42,8 +42,12 @@ export class DockerStatsComponent implements OnInit, AfterViewInit, OnChanges {
     this.dataChanges.next(changes);
   }
 
+  /*
+  * We also check for this.chartMemUsageMB && this.chartMemCpuUsagePerc, because when using this
+  * component with ngIf it looks like changes may come before the component is created
+  */
   onDataChanges(changes: SimpleChanges){
-    if (changes && changes.stats && changes.stats.currentValue) {
+    if (changes && changes.stats && changes.stats.currentValue && this.chartMemUsageMB && this.chartMemCpuUsagePerc) {
       const stats = changes.stats.currentValue;
       const sumMemUsageMB = Object.values(stats).reduce((sum, {memUsageMB}) => sum + memUsageMB, 0);
       const memLimitMB = Object.values(stats).reduce((_, {memLimitMB}) => memLimitMB, 0);  // should be the same for all containers
