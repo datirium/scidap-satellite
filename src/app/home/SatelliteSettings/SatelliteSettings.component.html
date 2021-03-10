@@ -9,10 +9,13 @@
 
                     <clr-input-container>
                         <label class="clr-col-3"> Satellite data directory:
-                            <button class="btn btn-outline" (click)="openDirectoryDialog(1)">select</button>
+                            <button class="btn btn-icon" (click)="openDirectoryDialog(1)">
+                                <clr-icon shape="folder"></clr-icon>
+                                browse
+                            </button>
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="Select satellite data directory path" [(ngModel)]="satelliteSettings.systemRoot" name="systemRoot" required />
-                        <clr-control-helper>Please choose satellite data directory to store analyses results.</clr-control-helper>
+                        <input clrInput type="text" disabled class="clr-col-9" placeholder="Select satellite data directory path" [(ngModel)]="satelliteSettings.systemRoot" name="systemRoot" required />
+                        <clr-control-helper>Directory to store analyses results.</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 
@@ -55,19 +58,25 @@
 
                     <clr-input-container>
                         <label class="clr-col-3"> Temporary data directory:
-                            <button class="btn btn-outline" (click)="openDirectoryDialog(2)">select</button>
+                            <button class="btn btn-icon" (click)="openDirectoryDialog(2)">
+                                <clr-icon shape="folder"></clr-icon>
+                                browse
+                            </button>
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="Select temporary data directory path" [(ngModel)]="airflowSettings.cwl__tmp_folder" name="cwl__tmp_folder" required />
-                        <clr-control-helper>Please choose data directory to store temporary data.</clr-control-helper>
+                        <input clrInput type="text" disabled class="clr-col-9" placeholder="Select temporary data directory path" [(ngModel)]="airflowSettings.cwl__tmp_folder" name="cwl__tmp_folder" required />
+                        <clr-control-helper>Directory to store temporary data.</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 
                     <clr-input-container>
                         <label class="clr-col-3"> Database data directory:
-                            <button class="btn btn-outline" (click)="openDirectoryDialog(3)">select</button>
+                            <button class="btn btn-icon" (click)="openDirectoryDialog(3)">
+                                <clr-icon shape="folder"></clr-icon>
+                                browse
+                            </button>
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="Select database data directory path" [(ngModel)]="defaultLocations.pgdata" name="pgdata" required />
-                        <clr-control-helper>Please choose database data directory to store metadata database files.</clr-control-helper>
+                        <input clrInput type="text" disabled class="clr-col-9" placeholder="Select database data directory path" [(ngModel)]="defaultLocations.pgdata" name="pgdata" required />
+                        <clr-control-helper>Directory to store metadata database files.</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 

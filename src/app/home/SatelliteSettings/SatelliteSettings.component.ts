@@ -47,9 +47,12 @@ export class SatelliteSettingsComponent implements OnInit {
     }
 
 
-    openDirectoryDialog(v) {
+    openDirectoryDialog(v: any) {
         this._electronService.remote.dialog.showOpenDialog({ properties: ['openDirectory'] }).then(({ filePaths, ...other }) => {
             console.log(filePaths, other);
+            if (other && other.canceled){
+                return;                     // do nothing if Cancel button was pressed
+            };
             if (1 === v) {
                 this.satelliteSettings.systemRoot = filePaths[0];
             } else if (2 === v) {
