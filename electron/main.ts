@@ -164,7 +164,7 @@ try {
         satelliteApp.disconnectPM2().then(() => {
             return satelliteApp.killPM2_2();
         }).then(() => {
-            return satelliteApp.satelliteInit();          // safer to run initial configuration because we can have different systemRoot
+            return satelliteApp.satelliteInit(true);          // we run it with true to skip folders creation. Only settings will be updated and services restarted.
         }).then(() => {
             event.reply('restart-programs', 'complete');
         }).catch((err) => {

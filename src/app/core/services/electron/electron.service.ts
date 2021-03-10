@@ -297,6 +297,18 @@ export class ElectronService extends Tracking {
         });
     }
 
+    diskMonit() {
+        return Observable.create((observer: Subscriber<any>) => {
+            this.ipcRenderer.on('disk-monit', (d, ...args) => {
+                observer.next({args});
+            });
+            return () => {
+                this.ipcRenderer.removeAllListeners('disk-monit');
+                observer.complete();
+            };
+        });
+    }
+
     openExternal(url) {
         this.shell.openExternal(url);
     }

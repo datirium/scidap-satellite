@@ -8,8 +8,9 @@ import * as url from 'url';
 import * as os from 'os';
 import * as keytar from 'keytar';
 
-const semver = require('semver')
+const semver = require('semver');
 const xbytes = require('xbytes');
+const fs = require("fs");
 const pm2 = require('pm2');
 const Log = require('electron-log');
 const args = process.argv.slice(1);
@@ -28,6 +29,7 @@ export class SatelliteApp {
     networkInterfaces = [];
     pm2MonitIntervalId;
     dockerMonitIntervalId;
+    diskMonitIntervalId;
     tokenMonitorIntervalId;
     // pm2_home;
     cwd;
@@ -364,6 +366,44 @@ export class SatelliteApp {
         });
     }
 
+    /**
+     * resolves only when all required folders exist
+     * sends disk-monit report in a form of {location: true/false}
+     */
+    async checkDiskIsAvailable() {
+        if (this.diskMonitIntervalId) {
+            clearInterval(this.diskMonitIntervalId);
+        };
+        let locationsToCheck = [
+            this.settings.satelliteSettings.systemRoot,
+            ...Object.values(this.settings.defaultLocations)
+        ];
+        return new Promise((resolve, reject) => {
+            this.diskMonitIntervalId = setInterval(() => {
+                let chain = Promise.resolve({});                                                            // sets inittial value for report to {}
+                for (let location of locationsToCheck) {
+                    chain = chain.then((report) => {
+                        return new Promise((resolve, reject) => {
+                            fs.access(location, fs.constants.R_OK | fs.constants.W_OK | fs.constants.X_OK,  // rwx access to the folder
+                                (error: any) => {
+                                    report[location] = !error;
+                                    resolve(report);
+                                }
+                            );
+                        });
+                    });
+                };
+                chain.then(
+                    (report) => {
+                        this.send('disk-monit', report);
+                        if (Object.keys(report).every((k) => report[k])) {  // true if all is true or if locationsToCheck was []
+                            resolve(report);                                // promises cannot recur, so it's safe to resolve it multiple times
+                        };
+                    }
+                );
+            }, 1000);
+        });
+    }
 
     async connectToPM2() {
         let http_interface = path.join(this.settings.executables.satelliteBin, '../../../', 'app/node_modules/pm2/bin/');
@@ -467,6 +507,7 @@ export class SatelliteApp {
                 });
             }, 1000);
             await this.checkDockerIsUp();
+            await this.checkDiskIsAvailable();
             return await this.startPM2(getRunConfiguration(this.settings));
         } catch (error) {
             Log.info(error);
@@ -563,14 +604,23 @@ export class SatelliteApp {
      * It used to fail when token wasn't found, now it will wait for it.
      * After user enter his email/password and token will be saved, this
      * function will continue execution.
+     *
+     * When run after pressing on "Save and Restart" button, we set
+     * skipFolderCreation to true, so the function waitForInitConfiguration
+     * won't be executed as it's not the real initial satellite configuration
+     * and we don't need to create any new folders and set up proxy for
+     * fastq-dump. UI won't allow to select folders that don't exist, so no
+     * need to create them.
      */
-    async satelliteInit() {
+    async satelliteInit(skipFolderCreation=false) {
         this.getToken()                                                      // waits until token can be retrieved from the keychain
             .then((token) => {
                 Log.info('Running initial configuration');
                 this.loadSettings(this.cwd, this.defaultSettingsLocation);   // reload settings in case something was changed
                 this.settings.satelliteSettings.rcServerToken = token;
-                waitForInitConfiguration(this.settings);
+                if (!skipFolderCreation){
+                    waitForInitConfiguration(this.settings);
+                }
                 this.store.set('initComplete', true);
                 return this.chainStartPM2Services();
             })

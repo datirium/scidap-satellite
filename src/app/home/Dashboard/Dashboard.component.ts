@@ -35,6 +35,7 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
 
     pm2Monit;
     dockerMonit;
+    diskMonit = {};
     pm2MonitAdopted = {};
     token;
     pm2;
@@ -65,6 +66,11 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
             });
         });
 
+        this.tracked = this._electronService.diskMonit().subscribe((list) => {
+            this._zone.run(() => {
+                this.diskMonit = list.args[0];    // report in a form of {location: true/false}
+            });
+        });
     }
 
     get isAllUp(): boolean {
@@ -76,6 +82,16 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
 
     get isDockerUp(): boolean {
         return this.dockerMonit !== null;
+    }
+
+    get missingDirectories() {
+        return Object.keys(this.diskMonit)
+            .reduce(function (obj, location) {
+                if (!this.diskMonit[location]) {
+                    obj.push(location);
+                };
+                return obj;
+            }.bind(this), [])
     }
 
     ngOnInit() {

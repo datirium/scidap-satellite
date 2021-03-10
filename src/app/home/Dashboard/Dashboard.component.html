@@ -1,6 +1,6 @@
 <div class="clr-row">
 
-  <div *ngIf="isAllUp && isDockerUp" class="alert alert-info clr-col-xl-12 clr-col-12" role="alert">
+  <div *ngIf="isAllUp && isDockerUp && missingDirectories.length == 0" class="alert alert-info clr-col-xl-12 clr-col-12" role="alert">
     <div class="alert-items">
       <div class="alert-item static">
         <div class="alert-icon-wrapper">
@@ -23,6 +23,21 @@
           <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
         </div>
         <span class="alert-text">To function properly SciDAP satellite needs <strong>Docker</strong> to be installed, started and configured to have at least 20GB of RAM and 6 CPUs</span>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="missingDirectories.length > 0" class="alert alert-danger clr-col-xl-12 clr-col-12" role="alert">
+    <div class="alert-items">
+      <div class="alert-item static">
+        <div class="alert-icon-wrapper">
+          <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+        </div>
+        <span class="alert-text">Failed to access directories:
+          <ul *ngFor="let location of missingDirectories">
+            <li>{{location}}</li>
+          </ul>
+        </span>
       </div>
     </div>
   </div>
