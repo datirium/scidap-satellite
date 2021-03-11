@@ -354,7 +354,7 @@ export class SatelliteApp {
                     { env: env_var },
                     (error, stdout, stderr) => {
                         if (error || stderr) {
-                            this.send('docker-monit', null);                  // null for docker is not running
+                            this.send('docker-monit', false);                 // false for docker is not running
                         } else {
                             let dockerStats = this.parseDockerStats(stdout);
                             this.send('docker-monit', dockerStats);           // either {} or real docker statistics

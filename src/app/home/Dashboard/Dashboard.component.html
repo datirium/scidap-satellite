@@ -1,6 +1,6 @@
 <div class="clr-row">
 
-  <div *ngIf="isAllUp && isDockerUp && missingDirectories.length == 0" class="alert alert-info clr-col-xl-12 clr-col-12" role="alert">
+  <div *ngIf="isAllUp && isDockerUp !== null && isDockerUp && missingDirectories !== null && missingDirectories.length == 0" class="alert alert-info clr-col-xl-12 clr-col-12" role="alert">
     <div class="alert-items">
       <div class="alert-item static">
         <div class="alert-icon-wrapper">
@@ -16,7 +16,7 @@
     </div>
   </div>
 
-  <div *ngIf="isDockerUp === false" class="alert alert-danger clr-col-xl-12 clr-col-12" role="alert">
+  <div *ngIf="isDockerUp !== null && !isDockerUp" class="alert alert-danger clr-col-xl-12 clr-col-12" role="alert">
     <div class="alert-items">
       <div class="alert-item static">
         <div class="alert-icon-wrapper">
@@ -27,7 +27,7 @@
     </div>
   </div>
 
-  <div *ngIf="missingDirectories.length > 0" class="alert alert-danger clr-col-xl-12 clr-col-12" role="alert">
+  <div *ngIf="missingDirectories !== null && missingDirectories.length > 0" class="alert alert-danger clr-col-xl-12 clr-col-12" role="alert">
     <div class="alert-items">
       <div class="alert-item static">
         <div class="alert-icon-wrapper">
@@ -44,7 +44,7 @@
 
   <div class="clr-break-row"></div>
 
-  <div *ngIf="isDockerUp" class="clr-col-xl-6 clr-col-12">
+  <div *ngIf="isDockerUp !== null && isDockerUp" class="clr-col-xl-6 clr-col-12">
     <docker-stats [stats]="dockerMonit"></docker-stats>
   </div>
 
