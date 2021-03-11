@@ -2,7 +2,7 @@ export const chartMemUsageMBConfig = () => (
   {
     chart: {
       type: 'area',
-      height: 150
+      height: 120
     },
     title: {
       text: null
@@ -60,7 +60,7 @@ export const chartMemCpuUsagePercConfig = () => (
   {
     chart: {
       type: 'bullet',
-      height: 150
+      height: 120
     },
     title: {
       text: null

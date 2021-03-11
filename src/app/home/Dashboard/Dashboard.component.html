@@ -44,10 +44,6 @@
 
   <div class="clr-break-row"></div>
 
-  <div *ngIf="isDockerUp !== null && isDockerUp" class="clr-col-xl-6 clr-col-12">
-    <docker-stats [stats]="dockerMonit"></docker-stats>
-  </div>
-
 </div>
 
 <div class="clr-row">
@@ -99,4 +95,9 @@
       </div>
     </div>
   </div>
+
+  <div *ngIf="isDockerUp !== null && isDockerUp" class="clr-col-xl-6 clr-col-12">
+    <docker-stats [stats]="dockerMonit"></docker-stats>
+  </div>
+
 </div>
