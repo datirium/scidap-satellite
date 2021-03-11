@@ -362,7 +362,7 @@ export class SatelliteApp {
                         }
                     }
                 );
-            }, 2000);
+            }, 1500);
         });
     }
 
@@ -401,7 +401,7 @@ export class SatelliteApp {
                         };
                     }
                 );
-            }, 1000);
+            }, 1500);
         });
     }
 

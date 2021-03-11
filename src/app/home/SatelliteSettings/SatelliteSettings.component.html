@@ -135,7 +135,7 @@
                     <clr-input-container>
                         <label class="clr-col-3"> Proxy settings:
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="http://USERNAME:PASSWORD@SERVER:PORT/" [(ngModel)]="satelliteSettings.proxy" name="proxy" required />
+                        <input clrInput type="text" class="clr-col-9" placeholder="http://USERNAME:PASSWORD@SERVER:PORT/" [(ngModel)]="satelliteSettings.proxy" name="proxy" />
                         <clr-control-helper>Your company can deny direct access to the Internet and instead have an HTTP or HTTPS proxy available. Usually port is 3128.</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
@@ -143,7 +143,7 @@
                     <clr-input-container>
                         <label class="clr-col-3"> Exclude hosts from proxy:
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="^.*\\(aventail\\|seanet\\)\\.com" [(ngModel)]="satelliteSettings.noProxy" name="noProxy" required />
+                        <input clrInput type="text" class="clr-col-9" placeholder="^.*\\(aventail\\|seanet\\)\\.com" [(ngModel)]="satelliteSettings.noProxy" name="noProxy" />
                         <clr-control-helper>Specifies URLs that should be excluded from proxying (on servers that should be contacted directly). Paired with a regexp matching host names not to be proxied. </clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
