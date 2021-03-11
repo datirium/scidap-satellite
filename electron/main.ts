@@ -162,8 +162,6 @@ try {
         Log.info('restart-programs');
 
         satelliteApp.disconnectPM2().then(() => {
-            return satelliteApp.killPM2_2();
-        }).then(() => {
             return satelliteApp.satelliteInit(true);          // we run it with true to skip folders creation. Only settings will be updated and services restarted.
         }).then(() => {
             event.reply('restart-programs', 'complete');

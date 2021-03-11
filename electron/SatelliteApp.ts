@@ -508,7 +508,7 @@ export class SatelliteApp {
             }, 1000);
             await this.checkDockerIsUp();
             await this.checkDiskIsAvailable();
-            return await this.startPM2(getRunConfiguration(this.settings));
+            return await this.restartPM2program(getRunConfiguration(this.settings));
         } catch (error) {
             Log.info(error);
         }
