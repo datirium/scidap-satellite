@@ -223,6 +223,18 @@
 
     <clr-wizard-page #settings (clrWizardPageCustomButton)="doSettings()">
         <ng-template clrPageTitle>Settings</ng-template>
+
+        <div *ngIf="isDockerUp !== null && !isDockerUp" class="alert alert-danger clr-col-xl-12 clr-col-12" role="alert">
+            <div class="alert-items">
+              <div class="alert-item static">
+                <div class="alert-icon-wrapper">
+                  <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+                </div>
+                <span class="alert-text">To function properly SciDAP satellite needs <strong>Docker</strong> to be installed and started and configured to have at least 20GB of RAM and 6 CPUs</span>
+              </div>
+            </div>
+        </div>
+
         <app-satellite-settings *ngIf="!initInProgress" #satelliteSettings></app-satellite-settings>
         <clr-spinner *ngIf="initInProgress">
             Starting Processes

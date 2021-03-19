@@ -41,6 +41,9 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
     buttonText = 'update';
     skipng = false;
 
+    dockerMonit;
+    isDockerUp = null;
+
     public cogBadge = false;
     public updateAvailable = false;
     public tokenIsMissing = false;
@@ -117,6 +120,12 @@ export class HomeComponent extends BaseComponent implements OnInit, AfterViewIni
         this.tracked = this._electronService.tokenMonit().subscribe((list) => {
             this._zone.run(() => {
                 this.tokenIsMissing = !list.args[0];  // always true/false
+            });
+        });
+        this.tracked = this._electronService.dockerMonit().subscribe((list) => {
+            this._zone.run(() => {
+                this.dockerMonit = list.args[0];  // either false when docker is not running or object with docker statistics (could be also {})
+                this.isDockerUp = !!this.dockerMonit;
             });
         });
         this.subscribeUpdates();
