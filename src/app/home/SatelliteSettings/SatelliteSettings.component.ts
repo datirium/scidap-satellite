@@ -95,6 +95,22 @@ export class SatelliteSettingsComponent implements OnInit {
         return _ret;
     }
 
+    doRestart() {
+
+        this.doSave();
+
+        const _ret = new Promise((resolve, reject) => {
+            this._electronService.ipcRenderer.on('restart-programs', (d, ...args) => {
+                resolve(args);
+            });
+        });
+
+        this._electronService.ipcRenderer.send('restart-programs');
+
+        return _ret;
+    }
+
+
     /**
      *
      * @param port

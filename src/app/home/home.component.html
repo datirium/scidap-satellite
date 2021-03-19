@@ -229,7 +229,7 @@
         </clr-spinner>
 
         <ng-template clrPageButtons>
-            <clr-wizard-button [type]="'complete'">Finish</clr-wizard-button>
+            <clr-wizard-button *ngIf="!initInProgress" [type]="'complete'">Finish</clr-wizard-button>
         </ng-template>
     </clr-wizard-page>
 </clr-wizard>

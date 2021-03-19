@@ -613,7 +613,7 @@ export class SatelliteApp {
      * need to create them.
      */
     async satelliteInit(skipFolderCreation=false) {
-        this.getToken()                                                      // waits until token can be retrieved from the keychain
+        return this.getToken()                                               // waits until token can be retrieved from the keychain
             .then((token) => {
                 Log.info('Running initial configuration');
                 this.loadSettings(this.cwd, this.defaultSettingsLocation);   // reload settings in case something was changed
