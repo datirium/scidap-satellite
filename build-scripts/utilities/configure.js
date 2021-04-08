@@ -102,6 +102,7 @@ function getNjsClientEnvVar(settings){
   let njsClientEnvVar = {
     PATH: settings.executables.pathEnvVar,
     SSL_CONN: settings.satelliteSettings.enableSSL,
+    SSL_API_SYNC: true,
     API_URL: settings.satelliteSettings.rcServer,
     SATELLITE_TOKEN: settings.satelliteSettings.rcServerToken,
     CONFIG_FILE: njsClientSettingsLocation,
