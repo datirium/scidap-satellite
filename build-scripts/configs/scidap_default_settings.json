@@ -52,8 +52,6 @@
     },
     "devel":{
         "simulation": false,
-        "mac":{
-            "update_from_devel": true
-        }
+        "mac_update_from_devel": true
     }
 }

@@ -175,7 +175,7 @@ try {
 
     ipcMain.on('checking-for-update', (event) => {
         Log.info('checking-for-update');
-        if (satelliteApp.settings.devel && satelliteApp.settings.devel.mac && satelliteApp.settings.devel.mac.update_from_devel) {
+        if (satelliteApp.settings.devel && satelliteApp.settings.devel.mac_update_from_devel) {
             // Need to overwrite default update settings to point to the development versions
             const devUpdateSetting = path.resolve(app.getAppPath(), './dev-app-update.yml');
             autoUpdater.updateConfigPath = devUpdateSetting;
