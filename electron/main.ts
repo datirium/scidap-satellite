@@ -4,6 +4,8 @@ import { SatelliteApp } from './SatelliteApp';
 
 import './SatelliteBus';
 
+import * as path from 'path';
+
 const appVersion = app.getVersion();
 // const updateUrl = `https://scidap.com/updates/`;
 
@@ -173,6 +175,12 @@ try {
 
     ipcMain.on('checking-for-update', (event) => {
         Log.info('checking-for-update');
+        if (satelliteApp.settings.devel && satelliteApp.settings.devel.mac && satelliteApp.settings.devel.mac.update_from_devel) {
+            // Need to overwrite default update settings to point to the development versions
+            const devUpdateSetting = path.resolve(app.getAppPath(), './dev-app-update.yml');
+            autoUpdater.updateConfigPath = devUpdateSetting;
+            Log.info('Using development update configurations file', devUpdateSetting);
+        }
         if (serve) {
             autoUpdater.checkForUpdates();
         } else {

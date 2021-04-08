@@ -51,6 +51,9 @@
         "db_name": "airflow"
     },
     "devel":{
-        "simulation": false
+        "simulation": false,
+        "mac":{
+            "update_from_devel": true
+        }
     }
 }

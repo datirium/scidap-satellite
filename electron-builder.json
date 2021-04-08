@@ -56,7 +56,6 @@
         "!postinstall*.js",
         "!test*",
         "!sign-cwl-airflow",
-        "!dev-app-update.yml",
         "!embedded.provisionprofile"
     ],
     "publish": [
