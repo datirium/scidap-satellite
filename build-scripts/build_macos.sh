@@ -27,6 +27,18 @@ build_njs_client() {
   PATH="${WORKDIR}/node-v${NODE_VERSION}-darwin-x64/bin:${PATH}"
   echo "Building njs-client from $1"
   cd $1
+  PULL_REQUESTED="${2:-false}"
+  if [ $PULL_REQUESTED = true ]; then
+    echo "Git pull was requested. Checking if repository is clean"
+    CHANGES_FOUND="$(git status --porcelain)"
+    echo "$CHANGES_FOUND"
+    if ! [ -n "$CHANGES_FOUND" ]; then
+      echo "Pulling the latest changes"
+      git pull
+    else
+      echo "Repository is not clean. Skipping"
+    fi
+  fi
   npm install > ${WORKDIR}/npm_install.log 2>&1
   npm run build > ${WORKDIR}/npm_build.log 2>&1
   mv dist node_modules ${SATDIR}                                  # need only these two folders
@@ -84,8 +96,10 @@ if [ -e ${SATDIR}/dist/src/main.js ]; then
   warn "njs-client has been already built. Skipping"
 else
   if [ -n "$NJS_CLIENT_LOCAL_PATH" ]; then
-    # Building njs-client from the local path, NJS_CLIENT_VERSION is not used
-    build_njs_client ${NJS_CLIENT_LOCAL_PATH}
+    # Building njs-client from the local path, NJS_CLIENT_VERSION is not used.
+    # Will try to pull the latest changes from the current branch if git repository
+    # is clean. Otherwise, will run build with the current repository state.
+    build_njs_client ${NJS_CLIENT_LOCAL_PATH}/scidap-satellite true
   else
     # Downloading and building njs-client release/tag NJS_CLIENT_VERSION
     # from Bitbucket using provided BITBUCKET_USER and BITBUCKET_PASS
