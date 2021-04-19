@@ -11,7 +11,6 @@
         "systemRoot": "./scidap",
         "aria2cPort": 6800,
         "pm2Port": 9615,
-        "baseUrl": "http://localhost:3069/",
         "enableSSL": true,
         "localFiles": true,
         "proxy": "",
@@ -52,6 +51,6 @@
     },
     "devel":{
         "simulation": false,
-        "mac_update_from_devel": true
+        "mac_update_from_devel": false
     }
 }
