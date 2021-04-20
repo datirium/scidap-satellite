@@ -60,7 +60,7 @@ npm install -g @angular/cli
    git clone https://github.com/datirium/scidap-satellite.git
    cd scidap-satellite && git checkout main
    ```
-- Create a text file `.env` in the `./build-scripts` folder. Add there either `NJS_CLIENT_LOCAL_PATH` to build `scidapSatelliteInteractions` from the local repository, or a pair of `BITBUCKET_USER` and `BITBUCKET_PASS` variables to clone it from Bitbucket.  `NJS_CLIENT_LOCAL_PATH` should point to the `scidap-satellite` subdir as we don't need to build `apisync`. Optionally, the default programs versions used in the script can be redefined in `.env` file.
+- Create a text file `.env` in the `./build-scripts` folder. Add there either `NJS_CLIENT_LOCAL_PATH` to build `scidapSatelliteInteractions` from the local repository, or a pair of `BITBUCKET_USER` and `BITBUCKET_PASS` variables to clone it from Bitbucket. Optionally, the default programs versions used in the script can be redefined in `.env` file.
 - Run `build_ubuntu.sh` script inside the `./build-scripts` folder.
    ```bash
    cd ./build-scripts
@@ -104,7 +104,7 @@ Default configuration is saved in the `./configs/scidap_default_settings.json` f
    cd scidap-satellite && git checkout main
    npm install
    ```
-- Create a text file `.env` in the `./build-scripts` folder. Add there either `NJS_CLIENT_LOCAL_PATH` to build `scidapSatelliteInteractions` from the local repository, or a pair of `BITBUCKET_USER` and `BITBUCKET_PASS` variables to clone it from Bitbucket.  `NJS_CLIENT_LOCAL_PATH` should point to the `scidap-satellite` subdir as we don't need to build `apisync`. Optionally, the default programs versions used in the script can be redefined in `.env` file.
+- Create a text file `.env` in the `./build-scripts` folder. Add there either `NJS_CLIENT_LOCAL_PATH` to build `scidapSatelliteInteractions` from the local repository, or a pair of `BITBUCKET_USER` and `BITBUCKET_PASS` variables to clone it from Bitbucket. Optionally, the default programs versions used in the script can be redefined in `.env` file.
 - Run `build_macos.sh` script inside the `./build-scripts` folder. Pack results into App. Use `electron:mac:prod` or `electron:mac:dev` depending on whether you want to connect to `https://api.scidap.com/` or `https://api-dev.scidap.com/`.
    ```bash
    cd ./build-scripts
@@ -116,7 +116,7 @@ After script finishes running, you will find a `scidap-satellite.app` in `./rele
 
 **To run** Electron App on macOS with installed and configured Docker right-click on `scidap-satellite.app` and select `Open`.
 
-In case you by mistake run `build_ubuntu.sh` script, you will need to remove `node_modules`, `build`, `build_ubuntu`, `Services`, `ubuntu_post_build` folders in the root of you repository and rerun `npm install`, `build_macos.sh` and `npm run electron:mac` commands as it's listed above.
+In case you by mistake run `build_ubuntu.sh` script, you will need to remove `node_modules`, `build`, `build_ubuntu`, `Services`, `ubuntu_post_build` folders in the root of you repository and rerun `npm install`, `build_macos.sh` and `npm run electron:mac:prod` commands as it's listed above.
 
 The default configuration file from `./configs/scidap_default_settings.json` will be used by Electron for generating `config.json`.
 
@@ -124,10 +124,10 @@ The default configuration file from `./configs/scidap_default_settings.json` wil
 
 - `defaultLocations.airflow` and `defaultLocations.pgdata` define the locations for airflow configuration and PostreSQL database files correspondingly. If they are set as relative paths, they by default will be resolved based on the `satelliteSettings.systemRoot`. However, for macOS bundle if `satelliteSettings.systemRoot` was changed from the **Satellite data directory** parameter in the **Common** settings tab, the `defaultLocations.airflow` and `defaultLocations.pgdata` won't be re-evaluated. If needed they can be configured independently using two separate parameters **Airflow data directory** and **Database data directory** in the **Advanced** settings tab, as the user might need to change the location only for his analyses data (on a external hard-drive, etc) while keeping the whole system run on the same machine with the same configurations.
 - `satelliteSettings` section is mainly used by NJS-Client. On macOS `rcServerToken` shouldn't be set, as it will be read from Keychain. `systemRoot` defines the location where all analyses data will be saved. If it's set as a relative path, it will be resolved based on the user's home directory.
-- all parameters from `airflowSettings` section will be applied to `airflow scheduler` and `cwl-airflow api`. It may include any valid parameter from `airflow.cfg` in a form of `"section.parameter": "value"`.
+- all parameters from `airflowSettings` section will be applied to `airflow scheduler` and `cwl-airflow api`. It may include any valid parameter from `airflow.cfg` in a form of `"section__parameter": "value"`.
 - all parameters from `aria2cSettings` section will be applied to `aria2c`. It may include any valid for Aria2c argument in a form of `"--flag": "value"`.
 - `databaseSettings` section defines parameters for the running PostgreSQL database, that is always bound to `127.0.0.1` so it's safe keep default values unless additional security measures needed.
-- `devel` section defines parameters used during developing. Currently, it includes only `simulation` parameter, which allows to shortcut CWL-Airflow API without triggering any DAGs.
+- `devel` section defines parameters used during developing. Currently, it includes `simulation` parameter, which allows to shortcut CWL-Airflow API without triggering any DAGs, and `mac_update_from_devel` that makes application search for development updates versions.
 
 
 ```yaml
@@ -138,7 +138,7 @@ The default configuration file from `./configs/scidap_default_settings.json` wil
     },
     "satelliteSettings": {
         "rcServerToken": "",
-        "rcServer": "dev.scidap.com:8080",
+        "rcServer": "api-sync.scidap.com:8080",
         "port": 3069,
         "airflowAPIPort": 8080,
         "systemRoot": "./scidap",
@@ -198,7 +198,7 @@ _____
 2. Couldn't compile aria with `--with-openssl` even if openssl was installed. As a solution use builds from here https://github.com/q3aql/aria2-static-builds
 3. PostgeSQL binaries are downloaded from https://www.enterprisedb.com/download-postgresql-binaries 
 
-**Upgrading from the old Ubuntu satellite installation**
+**Upgrading from the old (prior to replacing BioWardrobe-NG) Ubuntu satellite installation**
 1. Stop services
 ```bash
 systemctl stop airflow-apiserver
@@ -239,4 +239,4 @@ or
     Alternatively, test `docker run` with `--dns` param to see if DNS was the problem
 
 **Known issues on macOS**
-1. Updating `Satellite data directory` and `Enable local files module` from the `Settings` won't make any effect (need to be properly implemented).
+1. Updating `Enable local files module` from the `Settings` won't make any effect (need to be properly implemented).
