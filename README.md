@@ -110,7 +110,7 @@ Default configuration is saved in the `./configs/scidap_default_settings.json` f
    cd ./build-scripts
    ./build_macos.sh
    cd ..
-   npm run electron:mac:dev
+   npm run electron:mac:prod
    ```
 After script finishes running, you will find a `scidap-satellite.app` in `./release/mac` folder. All the temporary data is kept in `../build` folder and can be removed unless you want to save some time when rerunning `build_macos.sh` script next time. When component versions are updated, remove `../build` folder. `Services` folder is used to save all necessary files before assembling application. This folder is cleaned on each `build_macos.sh` run.
 
