@@ -1,3 +1,9 @@
+## 2.0.0 (2020-04-20)
+
+* BioWardrobe-NG is replaced by NJS-Client
+* no need in mongoDB anymore
+* LDAP authentication is outsourced to refactored [BioWardrobe-NG](https://github.com/Barski-lab/biowardrobe-ng)
+
 ## 1.0.7 (2020-08-05)
 
 * fastq-dump mac os fix case sensitivity
