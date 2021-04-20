@@ -55,10 +55,10 @@ npm install -g @angular/cli
    export PATH=~/.npm-global/bin:$PATH
    npm install -g @nestjs/cli@7.6.0
    ```
-- Clone `scidap-satellite` repository and switch to the `master` branch.
+- Clone `scidap-satellite` repository and switch to the `main` branch.
    ```bash
    git clone https://github.com/datirium/scidap-satellite.git
-   cd scidap-satellite && git checkout master
+   cd scidap-satellite && git checkout main
    ```
 - Create a text file `.env` in the `./build-scripts` folder. Add there either `NJS_CLIENT_LOCAL_PATH` to build `scidapSatelliteInteractions` from the local repository, or a pair of `BITBUCKET_USER` and `BITBUCKET_PASS` variables to clone it from Bitbucket.  `NJS_CLIENT_LOCAL_PATH` should point to the `scidap-satellite` subdir as we don't need to build `apisync`. Optionally, the default programs versions used in the script can be redefined in `.env` file.
 - Run `build_ubuntu.sh` script inside the `./build-scripts` folder.
@@ -98,10 +98,10 @@ Default configuration is saved in the `./configs/scidap_default_settings.json` f
   brew install node@12
   npm install -g @nestjs/cli@7.6.0
   ```
-- Clone `scidap-satellite` repository and switch to the `master` branch. Install node modules.
+- Clone `scidap-satellite` repository and switch to the `main` branch. Install node modules.
    ```bash
    git clone https://github.com/datirium/scidap-satellite.git
-   cd scidap-satellite && git checkout master
+   cd scidap-satellite && git checkout main
    npm install
    ```
 - Create a text file `.env` in the `./build-scripts` folder. Add there either `NJS_CLIENT_LOCAL_PATH` to build `scidapSatelliteInteractions` from the local repository, or a pair of `BITBUCKET_USER` and `BITBUCKET_PASS` variables to clone it from Bitbucket.  `NJS_CLIENT_LOCAL_PATH` should point to the `scidap-satellite` subdir as we don't need to build `apisync`. Optionally, the default programs versions used in the script can be redefined in `.env` file.
