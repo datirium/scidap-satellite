@@ -40,67 +40,135 @@ npm install -g @angular/cli
 ```
 
 
-# Building relocatable tar.gz and App
+# Building SciDAP-Satellite bundle for Ubuntu and macOS
 
 ## Ubuntu
 
-To build relocatable `tar.gz` that can be run with PM2 on Ubuntu 18.04, start clean virtual machine with Ubuntu 18.04 and run the following commands. Optionally, the default programs versions used in the script can be redefined in `.env` file provided in the same folder as `build_ubuntu.sh` script.
+**To build** relocatable `tar.gz` that can be run with PM2 on Ubuntu 18.04, follow these directions.
+- Start a clean virtual machine with Ubuntu 18.04. Install required dependencies.
+   ```bash
+   sudo apt-get install git g++ make curl
+   curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -    # to get Node 12.X and npm
+   sudo apt-get install nodejs
+   mkdir ~/.npm-global                                                # to avoid permission problems with npm
+   npm config set prefix '~/.npm-global'
+   export PATH=~/.npm-global/bin:$PATH
+   npm install -g @nestjs/cli@7.6.0
+   ```
+- Clone `scidap-satellite` repository and switch to the `master` branch.
+   ```bash
+   git clone https://github.com/datirium/scidap-satellite.git
+   cd scidap-satellite && git checkout master
+   ```
+- Create a text file `.env` in the `./build-scripts` folder. Add there either `NJS_CLIENT_LOCAL_PATH` to build `scidapSatelliteInteractions` from the local repository, or a pair of `BITBUCKET_USER` and `BITBUCKET_PASS` variables to clone it from Bitbucket.  `NJS_CLIENT_LOCAL_PATH` should point to the `scidap-satellite` subdir as we don't need to build `apisync`. Optionally, the default programs versions used in the script can be redefined in `.env` file.
+- Run `build_ubuntu.sh` script inside the `./build-scripts` folder.
+   ```bash
+   cd ./build-scripts
+   ./build_ubuntu.sh
+   ```
 
-```bash
-sudo apt-get install git g++ make curl
-curl https://install.meteor.com/ | sh                          # installing meteor with its own node for building BioWardrobe-NG
-git clone https://github.com/datirium/scidap-satellite.git
-cd ./scidap-satellite/build-scripts
-./build_ubuntu.sh
-```
+After script finishes running, you will find a compressed `scidap-satellite.tar.gz` in the `../ubuntu_post_build` folder. All the temporary data is kept in `../build_ubuntu` and can be removed unless you want to save some time when rerunning `build_ubuntu.sh` script next time. When component versions are updated, remove `../build_ubuntu` folder.
 
-After script finishes running, you will find a compressed `scidap-satellite.tar.gz` in the `../ubuntu_post_build` folder. All the temporary data is kept in `../build_ubuntu` and can be removed unless you want to save some time when rerunning `build_ubuntu.sh` script next time.
-
-To run relocatable `scidap-satellite.tar.gz` on clean Ubuntu 18.04 with installed and configured Docker use the following commands.
-```bash
-sudo apt-get install git nodejs npm curl              # mongod doesn't work without curl
-mkdir satellite
-mv scidap-satellite.tar.gz satellite                  # initial location of scidap-satellite.tar.gz might be different
-cd satellite
-tar xzf scidap-satellite.tar.gz
-npm install pm2
-./node_modules/pm2/bin/pm2 start ./configs/ecosystem.config.js  # start ecosystem.config.js with PM2
-```
+**To run** relocatable `tar.gz` with PM2 on Ubuntu 18.04, follow these directions.
+- Make sure that Docker is installed and properly configured [see installation instructions](https://docs.docker.com/engine/install/ubuntu/)
+- Install required dependencies.
+   ```bash
+   sudo apt-get install git g++ make curl
+   curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -    # to get Node 12.X and npm
+   sudo apt-get install nodejs
+   ```
+- Uncompress `scidap-satellite.tar.gz` into an empty folder. Install `pm2` and start it with `ecosystem.config.js`. See how to provide custom location for the configuration file below.
+  ```bash
+  mkdir satellite
+  mv scidap-satellite.tar.gz satellite                  # initial location of scidap-satellite.tar.gz might be different
+  cd satellite
+  tar xzf scidap-satellite.tar.gz
+  npm install pm2
+  ./node_modules/pm2/bin/pm2 start ./configs/ecosystem.config.js  # start ecosystem.config.js with PM2
+  ```
 
 Default configuration is saved in the `./configs/scidap_default_settings.json` file. Custom configuration can be loaded from the file set in `SCIDAP_SETTINGS` environment variable, `../scidap_settings.json` or `~/.config/scidap-satellite/scidap_settings.json`.
+
+## macOS
+
+**To build** Electron App on macOS follow these directions.
+- Install required dependencies.
+  ```bash
+  brew install git
+  brew install node@12
+  npm install -g @nestjs/cli@7.6.0
+  ```
+- Clone `scidap-satellite` repository and switch to the `master` branch. Install node modules.
+   ```bash
+   git clone https://github.com/datirium/scidap-satellite.git
+   cd scidap-satellite && git checkout master
+   npm install
+   ```
+- Create a text file `.env` in the `./build-scripts` folder. Add there either `NJS_CLIENT_LOCAL_PATH` to build `scidapSatelliteInteractions` from the local repository, or a pair of `BITBUCKET_USER` and `BITBUCKET_PASS` variables to clone it from Bitbucket.  `NJS_CLIENT_LOCAL_PATH` should point to the `scidap-satellite` subdir as we don't need to build `apisync`. Optionally, the default programs versions used in the script can be redefined in `.env` file.
+- Run `build_macos.sh` script inside the `./build-scripts` folder. Pack results into App. Use `electron:mac:prod` or `electron:mac:dev` depending on whether you want to connect to `https://api.scidap.com/` or `https://api-dev.scidap.com/`.
+   ```bash
+   cd ./build-scripts
+   ./build_macos.sh
+   cd ..
+   npm run electron:mac:dev
+   ```
+After script finishes running, you will find a `scidap-satellite.app` in `./release/mac` folder. All the temporary data is kept in `../build` folder and can be removed unless you want to save some time when rerunning `build_macos.sh` script next time. When component versions are updated, remove `../build` folder. `Services` folder is used to save all necessary files before assembling application. This folder is cleaned on each `build_macos.sh` run.
+
+**To run** Electron App on macOS with installed and configured Docker right-click on `scidap-satellite.app` and select `Open`.
+
+In case you by mistake run `build_ubuntu.sh` script, you will need to remove `node_modules`, `build`, `build_ubuntu`, `Services`, `ubuntu_post_build` folders in the root of you repository and rerun `npm install`, `build_macos.sh` and `npm run electron:mac` commands as it's listed above.
+
+The default configuration file from `./configs/scidap_default_settings.json` will be used by Electron for generating `config.json`.
+
+## Default configuration
+
+- `defaultLocations.airflow` and `defaultLocations.pgdata` define the locations for airflow configuration and PostreSQL database files correspondingly. If they are set as relative paths, they by default will be resolved based on the `satelliteSettings.systemRoot`. However, for macOS bundle if `satelliteSettings.systemRoot` was changed from the **Satellite data directory** parameter in the **Common** settings tab, the `defaultLocations.airflow` and `defaultLocations.pgdata` won't be re-evaluated. If needed they can be configured independently using two separate parameters **Airflow data directory** and **Database data directory** in the **Advanced** settings tab, as the user might need to change the location only for his analyses data (on a external hard-drive, etc) while keeping the whole system run on the same machine with the same configurations.
+- `satelliteSettings` section is mainly used by NJS-Client. On macOS `rcServerToken` shouldn't be set, as it will be read from Keychain. `systemRoot` defines the location where all analyses data will be saved. If it's set as a relative path, it will be resolved based on the user's home directory.
+- all parameters from `airflowSettings` section will be applied to `airflow scheduler` and `cwl-airflow api`. It may include any valid parameter from `airflow.cfg` in a form of `"section.parameter": "value"`.
+- all parameters from `aria2cSettings` section will be applied to `aria2c`. It may include any valid for Aria2c argument in a form of `"--flag": "value"`.
+- `databaseSettings` section defines parameters for the running PostgreSQL database, that is always bound to `127.0.0.1` so it's safe keep default values unless additional security measures needed.
+- `devel` section defines parameters used during developing. Currently, it includes only `simulation` parameter, which allows to shortcut CWL-Airflow API without triggering any DAGs.
+
 
 ```yaml
 {
     "defaultLocations": {
-        "files": "files",
-        "mongodb": "mongodb",
         "airflow": "airflow",
-        "satellite": "satellite",
         "pgdata": "pgdata"
     },
     "satelliteSettings": {
         "rcServerToken": "",
-        "rcServer": "https://api-sync.scidap.com",
+        "rcServer": "dev.scidap.com:8080",
         "port": 3069,
-        "scidapRoot": "./scidap",
         "airflowAPIPort": 8080,
+        "systemRoot": "./scidap",
         "aria2cPort": 6800,
-        "mongoPort": 27017,
-        "mongoCollection": "scidap-satellite",
-        "baseUrl": "http://localhost:3069/",
-        "scidapSSLPort": 3070,
-        "sslCert": "",
-        "sslKey": "",
+        "pm2Port": 9615,
+        "enableSSL": true,
         "localFiles": true,
         "proxy": "",
-        "noProxy": ""
+        "noProxy": "",
+        "remotes": {
+            "directurl": {
+                "protocol": [
+                    "ftp",
+                    "http",
+                    "https"
+                ],
+                "caption": "ftp"
+            },
+            "geo": {
+                "protocol": "geo",
+                "caption": "geo"
+            }
+        }
     },
     "airflowSettings": {
-        "core.executor": "LocalExecutor",
-        "core.dag_concurrency": 2,
-        "core.dags_are_paused_at_creation": "False",
-        "core.load_examples": "False",
-        "core.max_active_runs_per_dag": 1
+        "core__executor": "LocalExecutor",
+        "core__parallelism": 1,
+        "core__dag_concurrency": 1,
+        "core__max_active_runs_per_dag": 1,
+        "core__hostname_callable": "socket.gethostname"
     },
     "aria2cSettings": {
         "--console-log-level": "debug",
@@ -108,75 +176,18 @@ Default configuration is saved in the `./configs/scidap_default_settings.json` f
         "--allow-overwrite": true,
         "--auto-file-renaming": false
     },
-    "databaseSettings": {
+    "databaseSettings":{
         "db_port": 5432,
         "db_user": "airflow",
         "db_password": "airflow",
         "db_name": "airflow"
     },
-    "meteorSettings": {
-        "logLevel": "debug",
-        "cors_package": true,
-        "email": {
-            "url": "",
-            "from": ""
-        },
-        "extra_users": [],
-        "public": {
-        },
-        "accounts": {
-            "sendVerificationEmail": true,
-            "forbidClientAccountCreation": true,
-            "loginExpirationInDays": 7
-        },
-        "ldap": {},
-        "oauth2server": {},
-        "remotes": {
-            "postform": {
-                "collection": {},
-                "publication": "none"
-            },
-            "directurl": {
-                "caption": "Direct URL",
-                "type": "urls",
-                "protocol": [
-                    "https",
-                    "http",
-                    "ftp"
-                ],
-                "refreshSessionInterval": 180
-            },
-            "geo": {
-                "caption": "GEO",
-                "type": "urls",
-                "protocol": [
-                    "geo"
-                ],
-                "refreshSessionInterval": 180
-            }
-        }
+    "devel":{
+        "simulation": false,
+        "mac_update_from_devel": false
     }
 }
 ```
-
-## macOS
-To build relocatable App on macOS with preinstalled `meteor`, `node` and `git` run the following commands. Optionally, the default programs versions used in the script can be redefined in `.env` file provided in the same folder as `build_macos.sh` script.
-
-```bash
-git clone https://github.com/datirium/scidap-satellite.git
-cd ./scidap-satellite
-npm install
-cd ./build-scripts
-./build_macos.sh
-cd ..
-npm run electron:mac
-```
-
-After script finishes running, you will find a `scidap-satellite.app` in `./release/mac` folder. All the temporary data is kept in `../build` folder and can be removed unless you want to save some time when rerunning `build_macos.sh` script next time. `Services` folder is used to save all necessary files before assembling application. This folder is cleaned on each `build_macos.sh` run.
-
-In case you by mistake run `build_ubuntu.sh` script, you will need to remove `node_modules`, `build`, `build_ubuntu`, `Services`, `ubuntu_post_build` folders in the root of you repository and rerun `npm install`, `build_macos.sh` and `npm run electron:mac` commands as it's listed above.
-
-The default configuration file `./configs/scidap_default_settings.json` will be used by Electron for generating `config.json`.
 
 _____
 ## Notes for developers
