@@ -1,6 +1,6 @@
 {
   "name": "scidap-satellite",
-  "version": "1.0.13-beta11",
+  "version": "1.0.13",
   "description": "scientific data analysis platform satellite bundle",
   "homepage": "https://scidap.com/",
   "author": {

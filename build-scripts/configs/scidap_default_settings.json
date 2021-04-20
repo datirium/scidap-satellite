@@ -5,7 +5,7 @@
     },
     "satelliteSettings": {
         "rcServerToken": "",
-        "rcServer": "dev.scidap.com:8080",
+        "rcServer": "api-sync.scidap.com:8080",
         "port": 3069,
         "airflowAPIPort": 8080,
         "systemRoot": "./scidap",
