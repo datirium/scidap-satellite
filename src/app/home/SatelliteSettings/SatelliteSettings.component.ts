@@ -58,7 +58,7 @@ export class SatelliteSettingsComponent implements OnInit {
             } else if (2 === v) {
                 this.airflowSettings.cwl__tmp_folder = filePaths[0];
             } else {
-                this.defaultLocations.pgdata = filePaths[0];
+                return;
             }
         });
     }

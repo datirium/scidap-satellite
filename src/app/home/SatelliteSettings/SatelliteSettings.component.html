@@ -69,18 +69,6 @@
                     </clr-input-container>
 
                     <clr-input-container>
-                        <label class="clr-col-3"> Database data directory:
-                            <button class="btn btn-icon" (click)="openDirectoryDialog(3)">
-                                <clr-icon shape="folder"></clr-icon>
-                                browse
-                            </button>
-                        </label>
-                        <input clrInput type="text" disabled class="clr-col-9" placeholder="Select database data directory path" [(ngModel)]="defaultLocations.pgdata" name="pgdata" required />
-                        <clr-control-helper>Directory to store metadata database files.</clr-control-helper>
-                        <clr-control-error></clr-control-error>
-                    </clr-input-container>
-
-                    <clr-input-container>
                         <label class="clr-col-3"> Satellite public url:
                         </label>
                         <input clrInput type="text" class="clr-col-9" placeholder="https://127.0.0.1:3070/" [(ngModel)]="satelliteSettings.baseUrl" name="baseUrl" required />

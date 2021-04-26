@@ -1,3 +1,9 @@
+## 2.0.1 (2020-04-26)
+
+* reuse old `scidapRoot` when setting the default value for `systemRoot` (no need to manually configure it when updating from the old version)
+* use the latest NJS-Client version (d95b11f29ed5) with configurable port for aria2.js
+* Move `pgdata` to `~/Library/Application Support/scidap-satellite` as there is no need to keep it alongside `projects` folder
+
 ## 2.0.0 (2020-04-20)
 
 * BioWardrobe-NG is replaced by NJS-Client

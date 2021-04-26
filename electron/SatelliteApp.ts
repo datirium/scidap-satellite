@@ -121,8 +121,10 @@ export class SatelliteApp {
         };
         if (this.store.has("satelliteSettings")) {                                     // need to remove deprecated fields
             let satelliteSettings = this.store.get("satelliteSettings");
+            if (satelliteSettings["scidapRoot"]) {
+                satelliteSettings["systemRoot"] = satelliteSettings["scidapRoot"];     // scidapRoot was replaced by systemRoot
+            }
             removeKeys = [
-                'scidapRoot',                                                          // replaced by systemRoot
                 'mongoPort',                                                           // no MongoDB anymore
                 'mongoCollection',
                 'scidapSSLPort',                                                       // replaced by enableSSL
@@ -130,7 +132,7 @@ export class SatelliteApp {
                 'sslKey'
             ];
             satelliteSettings = Object.keys(satelliteSettings)
-                .filter((param) => !removeKeys.includes(param))                            // filter out all removeKeys
+                .filter((param) => !removeKeys.includes(param))                        // filter out all removeKeys
                 .reduce((filtered, param) => {
                     filtered[param] = satelliteSettings[param];
                     return filtered;
@@ -148,6 +150,7 @@ export class SatelliteApp {
         this.settings = getSettings(cwd, defaultSettingsLocation);                                  // load default settings
         this.settings.loadedFrom = this.store.path;                                                 // need to overwrite the default loadedFrom to place NJS-Client config and token near config.json
         this.settings.defaultLocations.airflow = path.resolve(app.getPath('userData'), 'airflow');  // need to overwrite the default airflow folder location to place it within ~/Library/Application\ Support/scidap-satellite
+        this.settings.defaultLocations.pgdata = path.resolve(app.getPath('userData'), 'pgdata');    // need to overwrite the default pgdata folder location to place it within ~/Library/Application\ Support/scidap-satellite
         this.settings.airflowSettings = {                                                           // need to overwrite the defaultcwl_tmp_folder location to place it within ~/scidap folder
             ...this.settings.airflowSettings,
             "cwl__tmp_folder": path.resolve(this.settings.satelliteSettings.systemRoot, "cwl_tmp_folder")
