@@ -113,6 +113,7 @@ function getNjsClientEnvVar(settings){
       ...njsClientEnvVar,
       https_proxy: settings.satelliteSettings.proxy,
       http_proxy: settings.satelliteSettings.proxy,
+      ftp_proxy: settings.satelliteSettings.proxy,
       no_proxy: settings.satelliteSettings.noProxy || ''
     };
   };
