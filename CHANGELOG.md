@@ -1,3 +1,7 @@
+## 2.0.2 (2020-04-27)
+
+* use the latest NJS-Client version (d52c369707ca) with FTP proxy support and other bug fixes
+
 ## 2.0.1 (2020-04-26)
 
 * reuse old `scidapRoot` when setting the default value for `systemRoot` (no need to manually configure it when updating from the old version)
