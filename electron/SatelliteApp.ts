@@ -99,7 +99,7 @@ export class SatelliteApp {
 
     runUpdate() {
         const latestUpdate = this.store.get('latestUpdateVersion', null);
-        if (!latestUpdate || semver.gt('1.0.12', latestUpdate)) {
+        if (!latestUpdate || semver.gt('2.0.2', latestUpdate)) {
             Log.info('Running settings update');
             this.removeDeprecatedSettings();
             this.loadSettings(this.cwd, this.defaultSettingsLocation);
