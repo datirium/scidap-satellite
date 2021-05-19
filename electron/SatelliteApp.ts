@@ -151,8 +151,8 @@ export class SatelliteApp {
         this.settings.loadedFrom = this.store.path;                                                 // need to overwrite the default loadedFrom to place NJS-Client config and token near config.json
         this.settings.defaultLocations.airflow = path.resolve(app.getPath('userData'), 'airflow');  // need to overwrite the default airflow folder location to place it within ~/Library/Application\ Support/scidap-satellite
         this.settings.defaultLocations.pgdata = path.resolve(app.getPath('userData'), 'pgdata');    // need to overwrite the default pgdata folder location to place it within ~/Library/Application\ Support/scidap-satellite
-        let systemRoot = this.settings.satelliteSettings.systemRoot;
-        if (this.store.has("satelliteSettings") && this.store.get("satelliteSettings")["systemRoot"]){
+        let systemRoot = this.settings.satelliteSettings.systemRoot;                                // default systemRoot from default config ~/scidap
+        if (this.store.has("satelliteSettings") && this.store.get("satelliteSettings")["systemRoot"]){  // we are running version update, so need to use systemRoot from the store
             systemRoot = this.store.get("satelliteSettings")["systemRoot"];
         }
         this.settings.airflowSettings = {                                                           // need to overwrite the defaultcwl_tmp_folder location to place it within ~/scidap folder
