@@ -151,9 +151,13 @@ export class SatelliteApp {
         this.settings.loadedFrom = this.store.path;                                                 // need to overwrite the default loadedFrom to place NJS-Client config and token near config.json
         this.settings.defaultLocations.airflow = path.resolve(app.getPath('userData'), 'airflow');  // need to overwrite the default airflow folder location to place it within ~/Library/Application\ Support/scidap-satellite
         this.settings.defaultLocations.pgdata = path.resolve(app.getPath('userData'), 'pgdata');    // need to overwrite the default pgdata folder location to place it within ~/Library/Application\ Support/scidap-satellite
+        let systemRoot = this.settings.satelliteSettings.systemRoot;
+        if (this.store.has("satelliteSettings") && this.store.get("satelliteSettings")["systemRoot"]){
+            systemRoot = this.store.get("satelliteSettings")["systemRoot"];
+        }
         this.settings.airflowSettings = {                                                           // need to overwrite the defaultcwl_tmp_folder location to place it within ~/scidap folder
             ...this.settings.airflowSettings,
-            "cwl__tmp_folder": path.resolve(this.settings.satelliteSettings.systemRoot, "cwl_tmp_folder")
+            "cwl__tmp_folder": path.resolve(systemRoot, "cwl_tmp_folder")
         };
         for (const key in this.settings) {                                                           // update defaults if they have been already redefined in config.json
             if (skipKeys.includes(key)) {                                                            // skipped keys won't be saved into config.json
