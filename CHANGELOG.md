@@ -1,3 +1,10 @@
+## 2.0.3 (2020-06-25)
+
+* fix bug with not deleted `scidapRoot`. Need to delete it as after each update `systemRoot`
+  can be mistakenly restored from it. Depending on the use case, check if `scidapRoot` need to be
+  manually deleted before update to 2.0.3 (if we want to set the default value for `systemRoot`)
+* remove deprecated settings: `baseUrl`, `triggerDag`
+
 ## 2.0.2 (2020-04-27)
 
 * use the latest NJS-Client version (d52c369707ca) with FTP proxy support and other bug fixes

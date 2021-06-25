@@ -99,7 +99,7 @@ export class SatelliteApp {
 
     runUpdate() {
         const latestUpdate = this.store.get('latestUpdateVersion', null);
-        if (!latestUpdate || semver.gt('2.0.2', latestUpdate)) {
+        if (!latestUpdate || semver.gt('2.0.3', latestUpdate)) {
             Log.info('Running settings update');
             this.removeDeprecatedSettings();
             this.loadSettings(this.cwd, this.defaultSettingsLocation);
@@ -129,7 +129,10 @@ export class SatelliteApp {
                 'mongoCollection',
                 'scidapSSLPort',                                                       // replaced by enableSSL
                 'sslCert',
-                'sslKey'
+                'sslKey',
+                'scidapRoot',                                                          // need to be cleaned as in the next update systemRoot may be restored from it
+                'baseUrl',                                                             // deprecated
+                "triggerDag"                                                           // deprecated
             ];
             satelliteSettings = Object.keys(satelliteSettings)
                 .filter((param) => !removeKeys.includes(param))                        // filter out all removeKeys
