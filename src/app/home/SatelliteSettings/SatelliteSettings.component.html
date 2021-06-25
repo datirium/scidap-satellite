@@ -9,10 +9,13 @@
 
                     <clr-input-container>
                         <label class="clr-col-3"> Satellite data directory:
-                            <button class="btn btn-outline" (click)="openDirectoryDialog(1)">select</button>
+                            <button class="btn btn-icon" (click)="openDirectoryDialog(1)">
+                                <clr-icon shape="folder"></clr-icon>
+                                browse
+                            </button>
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="Select satellite data directory path" [(ngModel)]="satelliteSettings.systemRoot" name="systemRoot" required />
-                        <clr-control-helper>Please choose satellite data directory to store analyses results.</clr-control-helper>
+                        <input clrInput type="text" disabled class="clr-col-9" placeholder="Select satellite data directory path" [(ngModel)]="satelliteSettings.systemRoot" name="systemRoot" required />
+                        <clr-control-helper>Directory to store analyses results.</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 
@@ -55,29 +58,23 @@
 
                     <clr-input-container>
                         <label class="clr-col-3"> Temporary data directory:
-                            <button class="btn btn-outline" (click)="openDirectoryDialog(2)">select</button>
+                            <button class="btn btn-icon" (click)="openDirectoryDialog(2)">
+                                <clr-icon shape="folder"></clr-icon>
+                                browse
+                            </button>
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="Select temporary data directory path" [(ngModel)]="airflowSettings.cwl__tmp_folder" name="cwl__tmp_folder" required />
-                        <clr-control-helper>Please choose data directory to store temporary data.</clr-control-helper>
+                        <input clrInput type="text" disabled class="clr-col-9" placeholder="Select temporary data directory path" [(ngModel)]="airflowSettings.cwl__tmp_folder" name="cwl__tmp_folder" required />
+                        <clr-control-helper>Directory to store temporary data.</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 
-                    <clr-input-container>
-                        <label class="clr-col-3"> Database data directory:
-                            <button class="btn btn-outline" (click)="openDirectoryDialog(3)">select</button>
-                        </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="Select database data directory path" [(ngModel)]="defaultLocations.pgdata" name="pgdata" required />
-                        <clr-control-helper>Please choose database data directory to store metadata database files.</clr-control-helper>
-                        <clr-control-error></clr-control-error>
-                    </clr-input-container>
-
-                    <clr-input-container>
+                    <!-- <clr-input-container>
                         <label class="clr-col-3"> Satellite public url:
                         </label>
                         <input clrInput type="text" class="clr-col-9" placeholder="https://127.0.0.1:3070/" [(ngModel)]="satelliteSettings.baseUrl" name="baseUrl" required />
                         <clr-control-helper>URL to satellite that can be accessed from other computers. By default just local computer can access.</clr-control-helper>
                         <clr-control-error></clr-control-error>
-                    </clr-input-container>
+                    </clr-input-container> -->
 
                     <clr-input-container>
                         <label class="clr-col-3"> API-Sync url:
@@ -126,7 +123,7 @@
                     <clr-input-container>
                         <label class="clr-col-3"> Proxy settings:
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="http://USERNAME:PASSWORD@SERVER:PORT/" [(ngModel)]="satelliteSettings.proxy" name="proxy" required />
+                        <input clrInput type="text" class="clr-col-9" placeholder="http://USERNAME:PASSWORD@SERVER:PORT/" [(ngModel)]="satelliteSettings.proxy" name="proxy" />
                         <clr-control-helper>Your company can deny direct access to the Internet and instead have an HTTP or HTTPS proxy available. Usually port is 3128.</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
@@ -134,7 +131,7 @@
                     <clr-input-container>
                         <label class="clr-col-3"> Exclude hosts from proxy:
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="^.*\\(aventail\\|seanet\\)\\.com" [(ngModel)]="satelliteSettings.noProxy" name="noProxy" required />
+                        <input clrInput type="text" class="clr-col-9" placeholder="^.*\\(aventail\\|seanet\\)\\.com" [(ngModel)]="satelliteSettings.noProxy" name="noProxy" />
                         <clr-control-helper>Specifies URLs that should be excluded from proxying (on servers that should be contacted directly). Paired with a regexp matching host names not to be proxied. </clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>

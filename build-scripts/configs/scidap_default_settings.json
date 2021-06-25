@@ -5,13 +5,12 @@
     },
     "satelliteSettings": {
         "rcServerToken": "",
-        "rcServer": "dev.scidap.com:1443",
+        "rcServer": "api-sync.scidap.com:8080",
         "port": 3069,
         "airflowAPIPort": 8080,
         "systemRoot": "./scidap",
         "aria2cPort": 6800,
         "pm2Port": 9615,
-        "baseUrl": "http://localhost:3069/",
         "enableSSL": true,
         "localFiles": true,
         "proxy": "",
@@ -49,5 +48,9 @@
         "db_user": "airflow",
         "db_password": "airflow",
         "db_name": "airflow"
+    },
+    "devel":{
+        "simulation": false,
+        "mac_update_from_devel": false
     }
 }

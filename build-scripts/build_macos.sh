@@ -27,6 +27,18 @@ build_njs_client() {
   PATH="${WORKDIR}/node-v${NODE_VERSION}-darwin-x64/bin:${PATH}"
   echo "Building njs-client from $1"
   cd $1
+  PULL_REQUESTED="${2:-false}"
+  if [ $PULL_REQUESTED = true ]; then
+    echo "Git pull was requested. Checking if repository is clean"
+    CHANGES_FOUND="$(git status --porcelain)"
+    echo "$CHANGES_FOUND"
+    if ! [ -n "$CHANGES_FOUND" ]; then
+      echo "Pulling the latest changes"
+      git pull
+    else
+      echo "Repository is not clean. Skipping"
+    fi
+  fi
   npm install > ${WORKDIR}/npm_install.log 2>&1
   npm run build > ${WORKDIR}/npm_build.log 2>&1
   mv dist node_modules ${SATDIR}                                  # need only these two folders
@@ -37,15 +49,15 @@ build_njs_client() {
 
 
 # Setting up package versions
-NODE_VERSION="12.19.0"
+NODE_VERSION="12.22.0"
 ARIA2_VERSION="1.35.0"
 CWLAIRFLOW_VERSION="1.2.10"
 CWLAIRFLOW_PYTHON_VERSION="3.8"
-CWLAIRFLOW_MACOS_VERSION="11.0.1"
-NJS_CLIENT_VERSION="e9737c5e0391"       # do not use tags as even when downloading from tags Bitbucket will still include commit id in the folder name when extracted
+CWLAIRFLOW_MACOS_VERSION="11.2.1"
+NJS_CLIENT_VERSION="e56ecf5c5a77"
 SRA_TOOLKIT_VERSION="2.10.9"
 POSTGRESQL_VERSION="13.1"
-ARIA2_WEBUI_VERSION="dddf776a18b095ac373a22b28135c5dd6858496b"
+ARIA2_WEBUI_VERSION="master"
 
 
 # Loading variables from .env if it was provided.
@@ -84,8 +96,10 @@ if [ -e ${SATDIR}/dist/src/main.js ]; then
   warn "njs-client has been already built. Skipping"
 else
   if [ -n "$NJS_CLIENT_LOCAL_PATH" ]; then
-    # Building njs-client from the local path, NJS_CLIENT_VERSION is not used
-    build_njs_client ${NJS_CLIENT_LOCAL_PATH}
+    # Building njs-client from the local path, NJS_CLIENT_VERSION is not used.
+    # Will try to pull the latest changes from the current branch if git repository
+    # is clean. Otherwise, will run build with the current repository state.
+    build_njs_client ${NJS_CLIENT_LOCAL_PATH}/scidap-satellite true
   else
     # Downloading and building njs-client release/tag NJS_CLIENT_VERSION
     # from Bitbucket using provided BITBUCKET_USER and BITBUCKET_PASS
@@ -190,10 +204,13 @@ cd $WORKDIR
 if [ -e "webui-aria2" ]; then
   warn "webui-aria2 has been already istalled. Skipping installation"
 else
+  TEMP_PATH=$PATH
+  PATH="${WORKDIR}/node-v${NODE_VERSION}-darwin-x64/bin:${PATH}"
   git clone https://github.com/ziahamza/webui-aria2
   cd webui-aria2
   git checkout ${ARIA2_WEBUI_VERSION}
-  npm install
-  npm i node-sass
-  npm run build
+  npm install > ${WORKDIR}/webui_aria2_npm_install.log 2>&1
+  npm i node-sass > ${WORKDIR}/node_sass_npm_install.log 2>&1
+  npm run build > ${WORKDIR}/webui_aria2_npm_build.log 2>&1
+  PATH=$TEMP_PATH
 fi

@@ -45,7 +45,7 @@ function getAria2cArgs(settings){
   if (settings.satelliteSettings.proxy) {
     aria2cArgs["--all-proxy"] = settings.satelliteSettings.proxy;
   };
-  return Object.keys(aria2cArgs).map((key) => `${key}=${aria2cArgs[key]}`);  // to return as array of "key=value" 
+  return Object.keys(aria2cArgs).map((key) => `${key}=${aria2cArgs[key]}`);  // to return as array of "key=value"
 }
 
 
@@ -53,6 +53,9 @@ function getAirflowApiServerArgs(settings){
   const airflowApiServerArgs = [
     '--port', settings.satelliteSettings.airflowAPIPort
   ];
+  if (settings.devel && settings.devel.simulation) {
+    airflowApiServerArgs.push('--simulation')
+  };
   return airflowApiServerArgs
 }
 
@@ -99,9 +102,10 @@ function getNjsClientEnvVar(settings){
   let njsClientEnvVar = {
     PATH: settings.executables.pathEnvVar,
     SSL_CONN: settings.satelliteSettings.enableSSL,
+    SSL_API_SYNC: true,
     API_URL: settings.satelliteSettings.rcServer,
+    SATELLITE_TOKEN: settings.satelliteSettings.rcServerToken,
     CONFIG_FILE: njsClientSettingsLocation,
-    NODE_ENV: 'development',
     NODE_OPTIONS: '--trace-warnings --pending-deprecation'   // why do we need it? Should be keep it for NestJS too?
   };
   if (settings.satelliteSettings.proxy) {
@@ -109,6 +113,7 @@ function getNjsClientEnvVar(settings){
       ...njsClientEnvVar,
       https_proxy: settings.satelliteSettings.proxy,
       http_proxy: settings.satelliteSettings.proxy,
+      ftp_proxy: settings.satelliteSettings.proxy,
       no_proxy: settings.satelliteSettings.noProxy || ''
     };
   };
@@ -116,29 +121,14 @@ function getNjsClientEnvVar(settings){
 }
 
 
-function saveJwtLocation(settings, location){
-  const rcServerTokenData = {
-    jwt: settings.satelliteSettings.rcServerToken
-  };
-  fs.writeFileSync(location, JSON.stringify(rcServerTokenData), {mode: 0o600});  // creates or overwrites file with -rw------- permissions
-}
-
-
 function saveNjsClientSettings(settings, location){
   /*
   Ignores settings.satelliteSettings.localFiles as it's not implemented in
   NJS-Client. settings.satelliteSettings.enableSSL will be used as environment
-  variable. Exports settings as json file to the provided location. JWT token
-  is saved at the same directory as location.
+  variable. Exports settings as json file to the provided location.
   */
 
-  const rcServerTokenLocation = path.resolve(
-    path.dirname(location),                     // keep file with JWT token alognside the NJS-Client settings file
-    'rc_server_token.json'
-  );
-  saveJwtLocation(settings, rcServerTokenLocation)
   const njsClientSettings = {
-      jwtLocation: rcServerTokenLocation,
       port: settings.satelliteSettings.port,
       airflowAPIPort: settings.satelliteSettings.airflowAPIPort,
       systemRoot: settings.satelliteSettings.systemRoot + "/"  // patch to avoid bug in NJS-Client (remove if not needed)
@@ -180,7 +170,7 @@ function waitForInitConfiguration(settings){
       console.log(`Failed to create directory ${folder} due to ${e}`);
     }
   }
-  child_process.spawnSync(                         // Need to leave it like this untill we make sure that api server is run after scheduler and they both don't create airflow.cfg
+  child_process.spawnSync(                         // Need to leave it like this until we make sure that api server is run after scheduler and they both don't create airflow.cfg
     "airflow", [],
     {
       cwd: settings.defaultLocations.airflow,
@@ -236,7 +226,7 @@ function getSettings(cwd, customLocation){
   Relative locations will be resolved based on __dirname if cwd was not provided.
   If customLocation is provided it have higher priority compared to other locations
   */
- 
+
   cwd = cwd || __dirname;
 
   // might be different between Ubuntu and macOS
@@ -266,7 +256,7 @@ function getSettings(cwd, customLocation){
       pathEnvVar: `${ path.resolve(cwd, '../satellite/bin') }:${ path.resolve(cwd, '../cwl-airflow/bin_portable') }:/usr/bin:/bin:/usr/local/bin:/usr/sbin`  // maybe add to the original PATH to make it universal, might be different on mac
     }
   }
-  
+
   return settings;
 }
 

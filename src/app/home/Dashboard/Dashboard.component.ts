@@ -34,6 +34,10 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
     _satelliteSettings;
 
     pm2Monit;
+    dockerMonit;
+    isDockerUp = null;
+    missingDirectories = null;
+    diskMonit = {};
     pm2MonitAdopted = {};
     token;
     pm2;
@@ -58,6 +62,25 @@ export class DashboardComponent extends BaseComponent implements OnInit, AfterVi
             });
         });
 
+        this.tracked = this._electronService.dockerMonit().subscribe((list) => {
+            this._zone.run(() => {
+                this.dockerMonit = list.args[0];  // either false when docker is not running or object with docker statistics (could be also {})
+                this.isDockerUp = !!this.dockerMonit;
+            });
+        });
+
+        this.tracked = this._electronService.diskMonit().subscribe((list) => {
+            this._zone.run(() => {
+                this.diskMonit = list.args[0];    // report in a form of {location: true/false}
+                this.missingDirectories = Object.keys(this.diskMonit)
+                    .reduce(function (obj, location) {
+                        if (!this.diskMonit[location]) {
+                            obj.push(location);
+                        };
+                        return obj;
+                    }.bind(this), [])
+            });
+        });
     }
 
     get isAllUp(): boolean {

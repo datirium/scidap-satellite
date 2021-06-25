@@ -27,6 +27,18 @@ build_njs_client() {
   PATH="${WORKDIR}/node-v${NODE_VERSION}-darwin-x64/bin:${PATH}"
   echo "Building njs-client from $1"
   cd $1
+  PULL_REQUESTED="${2:-false}"
+  if [ $PULL_REQUESTED = true ]; then
+    echo "Git pull was requested. Checking if repository is clean"
+    CHANGES_FOUND="$(git status --porcelain)"
+    echo "$CHANGES_FOUND"
+    if ! [ -n "$CHANGES_FOUND" ]; then
+      echo "Pulling the latest changes"
+      git pull
+    else
+      echo "Repository is not clean. Skipping"
+    fi
+  fi
   npm install > ${WORKDIR}/npm_install.log 2>&1
   npm run build > ${WORKDIR}/npm_build.log 2>&1
   mv dist node_modules ${SATDIR}                                  # need only these two folders
@@ -37,12 +49,12 @@ build_njs_client() {
 
 
 # Setting up package versions
-NODE_VERSION="12.19.0"
+NODE_VERSION="12.22.0"
 ARIA2_VERSION="1.35.0"
 CWLAIRFLOW_VERSION="1.2.10"
 CWLAIRFLOW_PYTHON_VERSION="3.6"
 UBUNTU_VERSION="18.04"
-NJS_CLIENT_VERSION="e9737c5e0391"       # do not use tags as even when downloading from tags Bitbucket will still include commit id in the folder name when extracted
+NJS_CLIENT_VERSION="e56ecf5c5a77"
 SRA_TOOLKIT_VERSION="2.10.9"
 POSTGRESQL_VERSION="10.15"
 
@@ -83,8 +95,10 @@ if [ -e ${SATDIR}/dist/src/main.js ]; then
   warn "njs-client has been already built. Skipping"
 else
   if [ -n "$NJS_CLIENT_LOCAL_PATH" ]; then
-    # Building njs-client from the local path, NJS_CLIENT_VERSION is not used
-    build_njs_client ${NJS_CLIENT_LOCAL_PATH}
+    # Building njs-client from the local path, NJS_CLIENT_VERSION is not used.
+    # Will try to pull the latest changes from the current branch if git repository
+    # is clean. Otherwise, will run build with the current repository state.
+    build_njs_client ${NJS_CLIENT_LOCAL_PATH}/scidap-satellite true
   else
     # Downloading and building njs-client release/tag NJS_CLIENT_VERSION
     # from Bitbucket using provided BITBUCKET_USER and BITBUCKET_PASS
@@ -92,18 +106,6 @@ else
     download_and_extract $NJS_CLIENT_URL ${NJS_CLIENT_VERSION}.tar.gz datirium-scidapsatelliteinteractions-${NJS_CLIENT_VERSION}
     build_njs_client datirium-scidapsatelliteinteractions-${NJS_CLIENT_VERSION}/scidap-satellite  # need subdir from the repository
   fi
-fi
-
-
-# Downloading MongoDB
-if [ -e ${SATDIR}/bin/mongod ]; then
-  warn "Mongod has been already copied. Skipping"
-else
-  UBUNTU_VERSION_WITHOUT_DOT="${UBUNTU_VERSION//./}"
-  MONGO_URL="https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu${UBUNTU_VERSION_WITHOUT_DOT}-${MONGO_VERSION}.tgz"
-  download_and_extract $MONGO_URL mongodb-linux-x86_64-ubuntu${UBUNTU_VERSION_WITHOUT_DOT}-${MONGO_VERSION}.tgz mongodb-linux-x86_64-ubuntu${UBUNTU_VERSION_WITHOUT_DOT}-${MONGO_VERSION}
-  echo "Copying mongodb-linux-x86_64-ubuntu${UBUNTU_VERSION_WITHOUT_DOT}-${MONGO_VERSION}/bin/mongod"
-  cp mongodb-linux-x86_64-ubuntu${UBUNTU_VERSION_WITHOUT_DOT}-${MONGO_VERSION}/bin/mongod ${SATDIR}/bin/
 fi
 
 
@@ -129,7 +131,7 @@ else
   # patch cwltool so it always use docker for javascript evaluation. The normal node causes troubles when running from pm2 (perhaps somehow related to subprocesses?)
   sed -i -e 's/^    trynodes = ("nodejs", "node")/    trynodes = []/g' ./cwl-airflow/lib/python${CWLAIRFLOW_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
   # patch cwltool to have longer timeout for javascript evaluation as hardcoded 30 sec is not enough when starting multiple containers simultaniously
-  sed -i -e '160i\ \ \ \ timeout = 360' ./cwl-airflow/lib/python${CWLAIRFLOW_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
+  sed -i -e '160i\ \ \ \ timeout = 600' ./cwl-airflow/lib/python${CWLAIRFLOW_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
 fi
 
 
