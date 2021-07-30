@@ -34,7 +34,7 @@
         "core__executor": "LocalExecutor",
         "core__parallelism": 1,
         "core__dag_concurrency": 1,
-        "core__max_active_runs_per_dag": 1,
+        "core__max_active_runs_per_dag": 5,
         "core__hostname_callable": "socket.gethostname"
     },
     "aria2cSettings": {
