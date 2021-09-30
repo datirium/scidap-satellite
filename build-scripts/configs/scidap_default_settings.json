@@ -12,7 +12,6 @@
         "aria2cPort": 6800,
         "pm2Port": 9615,
         "enableSSL": true,
-        "localFiles": true,
         "proxy": "",
         "noProxy": "",
         "remotes": {
@@ -27,6 +26,15 @@
             "geo": {
                 "protocol": "geo",
                 "caption": "geo"
+            },
+            "localfiles": {
+                "show": false,
+                "collection": [
+                    {
+                        "path": "upload",
+                        "name": "localfiles"
+                    }
+                ]
             }
         }
     },
