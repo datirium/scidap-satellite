@@ -99,7 +99,7 @@ export class SatelliteApp {
 
     runUpdate() {
         const latestUpdate = this.store.get('latestUpdateVersion', null);
-        if (!latestUpdate || semver.gt('2.0.3', latestUpdate)) {
+        if (!latestUpdate || semver.gt('2.0.4', latestUpdate)) {
             Log.info('Running settings update');
             this.removeDeprecatedSettings();
             this.loadSettings(this.cwd, this.defaultSettingsLocation);
@@ -111,9 +111,9 @@ export class SatelliteApp {
 
     removeDeprecatedSettings() {
         let removeKeys = [                                                             // deprecated or refactored keys that should be either removed or restored to their defaults
-            'defaultLocations',
-            'meteorSettings',
-            'airflowSettings'
+            'defaultLocations',                                                        // save to remove it, as it will be overwritten anyway
+            'meteorSettings'
+            // 'airflowSettings'                                                       // no need in removing this anymore as all old satellites have been already updated
         ];
         for (const key of removeKeys) {
             Log.info(`Remove deprecated or refactored settings for ${key}`);
@@ -127,6 +127,7 @@ export class SatelliteApp {
             removeKeys = [
                 'mongoPort',                                                           // no MongoDB anymore
                 'mongoCollection',
+                'localFiles',                                                          // moved to remotes.localfiles.show
                 'scidapSSLPort',                                                       // replaced by enableSSL
                 'sslCert',
                 'sslKey',
@@ -134,6 +135,9 @@ export class SatelliteApp {
                 'baseUrl',                                                             // deprecated
                 "triggerDag"                                                           // deprecated
             ];
+            if (satelliteSettings.remotes && !satelliteSettings.remotes.localfiles) {
+                removeKeys.push("remotes");                                           // need to overwrite it because localfiles were added
+            }
             satelliteSettings = Object.keys(satelliteSettings)
                 .filter((param) => !removeKeys.includes(param))                        // filter out all removeKeys
                 .reduce((filtered, param) => {

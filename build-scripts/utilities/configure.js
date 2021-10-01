@@ -22,6 +22,16 @@ function loadSettings(settings_locations){
   // in case defaultLocations were set as a relative path,
   // we need to resolve them based on settings.satelliteSettings.systemRoot
   settings.defaultLocations = getDefaultLocations(settings);
+  // resolve relative path in each collection from localfiles remote
+  if (settings.satelliteSettings.remotes) {
+    if (settings.satelliteSettings.remotes.localfiles &&
+        settings.satelliteSettings.remotes.localfiles.collection &&
+        settings.satelliteSettings.remotes.localfiles.collection.length > 0) {
+      for (collection of settings.satelliteSettings.remotes.localfiles.collection) {
+        collection.path = path.resolve(settings.satelliteSettings.systemRoot, collection.path)
+      }
+    }
+  };
   return settings;
 }
 
@@ -146,13 +156,6 @@ function saveNjsClientSettings(settings, location){
   };
   if (settings.satelliteSettings.remotes) {
     njsClientSettings.remotes = settings.satelliteSettings.remotes;
-    if (njsClientSettings.remotes.localfiles &&
-        njsClientSettings.remotes.localfiles.collection &&
-        njsClientSettings.remotes.localfiles.collection.length > 0) {
-      for (collection of njsClientSettings.remotes.localfiles.collection) {
-        collection.path = path.resolve(settings.satelliteSettings.systemRoot, collection.path)
-      }
-    }
   };
   fs.writeFileSync(location, JSON.stringify(njsClientSettings), {mode: 0o600});  // creates or overwrites file with -rw------- permissions
 }

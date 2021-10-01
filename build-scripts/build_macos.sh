@@ -49,14 +49,13 @@ build_njs_client() {
 
 
 # Setting up package versions
-NODE_VERSION="12.22.0"
-ARIA2_VERSION="1.35.0"
-CWLAIRFLOW_VERSION="1.2.10"
+NODE_VERSION="12.22.6"
+ARIA2_VERSION="1.35.0"            # couldn't find the latest 1.36.0 for mac. Will update later.
+CWLAIRFLOW_VERSION="1.2.11"
 CWLAIRFLOW_PYTHON_VERSION="3.8"
-CWLAIRFLOW_MACOS_VERSION="11.2.1"
-NJS_CLIENT_VERSION="e56ecf5c5a77"
-SRA_TOOLKIT_VERSION="2.10.9"
-POSTGRESQL_VERSION="13.1"
+NJS_CLIENT_VERSION="e5ec81bafccd"
+SRA_TOOLKIT_VERSION="2.11.1"
+POSTGRESQL_VERSION="13.4"
 ARIA2_WEBUI_VERSION="master"
 
 
@@ -125,8 +124,8 @@ fi
 if [ -e ${WORKDIR}/cwl-airflow ]; then
   warn "CWL-Airflow folder has been already copied. Skipping"
 else
-  CWLAIRFLOW_URL="https://github.com/Barski-lab/cwl-airflow/releases/download/${CWLAIRFLOW_VERSION}/python_${CWLAIRFLOW_PYTHON_VERSION}_with_cwl_airflow_master_macos_${CWLAIRFLOW_MACOS_VERSION}.tar.gz"
-  download_and_extract $CWLAIRFLOW_URL python_${CWLAIRFLOW_PYTHON_VERSION}_with_cwl_airflow_master_macos_${CWLAIRFLOW_MACOS_VERSION}.tar.gz python3
+  CWLAIRFLOW_URL="https://github.com/Barski-lab/cwl-airflow/releases/download/${CWLAIRFLOW_VERSION}/python_${CWLAIRFLOW_PYTHON_VERSION}_cwl_airflow_master_macos.tar.gz"
+  download_and_extract $CWLAIRFLOW_URL python_${CWLAIRFLOW_PYTHON_VERSION}_cwl_airflow_master_macos.tar.gz python3
   echo "Copying python3 to ${WORKDIR}/cwl-airflow"
   cp -r python3 cwl-airflow
   # patch cwltool so it always use docker for javascript evaluation.
