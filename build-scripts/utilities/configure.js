@@ -125,13 +125,9 @@ function saveNjsClientSettings(settings, location){
   /*
   settings.satelliteSettings.enableSSL will be used as environment
   variable. Exports settings as json file to the provided location.
-  If remotes section of the settings has localfiles field, that in
-  its turn has show set to true and not empty arrray of collection,
-  we will try to resolve each path based on the systemRoot. If any
-  of the abovementined conditions is not true, the whole
-  remotes.localfiles will be copied to the NJS-Client settings file
-  without changes and NJS-Client will be responsible for completely
-  ignoring it because show was set to false.
+  If remotes section of the settings has localfiles field, and
+  collection array is not empty, we will try to resolve each path
+  based on the systemRoot.
   */
 
   const njsClientSettings = {
@@ -151,7 +147,6 @@ function saveNjsClientSettings(settings, location){
   if (settings.satelliteSettings.remotes) {
     njsClientSettings.remotes = settings.satelliteSettings.remotes;
     if (njsClientSettings.remotes.localfiles &&
-        njsClientSettings.remotes.localfiles.show &&
         njsClientSettings.remotes.localfiles.collection &&
         njsClientSettings.remotes.localfiles.collection.length > 0) {
       for (collection of njsClientSettings.remotes.localfiles.collection) {
