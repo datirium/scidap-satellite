@@ -1,12 +1,12 @@
-<div class="clr-row" style="padding: 12px;">
-  <div *ngIf="isAllUp" class="alert alert-info clr-col-xl-6 clr-col-12" role="alert">
+<div class="clr-row">
+
+  <div *ngIf="isAllUp && isDockerUp !== null && isDockerUp && missingDirectories !== null && missingDirectories.length == 0" class="alert alert-info clr-col-xl-12 clr-col-12" role="alert">
     <div class="alert-items">
       <div class="alert-item static">
         <div class="alert-icon-wrapper">
           <clr-icon class="alert-icon" shape="info-circle"></clr-icon>
         </div>
-        <span class="alert-text">All processes included in the installation are up and running. This satellite can be now controlled from <strong>scidap.com</strong>
-          To function properly SciDAP satellite needs <strong>Docker</strong> to be installed, started and configured to have at least 20GB of RAM and 6 CPUs! </span>
+        <span class="alert-text">All processes included in the installation are up and running. This satellite can be now controlled from <strong>scidap.com</strong></span>
         <div class="alert-actions">
           <a class="alert-action" (click)="_electronService.openExternal('https://scidap.com/login')">Open scidap.com</a>
 
@@ -15,7 +15,35 @@
       </div>
     </div>
   </div>
-  <div class="clr-col-xl-6 clr-col-12">&nbsp;</div>
+
+  <div *ngIf="isDockerUp !== null && !isDockerUp" class="alert alert-danger clr-col-xl-12 clr-col-12" role="alert">
+    <div class="alert-items">
+      <div class="alert-item static">
+        <div class="alert-icon-wrapper">
+          <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+        </div>
+        <span class="alert-text">To function properly SciDAP satellite needs <strong>Docker</strong> to be installed, started and configured to have at least 20GB of RAM and 6 CPUs</span>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="missingDirectories !== null && missingDirectories.length > 0" class="alert alert-danger clr-col-xl-12 clr-col-12" role="alert">
+    <div class="alert-items">
+      <div class="alert-item static">
+        <div class="alert-icon-wrapper">
+          <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+        </div>
+        <span class="alert-text">Failed to access directories:
+          <ul *ngFor="let location of missingDirectories">
+            <li>{{location}}</li>
+          </ul>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="clr-break-row"></div>
+
 </div>
 
 <div class="clr-row">
@@ -67,4 +95,9 @@
       </div>
     </div>
   </div>
+
+  <div *ngIf="isDockerUp !== null && isDockerUp" class="clr-col-xl-6 clr-col-12">
+    <docker-stats [stats]="dockerMonit"></docker-stats>
+  </div>
+
 </div>

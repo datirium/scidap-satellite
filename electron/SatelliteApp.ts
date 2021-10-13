@@ -1,14 +1,16 @@
 import { BrowserWindow, screen as electronScreen, ipcMain, app } from 'electron';
 
 const Store = require('electron-store');
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 
 import * as path from 'path';
 import * as url from 'url';
 import * as os from 'os';
 import * as keytar from 'keytar';
 
-const semver = require('semver')
+const semver = require('semver');
+const xbytes = require('xbytes');
+const fs = require("fs");
 const pm2 = require('pm2');
 const Log = require('electron-log');
 const args = process.argv.slice(1);
@@ -26,6 +28,9 @@ export class SatelliteApp {
     settings;
     networkInterfaces = [];
     pm2MonitIntervalId;
+    dockerMonitIntervalId;
+    diskMonitIntervalId;
+    tokenMonitorIntervalId;
     // pm2_home;
     cwd;
     defaultSettingsLocation;
@@ -42,7 +47,7 @@ export class SatelliteApp {
         });
 
         this.serve = args.some(val => val === '--serve');
-        
+
         this.cwd = path.resolve(app.getAppPath(), '../Services/satellite');
         this.defaultSettingsLocation = path.resolve(app.getAppPath(), './build-scripts/configs/scidap_default_settings.json');
         if (this.serve) {
@@ -57,21 +62,44 @@ export class SatelliteApp {
         this.runUpdate();
 
         if (this.store.get('initComplete', false)) {
-            keytar.getPassword('scidap-satellite', 'token')
+            this.getToken()                            // waits until token can be retrieved from the keychain
                 .then((token) => {
-                    if (token) {
-                        this.loadSettings(this.cwd, this.defaultSettingsLocation);
-                        this.settings.satelliteSettings.rcServerToken = token;
-                        this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
-                    }
+                    this.loadSettings(this.cwd, this.defaultSettingsLocation);
+                    this.settings.satelliteSettings.rcServerToken = token;
+                    this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
+                }).catch((err) => {
+                    Log.error(`Got error ${err}`);
                 });
         }
     }
 
 
+    /**
+     * resolves when token is found
+     */
+    getToken() {
+        return new Promise((resolve, reject) => {
+            const tokenMonitorIntervalId = setInterval(() => {
+                keytar.getPassword('scidap-satellite', 'token')
+                    .then((token) => {
+                        if (token) {
+                            Log.info('Token is found');
+                            clearInterval(tokenMonitorIntervalId);
+                            this.send('token-monit', true);
+                            resolve(token);
+                        } else {
+                            Log.info('Token not found');
+                            this.send('token-monit', false);
+                        }
+                    });
+            }, 2000);
+        });
+    }
+
+
     runUpdate() {
         const latestUpdate = this.store.get('latestUpdateVersion', null);
-        if ( !latestUpdate || semver.gt('1.0.12', latestUpdate) ){
+        if (!latestUpdate || semver.gt('2.0.4', latestUpdate)) {
             Log.info('Running settings update');
             this.removeDeprecatedSettings();
             this.loadSettings(this.cwd, this.defaultSettingsLocation);
@@ -83,30 +111,39 @@ export class SatelliteApp {
 
     removeDeprecatedSettings() {
         let removeKeys = [                                                             // deprecated or refactored keys that should be either removed or restored to their defaults
-            'defaultLocations',
-            'meteorSettings',
-            'airflowSettings'
+            'defaultLocations',                                                        // save to remove it, as it will be overwritten anyway
+            'meteorSettings'
+            // 'airflowSettings'                                                       // no need in removing this anymore as all old satellites have been already updated
         ];
-        for (const key of removeKeys){
+        for (const key of removeKeys) {
             Log.info(`Remove deprecated or refactored settings for ${key}`);
             this.store.delete(key);
         };
         if (this.store.has("satelliteSettings")) {                                     // need to remove deprecated fields
             let satelliteSettings = this.store.get("satelliteSettings");
+            if (satelliteSettings["scidapRoot"]) {
+                satelliteSettings["systemRoot"] = satelliteSettings["scidapRoot"];     // scidapRoot was replaced by systemRoot
+            }
             removeKeys = [
-                'scidapRoot',                                                          // replaced by systemRoot
                 'mongoPort',                                                           // no MongoDB anymore
                 'mongoCollection',
+                'localFiles',                                                          // moved to remotes.localfiles.show
                 'scidapSSLPort',                                                       // replaced by enableSSL
                 'sslCert',
-                'sslKey'
+                'sslKey',
+                'scidapRoot',                                                          // need to be cleaned as in the next update systemRoot may be restored from it
+                'baseUrl',                                                             // deprecated
+                "triggerDag"                                                           // deprecated
             ];
+            if (satelliteSettings.remotes && !satelliteSettings.remotes.localfiles) {
+                removeKeys.push("remotes");                                           // need to overwrite it because localfiles were added
+            }
             satelliteSettings = Object.keys(satelliteSettings)
-            .filter((param) => !removeKeys.includes(param))                            // filter out all removeKeys
-            .reduce((filtered, param) => {
-                filtered[param] = satelliteSettings[param];
-                return filtered;
-              }, {})
+                .filter((param) => !removeKeys.includes(param))                        // filter out all removeKeys
+                .reduce((filtered, param) => {
+                    filtered[param] = satelliteSettings[param];
+                    return filtered;
+                }, {})
             this.store.set("satelliteSettings", satelliteSettings);
         }
     }
@@ -120,12 +157,17 @@ export class SatelliteApp {
         this.settings = getSettings(cwd, defaultSettingsLocation);                                  // load default settings
         this.settings.loadedFrom = this.store.path;                                                 // need to overwrite the default loadedFrom to place NJS-Client config and token near config.json
         this.settings.defaultLocations.airflow = path.resolve(app.getPath('userData'), 'airflow');  // need to overwrite the default airflow folder location to place it within ~/Library/Application\ Support/scidap-satellite
+        this.settings.defaultLocations.pgdata = path.resolve(app.getPath('userData'), 'pgdata');    // need to overwrite the default pgdata folder location to place it within ~/Library/Application\ Support/scidap-satellite
+        let systemRoot = this.settings.satelliteSettings.systemRoot;                                // default systemRoot from default config ~/scidap
+        if (this.store.has("satelliteSettings") && this.store.get("satelliteSettings")["systemRoot"]){  // we are running version update, so need to use systemRoot from the store
+            systemRoot = this.store.get("satelliteSettings")["systemRoot"];
+        }
         this.settings.airflowSettings = {                                                           // need to overwrite the defaultcwl_tmp_folder location to place it within ~/scidap folder
             ...this.settings.airflowSettings,
-            "cwl__tmp_folder": path.resolve(this.settings.satelliteSettings.systemRoot, "cwl_tmp_folder")
+            "cwl__tmp_folder": path.resolve(systemRoot, "cwl_tmp_folder")
         };
-        for (const key in this.settings){                                                           // update defaults if they have been already redefined in config.json
-            if (skipKeys.includes(key)){                                                            // skipped keys won't be saved into config.json
+        for (const key in this.settings) {                                                           // update defaults if they have been already redefined in config.json
+            if (skipKeys.includes(key)) {                                                            // skipped keys won't be saved into config.json
                 continue;
             }
             if (this.store.has(key)) {
@@ -275,6 +317,108 @@ export class SatelliteApp {
     }
 
 
+    /**
+     * Parses formatted docker stats stdout into JSON object
+     */
+    parseDockerStats(raw_data){
+        let nCPU = 1;                                                                                  // number of CPUs available for Docker
+        let dockerStats = raw_data.split('\n')
+            .filter(line => !!line)                                                                    // to skip empty lines
+            .reduce((collected, line) => {
+                let raw_params = line.split('\t');
+                if (raw_params.length == 1){                                                           // if only one item is present it's nCPU
+                    nCPU = parseInt(raw_params[0]);
+                    return collected;
+                };
+                const [containerId, cpuUsagePerc, memUsagePerc, memInfoIEC, pids] = raw_params;
+                if (containerId) {                                                                     // sometime docker stats reports empty container id when it just started
+                    const [memUsageIEC, memLimitIEC] = memInfoIEC.replace(/\s/g,'').split('/');        // need to remove spaces
+                    collected[containerId] = {
+                        cpuUsagePerc: parseFloat(cpuUsagePerc),
+                        memUsagePerc: parseFloat(memUsagePerc),
+                        memUsageMB: parseInt(xbytes.parse(memUsageIEC).convertTo('MB')),               // Docker reports in IEC format - KiB, MiB, TiB, etc, we need MB
+                        memLimitMB: parseInt(xbytes.parse(memLimitIEC).convertTo('MB')),
+                        cpuLimitNum: nCPU,
+                        cpuUsageFrac: parseFloat(cpuUsagePerc)/nCPU,                                   // scaled to the number of CPUs available
+                        pids: parseInt(pids)
+                    };
+                };
+                return collected;
+            }, {});
+        return dockerStats;
+    }
+
+
+    /**
+     * resolves when docker is up
+     */
+    async checkDockerIsUp() {
+        const env_var: any = {
+            HOME: app.getPath('home'),
+            PATH: this.settings.executables.pathEnvVar
+        };
+
+        if (this.dockerMonitIntervalId) {                // to prevent from running several intervals
+            clearInterval(this.dockerMonitIntervalId);
+        };
+        return new Promise((resolve, reject) => {
+            this.dockerMonitIntervalId = setInterval(() => {
+                exec(
+                    'docker info --format "{{.NCPU}}" && docker stats --no-stream --format "{{.ID}}\t{{.CPUPerc}}\t{{.MemPerc}}\t{{.MemUsage}}\t{{.PIDs}}"',
+                    { env: env_var },
+                    (error, stdout, stderr) => {
+                        if (error || stderr) {
+                            this.send('docker-monit', false);                 // false for docker is not running
+                        } else {
+                            let dockerStats = this.parseDockerStats(stdout);
+                            this.send('docker-monit', dockerStats);           // either {} or real docker statistics
+                            resolve(dockerStats);                             // promises cannot recur, so it's safe to resolve it multiple times
+                        }
+                    }
+                );
+            }, 1500);
+        });
+    }
+
+    /**
+     * resolves only when all required folders exist
+     * sends disk-monit report in a form of {location: true/false}
+     */
+    async checkDiskIsAvailable() {
+        if (this.diskMonitIntervalId) {
+            clearInterval(this.diskMonitIntervalId);
+        };
+        let locationsToCheck = [
+            this.settings.satelliteSettings.systemRoot,
+            ...Object.values(this.settings.defaultLocations)
+        ];
+        return new Promise((resolve, reject) => {
+            this.diskMonitIntervalId = setInterval(() => {
+                let chain = Promise.resolve({});                                                            // sets inittial value for report to {}
+                for (let location of locationsToCheck) {
+                    chain = chain.then((report) => {
+                        return new Promise((resolve, reject) => {
+                            fs.access(location, fs.constants.R_OK | fs.constants.W_OK | fs.constants.X_OK,  // rwx access to the folder
+                                (error: any) => {
+                                    report[location] = !error;
+                                    resolve(report);
+                                }
+                            );
+                        });
+                    });
+                };
+                chain.then(
+                    (report) => {
+                        this.send('disk-monit', report);
+                        if (Object.keys(report).every((k) => report[k])) {  // true if all is true or if locationsToCheck was []
+                            resolve(report);                                // promises cannot recur, so it's safe to resolve it multiple times
+                        };
+                    }
+                );
+            }, 1500);
+        });
+    }
+
     async connectToPM2() {
         let http_interface = path.join(this.settings.executables.satelliteBin, '../../../', 'app/node_modules/pm2/bin/');
         if (this.serve) {
@@ -361,6 +505,9 @@ export class SatelliteApp {
         });
     }
 
+    /**
+     * Starts all the services
+     */
     async chainStartPM2Services(): Promise<any> {
         Log.info('Starting PM2 services');
         try {
@@ -373,7 +520,9 @@ export class SatelliteApp {
                     this.send('pm2-monit', processDescriptionList);
                 });
             }, 1000);
-            return await this.startPM2(getRunConfiguration(this.settings));
+            await this.checkDockerIsUp();
+            await this.checkDiskIsAvailable();
+            return await this.restartPM2program(getRunConfiguration(this.settings));
         } catch (error) {
             Log.info(error);
         }
@@ -465,18 +614,30 @@ export class SatelliteApp {
     }
 
 
-    async satelliteInit() {
-        const token = await keytar.getPassword('scidap-satellite', 'token');
-        if (token) {
-            Log.info('Running initial configuration');
-            this.loadSettings(this.cwd, this.defaultSettingsLocation);               // reload settings in case something was changed
-            this.settings.satelliteSettings.rcServerToken = token;
-            waitForInitConfiguration(this.settings);
-            this.store.set('initComplete', true);
-            return await this.chainStartPM2Services();
-        } else {
-            return Promise.reject('Failed to run initial configuration: no token');
-        }
+    /**
+     * It used to fail when token wasn't found, now it will wait for it.
+     * After user enter his email/password and token will be saved, this
+     * function will continue execution.
+     *
+     * When run after pressing on "Save and Restart" button, we set
+     * skipFolderCreation to true, so the function waitForInitConfiguration
+     * won't be executed as it's not the real initial satellite configuration
+     * and we don't need to create any new folders and set up proxy for
+     * fastq-dump. UI won't allow to select folders that don't exist, so no
+     * need to create them.
+     */
+    async satelliteInit(skipFolderCreation=false) {
+        return this.getToken()                                               // waits until token can be retrieved from the keychain
+            .then((token) => {
+                Log.info('Running initial configuration');
+                this.loadSettings(this.cwd, this.defaultSettingsLocation);   // reload settings in case something was changed
+                this.settings.satelliteSettings.rcServerToken = token;
+                if (!skipFolderCreation){
+                    waitForInitConfiguration(this.settings);
+                }
+                this.store.set('initComplete', true);
+                return this.chainStartPM2Services();
+            })
     }
 
 

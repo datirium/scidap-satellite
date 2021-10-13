@@ -47,15 +47,18 @@ export class SatelliteSettingsComponent implements OnInit {
     }
 
 
-    openDirectoryDialog(v) {
+    openDirectoryDialog(v: any) {
         this._electronService.remote.dialog.showOpenDialog({ properties: ['openDirectory'] }).then(({ filePaths, ...other }) => {
             console.log(filePaths, other);
+            if (other && other.canceled){
+                return;                     // do nothing if Cancel button was pressed
+            };
             if (1 === v) {
                 this.satelliteSettings.systemRoot = filePaths[0];
             } else if (2 === v) {
                 this.airflowSettings.cwl__tmp_folder = filePaths[0];
             } else {
-                this.defaultLocations.pgdata = filePaths[0];
+                return;
             }
         });
     }
@@ -91,6 +94,22 @@ export class SatelliteSettingsComponent implements OnInit {
 
         return _ret;
     }
+
+    doRestart() {
+
+        this.doSave();
+
+        const _ret = new Promise((resolve, reject) => {
+            this._electronService.ipcRenderer.on('restart-programs', (d, ...args) => {
+                resolve(args);
+            });
+        });
+
+        this._electronService.ipcRenderer.send('restart-programs');
+
+        return _ret;
+    }
+
 
     /**
      *

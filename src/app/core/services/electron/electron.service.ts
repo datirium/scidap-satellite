@@ -273,6 +273,42 @@ export class ElectronService extends Tracking {
         });
     }
 
+    dockerMonit() {
+        return Observable.create((observer: Subscriber<any>) => {
+            this.ipcRenderer.on('docker-monit', (d, ...args) => {
+                observer.next({args});
+            });
+            return () => {
+                this.ipcRenderer.removeAllListeners('docker-monit');
+                observer.complete();
+            };
+        });
+    }
+
+    tokenMonit() {
+        return Observable.create((observer: Subscriber<any>) => {
+            this.ipcRenderer.on('token-monit', (d, ...args) => {
+                observer.next({args});
+            });
+            return () => {
+                this.ipcRenderer.removeAllListeners('token-monit');
+                observer.complete();
+            };
+        });
+    }
+
+    diskMonit() {
+        return Observable.create((observer: Subscriber<any>) => {
+            this.ipcRenderer.on('disk-monit', (d, ...args) => {
+                observer.next({args});
+            });
+            return () => {
+                this.ipcRenderer.removeAllListeners('disk-monit');
+                observer.complete();
+            };
+        });
+    }
+
     openExternal(url) {
         this.shell.openExternal(url);
     }

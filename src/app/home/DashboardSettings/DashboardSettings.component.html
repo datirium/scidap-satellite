@@ -7,16 +7,14 @@
             Block
         </div> -->
     <div class="card-text">
-      <app-satellite-settings *ngIf="!initInProgress" #satelliteSettings></app-satellite-settings>
-      <clr-spinner *ngIf="initInProgress">
-        Starting Processes
-      </clr-spinner>
+      <app-satellite-settings #satelliteSettings></app-satellite-settings>
     </div>
     <br>
   </div>
   <div class="card-footer">
-    <button class="btn btn-outline" (click)="saveAndRestart()">
-      <clr-icon shape="floppy"></clr-icon>
+    <button [attr.disabled]="restartInProgress?true:null" class="btn btn-outline" (click)="saveAndRestart()">
+      <clr-icon *ngIf="!restartInProgress" shape="floppy"></clr-icon>
+      <clr-spinner *ngIf="restartInProgress" [clrInline]="true" [clrSmall]="true"></clr-spinner>
       Save settings & restart services
     </button>
   </div>

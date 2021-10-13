@@ -11,7 +11,7 @@ export class DashboardSettingsComponent implements OnInit {
 
   @ViewChild('satelliteSettings') satelliteSettings: SatelliteSettingsComponent;
 
-  initInProgress;
+  restartInProgress = false;
   constructor(
     public _electronService: ElectronService,
   ) { }
@@ -20,7 +20,14 @@ export class DashboardSettingsComponent implements OnInit {
   }
 
   saveAndRestart() {
-    this.satelliteSettings.doSave();
-    this._electronService.ipcRenderer.send('restart-programs');
+    this.restartInProgress = true;
+    this.satelliteSettings.doRestart().then((v) => {
+        console.log('restart-programs response', v);
+        this.restartInProgress = false;
+        if (v[0] !== 'complete') {
+            console.log('Error in restart');
+        }
+    });
   }
+
 }
