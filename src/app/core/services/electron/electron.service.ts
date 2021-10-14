@@ -209,9 +209,9 @@ export class ElectronService extends Tracking {
         this.ipcRenderer.send('webui-window');
     }
 
-    mongoExpressWindow() {
-        this.ipcRenderer.send('mongo-express-window');
-    }
+    // mongoExpressWindow() {
+    //     this.ipcRenderer.send('mongo-express-window');
+    // }
 
 
     installUpdates() {
@@ -268,6 +268,42 @@ export class ElectronService extends Tracking {
 
             return () => {
                 this.ipcRenderer.removeAllListeners('pm2-monit');
+                observer.complete();
+            };
+        });
+    }
+
+    dockerMonit() {
+        return Observable.create((observer: Subscriber<any>) => {
+            this.ipcRenderer.on('docker-monit', (d, ...args) => {
+                observer.next({args});
+            });
+            return () => {
+                this.ipcRenderer.removeAllListeners('docker-monit');
+                observer.complete();
+            };
+        });
+    }
+
+    tokenMonit() {
+        return Observable.create((observer: Subscriber<any>) => {
+            this.ipcRenderer.on('token-monit', (d, ...args) => {
+                observer.next({args});
+            });
+            return () => {
+                this.ipcRenderer.removeAllListeners('token-monit');
+                observer.complete();
+            };
+        });
+    }
+
+    diskMonit() {
+        return Observable.create((observer: Subscriber<any>) => {
+            this.ipcRenderer.on('disk-monit', (d, ...args) => {
+                observer.next({args});
+            });
+            return () => {
+                this.ipcRenderer.removeAllListeners('disk-monit');
                 observer.complete();
             };
         });

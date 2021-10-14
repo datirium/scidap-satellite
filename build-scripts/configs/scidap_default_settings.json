@@ -1,0 +1,64 @@
+{
+    "defaultLocations": {
+        "airflow": "airflow",
+        "pgdata": "pgdata"
+    },
+    "satelliteSettings": {
+        "rcServerToken": "",
+        "rcServer": "api-sync.scidap.com:8080",
+        "port": 3069,
+        "airflowAPIPort": 8080,
+        "systemRoot": "./scidap",
+        "aria2cPort": 6800,
+        "pm2Port": 9615,
+        "enableSSL": true,
+        "proxy": "",
+        "noProxy": "",
+        "remotes": {
+            "directurl": {
+                "protocol": [
+                    "ftp",
+                    "http",
+                    "https"
+                ],
+                "caption": "ftp"
+            },
+            "geo": {
+                "protocol": "geo",
+                "caption": "geo"
+            },
+            "localfiles": {
+                "show": false,
+                "collection": [
+                    {
+                        "path": "upload",
+                        "name": "localfiles"
+                    }
+                ]
+            }
+        }
+    },
+    "airflowSettings": {
+        "core__executor": "LocalExecutor",
+        "core__parallelism": 1,
+        "core__dag_concurrency": 1,
+        "core__max_active_runs_per_dag": 5,
+        "core__hostname_callable": "socket.gethostname"
+    },
+    "aria2cSettings": {
+        "--console-log-level": "debug",
+        "--remove-control-file": true,
+        "--allow-overwrite": true,
+        "--auto-file-renaming": false
+    },
+    "databaseSettings":{
+        "db_port": 5432,
+        "db_user": "airflow",
+        "db_password": "airflow",
+        "db_name": "airflow"
+    },
+    "devel":{
+        "simulation": false,
+        "mac_update_from_devel": false
+    }
+}

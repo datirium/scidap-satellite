@@ -11,13 +11,16 @@
 /app-builds
 /release
 main.js
-src/**/*.js
+# src/**/*.js
+src/environments/client.config.js
 !src/karma.conf.js
 *.js.map
 
 /Services
 /Services/*
 /build
+/build_ubuntu
+/ubuntu_post_build
 
 /electron/**/*.js
 /electron/**/*.js.map

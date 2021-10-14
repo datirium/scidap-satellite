@@ -9,10 +9,13 @@
 
                     <clr-input-container>
                         <label class="clr-col-3"> Satellite data directory:
-                            <button class="btn btn-outline" (click)="openDirectoryDialog()">select</button>
+                            <button class="btn btn-icon" (click)="openDirectoryDialog(1)">
+                                <clr-icon shape="folder"></clr-icon>
+                                browse
+                            </button>
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="Select satellite data directory path" [(ngModel)]="satelliteSettings.scidapRoot" name="scidapRoot" required />
-                        <clr-control-helper>Please choose satellite's data directory. Where all analysis results will be stored.</clr-control-helper>
+                        <input clrInput type="text" disabled class="clr-col-9" placeholder="Select satellite data directory path" [(ngModel)]="satelliteSettings.systemRoot" name="systemRoot" required />
+                        <clr-control-helper>Directory to store analyses results.</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 
@@ -52,11 +55,56 @@
             <button clrTabLink>Advanced</button>
             <ng-template [(clrIfActive)]="advancedSettings">
                 <clr-tab-content>
+
                     <clr-input-container>
+                        <label class="clr-col-3"> Temporary data directory:
+                            <button class="btn btn-icon" (click)="openDirectoryDialog(2)">
+                                <clr-icon shape="folder"></clr-icon>
+                                browse
+                            </button>
+                        </label>
+                        <input clrInput type="text" disabled class="clr-col-9" placeholder="Select temporary data directory path" [(ngModel)]="airflowSettings.cwl__tmp_folder" name="cwl__tmp_folder" required />
+                        <clr-control-helper>Directory to store temporary data.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <!-- <clr-input-container>
                         <label class="clr-col-3"> Satellite public url:
                         </label>
                         <input clrInput type="text" class="clr-col-9" placeholder="https://127.0.0.1:3070/" [(ngModel)]="satelliteSettings.baseUrl" name="baseUrl" required />
                         <clr-control-helper>URL to satellite that can be accessed from other computers. By default just local computer can access.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container> -->
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> API-Sync url:
+                        </label>
+                        <input clrInput type="text" class="clr-col-9" placeholder="SERVER:PORT" [(ngModel)]="satelliteSettings.rcServer" name="rcServer" required />
+                        <clr-control-helper>URL to API-Sync to configure connection to the production or development server</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Global parallelism:
+                        </label>
+                        <input clrInput type="number" min=1 class="clr-col-9" placeholder="POSITIVE INTEGER" [(ngModel)]="airflowSettings.core__parallelism" name="core__parallelism" required />
+                        <clr-control-helper>The maximum number of steps/tasks allowed to run simultaneously for all workflows</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Task concurrency:
+                        </label>
+                        <input clrInput type="number" min=1 class="clr-col-9" placeholder="POSITIVE INTEGER" [(ngModel)]="airflowSettings.core__dag_concurrency" name="core__dag_concurrency" required />
+                        <clr-control-helper>The maximum number of steps/tasks allowed to run simultaneously per workflow</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-input-container>
+
+                    <clr-input-container>
+                        <label class="clr-col-3"> Workflow concurrency:
+                        </label>
+                        <input clrInput type="number" min=1 class="clr-col-9" placeholder="POSITIVE INTEGER" [(ngModel)]="airflowSettings.core__max_active_runs_per_dag" name="core__max_active_runs_per_dag" required />
+                        <clr-control-helper>The maximum number of workflows of the same type allowed to run simultaneously</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 
@@ -75,7 +123,7 @@
                     <clr-input-container>
                         <label class="clr-col-3"> Proxy settings:
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="http://USERNAME:PASSWORD@SERVER:PORT/" [(ngModel)]="satelliteSettings.proxy" name="proxy" required />
+                        <input clrInput type="text" class="clr-col-9" placeholder="http://USERNAME:PASSWORD@SERVER:PORT/" [(ngModel)]="satelliteSettings.proxy" name="proxy" />
                         <clr-control-helper>Your company can deny direct access to the Internet and instead have an HTTP or HTTPS proxy available. Usually port is 3128.</clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
@@ -83,30 +131,39 @@
                     <clr-input-container>
                         <label class="clr-col-3"> Exclude hosts from proxy:
                         </label>
-                        <input clrInput type="text" class="clr-col-9" placeholder="^.*\\(aventail\\|seanet\\)\\.com" [(ngModel)]="satelliteSettings.noProxy" name="noProxy" required />
+                        <input clrInput type="text" class="clr-col-9" placeholder="^.*\\(aventail\\|seanet\\)\\.com" [(ngModel)]="satelliteSettings.noProxy" name="noProxy" />
                         <clr-control-helper>Specifies URLs that should be excluded from proxying (on servers that should be contacted directly). Paired with a regexp matching host names not to be proxied. </clr-control-helper>
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 
-                    <clr-input-container>
+                    <clr-checkbox-container>
+                        <label class="clr-col-3"> Enable SSL: </label>
+                        <clr-checkbox-wrapper>
+                            <input type="checkbox" class="clr-col-9" clrCheckbox [(ngModel)]="satelliteSettings.enableSSL" name="enableSSL" />
+                        </clr-checkbox-wrapper>
+                        <clr-control-helper>Enabling this module will allow to use SSL encryption</clr-control-helper>
+                        <clr-control-error></clr-control-error>
+                    </clr-checkbox-container>
+
+                    <!-- <clr-input-container>
                         <label class="clr-col-3"> Satellite SSL cert: &nbsp;&nbsp;
                             <button class="btn btn-outline" (click)="openCertDialog(1)">select cert</button>
                         </label>
                         <input clrInput type="text" class="clr-col-9" placeholder="" [(ngModel)]="satelliteSettings.sslCert" name="sslCert" />
                         <clr-control-helper>Path to satellite's SSL certificate.</clr-control-helper>
                         <clr-control-error></clr-control-error>
-                    </clr-input-container>
+                    </clr-input-container> -->
 
-                    <clr-input-container>
+                    <!-- <clr-input-container>
                         <label class="clr-col-3"> Satellite SSL key:
                             &nbsp;&nbsp; <button class="btn btn-outline" (click)="openCertDialog(2)">select key</button>
                         </label>
                         <input clrInput type="text" class="clr-col-9" placeholder="" [(ngModel)]="satelliteSettings.sslKey" name="sslKey" />
                         <clr-control-helper>Path to satellite's SSL key.</clr-control-helper>
                         <clr-control-error></clr-control-error>
-                    </clr-input-container>
+                    </clr-input-container> -->
 
-                    <clr-input-container>
+                    <!-- <clr-input-container>
                         <label class="clr-col-3"> Satellite SSL listen port:
                             <div style="color: tomato" *ngIf="checkPort(satelliteSettings.scidapSSLPort)">
                                 <clr-icon shape="exclamation-circle"></clr-icon>
@@ -116,18 +173,18 @@
                         <input clrInput type="number" max=65535 min=1000 class="clr-col-9" [(ngModel)]="satelliteSettings.scidapSSLPort" name="scidapSSLPort" required />
                         <clr-control-helper>Satellite service port number to listen on.</clr-control-helper>
                         <clr-control-error></clr-control-error>
-                    </clr-input-container>
+                    </clr-input-container> -->
 
                     <clr-input-container>
-                        <label class="clr-col-3"> Airflow's API url:
-                            <div style="color: tomato" *ngIf="checkURLPort(satelliteSettings.triggerDag)">
+                        <label class="clr-col-3"> Airflow's API port:
+                            <div style="color: tomato" *ngIf="checkPort(satelliteSettings.airflowAPIPort)">
                                 <clr-icon shape="exclamation-circle"></clr-icon>
                                 <span>Port is in use!</span>
                             </div>
                         </label>
-                        <input clrInput type="text" class="clr-col-9" [(ngModel)]="satelliteSettings.triggerDag" name="triggerDag" />
-                        <clr-control-helper>Airflow's API url.</clr-control-helper>
-                        <clr-control-error>Error message2</clr-control-error>
+                        <input clrInput type="number" max=65535 min=1000 class="clr-col-9" [(ngModel)]="satelliteSettings.airflowAPIPort" name="airflowAPIPort" />
+                        <clr-control-helper>Airflow's API port.</clr-control-helper>
+                        <clr-control-error></clr-control-error>
                     </clr-input-container>
 
                     <clr-input-container>
@@ -154,7 +211,7 @@
                         <clr-control-error></clr-control-error>
                     </clr-input-container>
 
-                    <clr-input-container>
+                    <!-- <clr-input-container>
                         <label class="clr-col-3"> MongoDB service port:
                             <div style="color: tomato" *ngIf="checkPort(satelliteSettings.mongoPort)">
                                 <clr-icon shape="exclamation-circle"></clr-icon>
@@ -164,7 +221,7 @@
                         <input clrInput type="text" max=65535 min=1000 class="clr-col-9" [(ngModel)]="satelliteSettings.mongoPort" name="mongoPort" required />
                         <clr-control-helper>MongoDB service port number to listen on.</clr-control-helper>
                         <clr-control-error></clr-control-error>
-                    </clr-input-container>
+                    </clr-input-container> -->
 
                     <!-- <clr-input-container>
                         <label class="clr-col-3"> API service port:</label>

@@ -1,24 +1,22 @@
 import { BrowserWindow, screen as electronScreen, ipcMain, app } from 'electron';
 
 const Store = require('electron-store');
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 
 import * as path from 'path';
 import * as url from 'url';
-import * as fs from 'fs';
 import * as os from 'os';
 import * as keytar from 'keytar';
 
-import { parse, stringify } from './IniParser';
-
-import { SatelliteDefault } from './SatelliteDefault';
-import { join } from 'path';
-
+const semver = require('semver');
+const xbytes = require('xbytes');
+const fs = require("fs");
 const pm2 = require('pm2');
-
 const Log = require('electron-log');
-
 const args = process.argv.slice(1);
+
+const { waitForInitConfiguration, getRunConfiguration, getSettings } = require('../build-scripts/utilities/configure.js');
+
 
 export class SatelliteApp {
     private win = null;
@@ -26,26 +24,20 @@ export class SatelliteApp {
     private mongoExpressWin = null;
     private store;
 
-    services_base_path;
-    airflow_base_path;
     serve;
-
-    airflowSettings;
-    satelliteSettings;
-    token;
-    initComplete;
-
+    settings;
     networkInterfaces = [];
-
-    pm2_home;
-
     pm2MonitIntervalId;
+    dockerMonitIntervalId;
+    diskMonitIntervalId;
+    tokenMonitorIntervalId;
+    // pm2_home;
+    cwd;
+    defaultSettingsLocation;
 
     public willQuitApp = false;
 
-    /**
-     *
-     */
+
     constructor() {
         // const size = electronScreen.getPrimaryDisplay().workAreaSize;
         this.store = new Store({
@@ -56,44 +48,140 @@ export class SatelliteApp {
 
         this.serve = args.some(val => val === '--serve');
 
-        this.services_base_path = path.join(__dirname, '../Services/satellite/bin');
-        this.airflow_base_path = path.join(__dirname, '../Services/cwl-airflow/');
+        this.cwd = path.resolve(app.getAppPath(), '../Services/satellite');
+        this.defaultSettingsLocation = path.resolve(app.getAppPath(), './build-scripts/configs/scidap_default_settings.json');
         if (this.serve) {
             require('electron-reload')(`${__dirname}/../`, {
                 electron: require(`${__dirname}/../node_modules/electron`)
             });
-            this.services_base_path = path.join(__dirname, '../Services/satellite/bin');
-            this.airflow_base_path = path.join(__dirname, '../Services/cwl-airflow/');
-        } else {
-            this.services_base_path = path.join(app.getAppPath(), '../Services/satellite/bin');
-            this.airflow_base_path = path.join(app.getAppPath(), '../Services/cwl-airflow/');
-
-            Log.info(this.services_base_path);
+            this.cwd = path.resolve(__dirname, '../Services/satellite');
+            this.defaultSettingsLocation = path.resolve(__dirname, '../build-scripts/configs/scidap_default_settings.json');
         }
 
-        this.airflowSettings = this.store.get('airflowSettings', null);
-        this.satelliteSettings = this.store.get('satelliteSettings', null);
+        // this.pm2_home = path.join(app.getPath('home'), '.pm2');
+        this.runUpdate();
 
-        this.pm2_home = path.join(app.getPath('home'), '.pm2');
-
-        this.initComplete = this.store.get('initComplete', false);
-
-        if (this.initComplete && this.airflowSettings && this.satelliteSettings) {
-            keytar.getPassword('scidap-satellite', 'token')
+        if (this.store.get('initComplete', false)) {
+            this.getToken()                            // waits until token can be retrieved from the keychain
                 .then((token) => {
-                    if (token) {
-                        Log.info('Pm2 started!');
-                        this.token = token;
-                        // Start PM2!
-                        this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
-                    }
+                    this.loadSettings(this.cwd, this.defaultSettingsLocation);
+                    this.settings.satelliteSettings.rcServerToken = token;
+                    this.chainStartPM2Services().then((v) => Log.info(`services started ${JSON.stringify(v)}`));
+                }).catch((err) => {
+                    Log.error(`Got error ${err}`);
                 });
         }
     }
 
+
     /**
-     *
+     * resolves when token is found
      */
+    getToken() {
+        return new Promise((resolve, reject) => {
+            const tokenMonitorIntervalId = setInterval(() => {
+                keytar.getPassword('scidap-satellite', 'token')
+                    .then((token) => {
+                        if (token) {
+                            Log.info('Token is found');
+                            clearInterval(tokenMonitorIntervalId);
+                            this.send('token-monit', true);
+                            resolve(token);
+                        } else {
+                            Log.info('Token not found');
+                            this.send('token-monit', false);
+                        }
+                    });
+            }, 2000);
+        });
+    }
+
+
+    runUpdate() {
+        const latestUpdate = this.store.get('latestUpdateVersion', null);
+        if (!latestUpdate || semver.gt('2.0.4', latestUpdate)) {
+            Log.info('Running settings update');
+            this.removeDeprecatedSettings();
+            this.loadSettings(this.cwd, this.defaultSettingsLocation);
+            waitForInitConfiguration(this.settings);                     // the only time consuming part
+            this.store.set('latestUpdateVersion', app.getVersion());
+        }
+    }
+
+
+    removeDeprecatedSettings() {
+        let removeKeys = [                                                             // deprecated or refactored keys that should be either removed or restored to their defaults
+            'defaultLocations',                                                        // save to remove it, as it will be overwritten anyway
+            'meteorSettings'
+            // 'airflowSettings'                                                       // no need in removing this anymore as all old satellites have been already updated
+        ];
+        for (const key of removeKeys) {
+            Log.info(`Remove deprecated or refactored settings for ${key}`);
+            this.store.delete(key);
+        };
+        if (this.store.has("satelliteSettings")) {                                     // need to remove deprecated fields
+            let satelliteSettings = this.store.get("satelliteSettings");
+            if (satelliteSettings["scidapRoot"]) {
+                satelliteSettings["systemRoot"] = satelliteSettings["scidapRoot"];     // scidapRoot was replaced by systemRoot
+            }
+            removeKeys = [
+                'mongoPort',                                                           // no MongoDB anymore
+                'mongoCollection',
+                'localFiles',                                                          // moved to remotes.localfiles.show
+                'scidapSSLPort',                                                       // replaced by enableSSL
+                'sslCert',
+                'sslKey',
+                'scidapRoot',                                                          // need to be cleaned as in the next update systemRoot may be restored from it
+                'baseUrl',                                                             // deprecated
+                "triggerDag"                                                           // deprecated
+            ];
+            if (satelliteSettings.remotes && !satelliteSettings.remotes.localfiles) {
+                removeKeys.push("remotes");                                           // need to overwrite it because localfiles were added
+            }
+            satelliteSettings = Object.keys(satelliteSettings)
+                .filter((param) => !removeKeys.includes(param))                        // filter out all removeKeys
+                .reduce((filtered, param) => {
+                    filtered[param] = satelliteSettings[param];
+                    return filtered;
+                }, {})
+            this.store.set("satelliteSettings", satelliteSettings);
+        }
+    }
+
+
+    loadSettings(cwd, defaultSettingsLocation) {
+        const skipKeys = [
+            'executables',                                                                          // executables can be dynamically changed
+            'loadedFrom'                                                                            // we don't want to save it in config.json as it's more like a techinical field
+        ];
+        this.settings = getSettings(cwd, defaultSettingsLocation);                                  // load default settings
+        this.settings.loadedFrom = this.store.path;                                                 // need to overwrite the default loadedFrom to place NJS-Client config and token near config.json
+        this.settings.defaultLocations.airflow = path.resolve(app.getPath('userData'), 'airflow');  // need to overwrite the default airflow folder location to place it within ~/Library/Application\ Support/scidap-satellite
+        this.settings.defaultLocations.pgdata = path.resolve(app.getPath('userData'), 'pgdata');    // need to overwrite the default pgdata folder location to place it within ~/Library/Application\ Support/scidap-satellite
+        let systemRoot = this.settings.satelliteSettings.systemRoot;                                // default systemRoot from default config ~/scidap
+        if (this.store.has("satelliteSettings") && this.store.get("satelliteSettings")["systemRoot"]){  // we are running version update, so need to use systemRoot from the store
+            systemRoot = this.store.get("satelliteSettings")["systemRoot"];
+        }
+        this.settings.airflowSettings = {                                                           // need to overwrite the defaultcwl_tmp_folder location to place it within ~/scidap folder
+            ...this.settings.airflowSettings,
+            "cwl__tmp_folder": path.resolve(systemRoot, "cwl_tmp_folder")
+        };
+        for (const key in this.settings) {                                                           // update defaults if they have been already redefined in config.json
+            if (skipKeys.includes(key)) {                                                            // skipped keys won't be saved into config.json
+                continue;
+            }
+            if (this.store.has(key)) {
+                let settingsFromStore = this.store.get(key);
+                this.settings[key] = {
+                    ...this.settings[key],
+                    ...settingsFromStore
+                };
+            };
+            this.store.set(key, this.settings[key]);                     // save either defaults or not changed data to config.json
+        }
+    }
+
+
     createWindow() {
         if (this.win) {
             this.win.show();
@@ -132,9 +220,7 @@ export class SatelliteApp {
         return this.win;
     }
 
-    /**
-     *
-     */
+
     createWebuiWindow() {
         if (this.webUiWin) {
             return;
@@ -178,42 +264,37 @@ export class SatelliteApp {
     }
 
 
-    /**
-     *
-     */
-    createMongoExpressWindow() {
-        if (this.mongoExpressWin) {
-            return;
-        }
+    // createMongoExpressWindow() {
+    //     if (this.mongoExpressWin) {
+    //         return;
+    //     }
 
-        const { x, y, width, height } = this.store.get('windowBounds');
+    //     const { x, y, width, height } = this.store.get('windowBounds');
 
-        // Create the browser window.
-        this.mongoExpressWin = new BrowserWindow({
-            x,
-            y,
-            width,
-            height,
-            title: 'Mongo Express',
-            webPreferences: {
-                nodeIntegration: true,
-            },
-            tabbingIdentifier: 'SciDAP'
-        });
+    //     // Create the browser window.
+    //     this.mongoExpressWin = new BrowserWindow({
+    //         x,
+    //         y,
+    //         width,
+    //         height,
+    //         title: 'Mongo Express',
+    //         webPreferences: {
+    //             nodeIntegration: true,
+    //         },
+    //         tabbingIdentifier: 'SciDAP'
+    //     });
 
 
-        this.mongoExpressWin.loadURL('http://localhost:27083/');
+    //     this.mongoExpressWin.loadURL('http://localhost:27083/');
 
-        this.mongoExpressWin.on('closed', () => {
-            this.mongoExpressWin = null;
-        });
+    //     this.mongoExpressWin.on('closed', () => {
+    //         this.mongoExpressWin = null;
+    //     });
 
-        return this.mongoExpressWin;
-    }
+    //     return this.mongoExpressWin;
+    // }
 
-    /**
-     *
-     */
+
     windowEvents() {
         // Emitted when the window is closed.
         this.win.on('close', (e) => {
@@ -237,28 +318,126 @@ export class SatelliteApp {
 
 
     /**
-     *    PM2
+     * Parses formatted docker stats stdout into JSON object
      */
+    parseDockerStats(raw_data){
+        let nCPU = 1;                                                                                  // number of CPUs available for Docker
+        let dockerStats = raw_data.split('\n')
+            .filter(line => !!line)                                                                    // to skip empty lines
+            .reduce((collected, line) => {
+                let raw_params = line.split('\t');
+                if (raw_params.length == 1){                                                           // if only one item is present it's nCPU
+                    nCPU = parseInt(raw_params[0]);
+                    return collected;
+                };
+                const [containerId, cpuUsagePerc, memUsagePerc, memInfoIEC, pids] = raw_params;
+                if (containerId) {                                                                     // sometime docker stats reports empty container id when it just started
+                    const [memUsageIEC, memLimitIEC] = memInfoIEC.replace(/\s/g,'').split('/');        // need to remove spaces
+                    collected[containerId] = {
+                        cpuUsagePerc: parseFloat(cpuUsagePerc),
+                        memUsagePerc: parseFloat(memUsagePerc),
+                        memUsageMB: parseInt(xbytes.parse(memUsageIEC).convertTo('MB')),               // Docker reports in IEC format - KiB, MiB, TiB, etc, we need MB
+                        memLimitMB: parseInt(xbytes.parse(memLimitIEC).convertTo('MB')),
+                        cpuLimitNum: nCPU,
+                        cpuUsageFrac: parseFloat(cpuUsagePerc)/nCPU,                                   // scaled to the number of CPUs available
+                        pids: parseInt(pids)
+                    };
+                };
+                return collected;
+            }, {});
+        return dockerStats;
+    }
 
-    async connectToPM2() {
-        let http_interface = path.join(this.services_base_path, '../../../', 'app/node_modules/pm2/bin/');
-        if (this.serve) {
-            http_interface = path.join(this.services_base_path, '../../../', 'node_modules/pm2/bin/');
-        }
-        // const _spawn = spawn(`${this.services_base_path}/node`, [`${http_interface}/HttpInterface.js`], {
-        let env_var: any = {
-            PM2_API_PORT: this.satelliteSettings.pm2Port,
-            // PM2_HOME: this.pm2_home,
+
+    /**
+     * resolves when docker is up
+     */
+    async checkDockerIsUp() {
+        const env_var: any = {
             HOME: app.getPath('home'),
-            PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
+            PATH: this.settings.executables.pathEnvVar
         };
 
-        if (this.satelliteSettings && this.satelliteSettings.proxy) {
+        if (this.dockerMonitIntervalId) {                // to prevent from running several intervals
+            clearInterval(this.dockerMonitIntervalId);
+        };
+        return new Promise((resolve, reject) => {
+            this.dockerMonitIntervalId = setInterval(() => {
+                exec(
+                    'docker info --format "{{.NCPU}}" && docker stats --no-stream --format "{{.ID}}\t{{.CPUPerc}}\t{{.MemPerc}}\t{{.MemUsage}}\t{{.PIDs}}"',
+                    { env: env_var },
+                    (error, stdout, stderr) => {
+                        if (error || stderr) {
+                            this.send('docker-monit', false);                 // false for docker is not running
+                        } else {
+                            let dockerStats = this.parseDockerStats(stdout);
+                            this.send('docker-monit', dockerStats);           // either {} or real docker statistics
+                            resolve(dockerStats);                             // promises cannot recur, so it's safe to resolve it multiple times
+                        }
+                    }
+                );
+            }, 1500);
+        });
+    }
+
+    /**
+     * resolves only when all required folders exist
+     * sends disk-monit report in a form of {location: true/false}
+     */
+    async checkDiskIsAvailable() {
+        if (this.diskMonitIntervalId) {
+            clearInterval(this.diskMonitIntervalId);
+        };
+        let locationsToCheck = [
+            this.settings.satelliteSettings.systemRoot,
+            ...Object.values(this.settings.defaultLocations)
+        ];
+        return new Promise((resolve, reject) => {
+            this.diskMonitIntervalId = setInterval(() => {
+                let chain = Promise.resolve({});                                                            // sets inittial value for report to {}
+                for (let location of locationsToCheck) {
+                    chain = chain.then((report) => {
+                        return new Promise((resolve, reject) => {
+                            fs.access(location, fs.constants.R_OK | fs.constants.W_OK | fs.constants.X_OK,  // rwx access to the folder
+                                (error: any) => {
+                                    report[location] = !error;
+                                    resolve(report);
+                                }
+                            );
+                        });
+                    });
+                };
+                chain.then(
+                    (report) => {
+                        this.send('disk-monit', report);
+                        if (Object.keys(report).every((k) => report[k])) {  // true if all is true or if locationsToCheck was []
+                            resolve(report);                                // promises cannot recur, so it's safe to resolve it multiple times
+                        };
+                    }
+                );
+            }, 1500);
+        });
+    }
+
+    async connectToPM2() {
+        let http_interface = path.join(this.settings.executables.satelliteBin, '../../../', 'app/node_modules/pm2/bin/');
+        if (this.serve) {
+            http_interface = path.join(this.settings.executables.satelliteBin, '../../../', 'node_modules/pm2/bin/');
+        }
+        // const _spawn = spawn(`${this.settings.executables.satelliteBin}/node`, [`${http_interface}/HttpInterface.js`], {
+        let env_var: any = {
+            PM2_API_PORT: this.settings.satelliteSettings.pm2Port,
+            // PM2_HOME: this.pm2_home,
+            HOME: app.getPath('home'),
+            PATH: this.settings.executables.pathEnvVar
+        };
+
+        if (this.settings.satelliteSettings.proxy) {
             env_var = {
                 ...env_var,
-                https_proxy: `${this.satelliteSettings.proxy}`,
-                http_proxy: `${this.satelliteSettings.proxy}`,
-                no_proxy: `${this.satelliteSettings.noProxy || ''}`
+                https_proxy: `${this.settings.satelliteSettings.proxy}`,
+                http_proxy: `${this.settings.satelliteSettings.proxy}`,
+                no_proxy: `${this.settings.satelliteSettings.noProxy || ''}`
             };
         }
 
@@ -298,6 +477,7 @@ export class SatelliteApp {
         });
     }
 
+
     /**
      * PM2 start promise wrapper, with options
      * @param options
@@ -313,9 +493,10 @@ export class SatelliteApp {
         });
     }
 
+
     startPM2web() {
         return new Promise((resolve, reject) => {
-            pm2.web(this.satelliteSettings.pm2Port, (err, proc) => {
+            pm2.web(this.settings.satelliteSettings.pm2Port, (err, proc) => {
                 if (err) {
                     reject(new Error(err));
                 }
@@ -325,170 +506,12 @@ export class SatelliteApp {
     }
 
     /**
-     *
-     */
-    startPM2Aria2c() {
-        const cmd_args = ['--enable-rpc', '--rpc-listen-all=false', `--rpc-listen-port=${this.satelliteSettings.aria2cPort}`,
-            '--console-log-level=debug', '--auto-file-renaming=false'];
-        if (this.satelliteSettings && this.satelliteSettings.proxy) {
-            cmd_args.push(`--all-proxy=${this.satelliteSettings.proxy}`);
-        }
-        const options = {
-            name: 'aria2c',
-            script: `${this.services_base_path}/aria2c`,
-            args: cmd_args,
-            watch: false,
-            exec_mode: 'fork_mode',
-            cwd: `${this.satelliteSettings.scidapRoot}/files`
-        };
-
-        return this.startPM2(options);
-    }
-
-
-    /**
-     *
-     */
-    startPM2Mongod() {
-        const options = {
-            name: 'mongod',
-            script: `${this.services_base_path}/mongod`,
-            args: [`--port=${this.satelliteSettings.mongoPort}`, '--bind_ip=127.0.0.1', `--dbpath=${this.satelliteSettings.scidapRoot}/mongodb`],
-            watch: false,
-            exec_mode: 'fork_mode',
-            cwd: `${this.satelliteSettings.scidapRoot}/mongodb`
-        };
-
-        return this.startPM2(options);
-    }
-
-    /**
-     *
-     */
-    startPM2MongoExpress() {
-        let mongo_express_path = path.join(this.services_base_path, '../../../', 'app/node_modules/mongo-express/');
-        if (this.serve) {
-            mongo_express_path = path.join(this.services_base_path, '../../../', 'node_modules/mongo-express/');
-        }
-
-        const options = {
-            name: 'mongo-express',
-            script: `${mongo_express_path}/app.js`,
-            args: ['-a', '-U', `mongodb://localhost:${this.satelliteSettings.mongoPort}/scidap-satellite`, '--port', 27083],
-            interpreter: 'node',
-            watch: false,
-            exec_mode: 'fork_mode',
-            cwd: `${this.satelliteSettings.scidapRoot}`,
-            env: {
-                ME_CONFIG_BASICAUTH_USERNAME: '',
-                PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
-            }
-        };
-
-        return this.startPM2(options);
-    }
-
-    /**
-     *
-     */
-    startAirflowScheduler() {
-        // -l LOG_FILE, --log-file LOG_FILE
-        // Location of the log file
-
-        /**
-         *  CONF PATCHES?
-         */
-        this.airflowUpdate();
-        /**
-         *  END CONF PATCH
-         */
-
-
-        const options = {
-            name: 'airflow-scheduler',
-            script: `${this.airflow_base_path}/bin_portable/airflow`,
-            args: ['scheduler'],
-            interpreter: 'bash',
-            watch: false,
-            exec_mode: 'fork_mode',
-            cwd: this.airflowSettings.AIRFLOW_HOME,
-            env: {
-                PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`,
-                AIRFLOW_HOME: this.airflowSettings.AIRFLOW_HOME,
-                LC_ALL: 'en_US.UTF-8',
-                LANG: 'en_US.UTF-8'
-            }
-        };
-
-        return this.startPM2(options);
-    }
-
-    /**
-     *
-     */
-    startAirflowAPI() {
-        const options = {
-            name: 'airflow-apiserver',
-            script: `${this.airflow_base_path}/bin_portable/cwl-airflow`,
-            args: ['api', `--port=${this.satelliteSettings.airflowAPIPort}`],
-            interpreter: 'bash',
-            watch: false,
-            exec_mode: 'fork_mode',
-            cwd: `${this.satelliteSettings.scidapRoot}`,
-            env: {
-                PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`,
-                AIRFLOW_HOME: this.airflowSettings.AIRFLOW_HOME
-            }
-        };
-        return this.startPM2(options);
-    }
-
-    /**
-     *
-     */
-    startSatellite() {
-        let env_var: any = {
-            MONGO_URL: `mongodb://localhost:${this.satelliteSettings.mongoPort}/scidap-satellite`,
-            ROOT_URL: `${this.satelliteSettings.baseUrl}`,
-            PORT: `${this.satelliteSettings.port}`,
-            METEOR_SETTINGS: this.getSatelliteConf(),
-            NODE_OPTIONS: '--trace-warnings --pending-deprecation',
-            PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
-
-        };
-
-        if (this.satelliteSettings && this.satelliteSettings.proxy) {
-            env_var = {
-                ...env_var,
-                https_proxy: `${this.satelliteSettings.proxy}`,
-                http_proxy: `${this.satelliteSettings.proxy}`,
-                no_proxy: `${this.satelliteSettings.noProxy || ''}`
-            };
-        }
-
-        const options = {
-            name: 'satellite',
-            script: `${this.services_base_path}/../main.js`,
-            interpreter: 'node',
-            watch: false,
-            exec_mode: 'fork_mode',
-            cwd: `${this.satelliteSettings.scidapRoot}`,
-            env: env_var
-        };
-        return this.startPM2(options);
-    }
-
-    /**
-     *
+     * Starts all the services
      */
     async chainStartPM2Services(): Promise<any> {
+        Log.info('Starting PM2 services');
         try {
             await this.connectToPM2();
-            await this.startPM2Aria2c();
-            await this.startPM2Mongod();
-            await this.startAirflowScheduler();
-            await this.startAirflowAPI();
-            await this.startPM2MongoExpress();
             if (this.pm2MonitIntervalId) {
                 clearInterval(this.pm2MonitIntervalId);
             }
@@ -497,12 +520,14 @@ export class SatelliteApp {
                     this.send('pm2-monit', processDescriptionList);
                 });
             }, 1000);
-
-            return await this.startSatellite();
+            await this.checkDockerIsUp();
+            await this.checkDiskIsAvailable();
+            return await this.restartPM2program(getRunConfiguration(this.settings));
         } catch (error) {
             Log.info(error);
         }
     }
+
 
     killPM2() {
         return new Promise((resolve, reject) => {
@@ -515,18 +540,18 @@ export class SatelliteApp {
         });
     }
 
-    async killPM2_2() {
 
-        let pm2_interface = path.join(this.services_base_path, '../../../', 'app/node_modules/pm2/bin/');
+    async killPM2_2() {
+        let pm2_interface = path.join(this.settings.executables.satelliteBin, '../../../', 'app/node_modules/pm2/bin/');
         if (this.serve) {
-            pm2_interface = path.join(this.services_base_path, '../../../', 'node_modules/pm2/bin/');
+            pm2_interface = path.join(this.settings.executables.satelliteBin, '../../../', 'node_modules/pm2/bin/');
         }
 
         const _spawn = spawn(`${pm2_interface}/pm2`, ['kill'], {
             shell: true,
             env: {
                 HOME: app.getPath('home'),
-                PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
+                PATH: this.settings.executables.pathEnvVar
             }
         });
 
@@ -549,8 +574,8 @@ export class SatelliteApp {
                 }
             });
         });
-
     }
+
 
     disconnectPM2() {
         return new Promise((resolve, reject) => {
@@ -564,6 +589,7 @@ export class SatelliteApp {
         });
     }
 
+
     stopPM2program(id) {
         return new Promise((resolve, reject) => {
             pm2.stop(id, (err) => {
@@ -574,6 +600,7 @@ export class SatelliteApp {
             });
         });
     }
+
 
     restartPM2program(id) {
         return new Promise((resolve, reject) => {
@@ -586,198 +613,34 @@ export class SatelliteApp {
         });
     }
 
-    async runCommands(commands: any[]) {
-        const self = this;
-        await commands.forEach(async (command) => {
-            Log.info(command);
-            const _spawn = spawn(`${command}`, [], {
-                shell: true,
-                env: {
-                    AIRFLOW_HOME: self.airflowSettings.AIRFLOW_HOME,
-                    PATH: `${this.services_base_path}:${this.airflow_base_path}/bin_portable:/usr/bin:/bin:/usr/local/bin`
+
+    /**
+     * It used to fail when token wasn't found, now it will wait for it.
+     * After user enter his email/password and token will be saved, this
+     * function will continue execution.
+     *
+     * When run after pressing on "Save and Restart" button, we set
+     * skipFolderCreation to true, so the function waitForInitConfiguration
+     * won't be executed as it's not the real initial satellite configuration
+     * and we don't need to create any new folders and set up proxy for
+     * fastq-dump. UI won't allow to select folders that don't exist, so no
+     * need to create them.
+     */
+    async satelliteInit(skipFolderCreation=false) {
+        return this.getToken()                                               // waits until token can be retrieved from the keychain
+            .then((token) => {
+                Log.info('Running initial configuration');
+                this.loadSettings(this.cwd, this.defaultSettingsLocation);   // reload settings in case something was changed
+                this.settings.satelliteSettings.rcServerToken = token;
+                if (!skipFolderCreation){
+                    waitForInitConfiguration(this.settings);
                 }
-            });
-            let _stderr, _stdout;
-            // TODO: delete old config!
-            _spawn.stdout.on('data', (data) => {
-                _stdout = `${_stdout}${data}`;
-            });
-            _spawn.stderr.on('data', (data) => {
-                _stderr = `${_stderr}${data}`;
-            });
-            await new Promise((resolve, reject) => {
-                _spawn.on('close', (code) => {
-                    if (code !== 0) {
-                        Log.info(`init command exited with code ${code}`);
-                        Log.info(`init stderr ${_stderr}`);
-                        reject(code);
-                    } else {
-                        Log.info(command, 'complete');
-                        Log.info(command, _stdout);
-                        resolve();
-                    }
-                });
-            });
-        });
-
-    }
-
-    /**
-     *
-     * @param a - version A '1.0.0'
-     * @param b - version B '1.0.1'
-     */
-    versionAisBiggerB(a: string, b: string): boolean {
-        const spltA = a.split('.');
-        const spltB = b.split('.');
-        for (let i = 0; i < spltA.length; i++) {
-            if (!spltB[i] || spltA[i] > spltB[i]) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     *
-     */
-    async airflowUpdate() {
-
-        const latestUpdate = this.store.get('latestUpdateVersion');
-        const appVersion = app.getVersion();
-
-        if (this.versionAisBiggerB('1.0.8', latestUpdate)) { // Updates for a specific version only!
-
-            this.airflowSettings = this.store.get('airflowSettings');
-
-            this.store.set('latestUpdateVersion', appVersion);
-
-            // need to update clean_dag_run.py, so it should be deleted before running cwl-airflow init
-            try {
-                await fs.promises.unlink(`${this.airflowSettings.AIRFLOW_HOME}/dags/clean_dag_run.py`);
-            } catch (e) {
-                Log.info('Failed to remove clean_dag_run.py');
-            }
-
-            // need to guarantee sequential execution of the following commands therefore use &&
-            // to make sure the connection is updated, we need to delete it first
-            const init_commands = [
-                `cwl-airflow init --upgrade && \
-             airflow connections -d --conn_id process_report && \
-             airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port}`
-            ];
-            await this.runCommands(init_commands);
-
-            fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/tmp`, { recursive: true });
-
-            const airflowConfig: any = parse(fs.readFileSync(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
-            airflowConfig.core.dag_concurrency = 2;
-            airflowConfig.core.dags_are_paused_at_creation = 'False';
-            airflowConfig.core.load_examples = 'False';
-            airflowConfig.core.hostname_callable = 'socket:gethostname';
-            airflowConfig.core.max_active_runs_per_dag = 1;
-            airflowConfig.cwl.tmp_folder = join(this.satelliteSettings.scidapRoot, 'tmp');
-            await fs.promises.writeFile(`${this.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
-        }
-    }
-
-    /**
-     * Init saves all settings and starts services for the first time!
-     */
-    async airflowInit() {
-        this.airflowSettings = this.store.get('airflowSettings');
-        this.satelliteSettings = this.store.get('satelliteSettings');
-
-        Log.info('init airflowSettings:', this.airflowSettings);
-        Log.info('init satelliteSettings:', this.satelliteSettings);
-
-        const self = this;
-
-        // need to guarantee sequential execution of the following commands therefore use &&
-        // to make sure the connection is updated, we need to delete it first
-        const init_commands = [
-            `cwl-airflow init --upgrade && \
-             airflow connections -d --conn_id process_report && \
-             airflow connections -a --conn_id process_report --conn_uri http://localhost:${this.satelliteSettings.port}`
-        ];
-        this.runCommands(init_commands);
-
-        const airflowConfig: any = parse(fs.readFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, 'utf-8'));
-        airflowConfig.core.dag_concurrency = 2;
-        airflowConfig.core.dags_are_paused_at_creation = 'False';
-        airflowConfig.core.load_examples = 'False';
-        airflowConfig.core.hostname_callable = 'socket:gethostname';
-        airflowConfig.core.max_active_runs_per_dag = 1;
-        airflowConfig.cwl.tmp_folder = join(this.satelliteSettings.scidapRoot, 'tmp');
-        fs.writeFileSync(`${self.airflowSettings.AIRFLOW_HOME}/airflow.cfg`, stringify(airflowConfig, { whitespace: true }));
-    }
-
-    /**
-     *
-     */
-    async satelliteInit() {
-        await this.airflowInit();
-
-        fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/tmp`, { recursive: true });
-        fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/files`, { recursive: true });
-        fs.mkdirSync(`${this.satelliteSettings.scidapRoot}/mongodb`, { recursive: true });
-        this.store.set('initComplete', true);
-
-        const token = await keytar.getPassword('scidap-satellite', 'token');
-
-        if (token) {
-            Log.info('Pm2 started!');
-            this.token = token;
-            return await this.chainStartPM2Services();
-        } else {
-            return Promise.reject('no token');
-        }
+                this.store.set('initComplete', true);
+                return this.chainStartPM2Services();
+            })
     }
 
 
-
-    /**
-     *
-     */
-    getSatelliteConf() {
-        const satelliteConf = {
-            ...SatelliteDefault,
-            base_url: this.satelliteSettings.baseUrl,
-            rc_server_token: this.token,
-            systemRoot: this.satelliteSettings.scidapRoot,
-            airflow: {
-                trigger_dag: this.satelliteSettings.triggerDag,
-                dags_folder: `${this.airflowSettings.AIRFLOW_HOME}/dags/`
-            },
-            logFile: `${this.airflowSettings.AIRFLOW_HOME}/../satellite-service.log`,
-        };
-
-        if (this.satelliteSettings.sslCert && this.satelliteSettings.sslKey && this.satelliteSettings.scidapSSLPort) {
-            satelliteConf['SSL'] = {
-                'key': this.satelliteSettings.sslKey,
-                'cert': this.satelliteSettings.sslCert,
-                'port': this.satelliteSettings.scidapSSLPort
-            };
-        }
-
-        if (this.satelliteSettings.localFiles) {
-            satelliteConf.remotes.localfiles = {
-                ...satelliteConf.remotes.localfiles,
-                base_directory: `${app.getPath('home')}`    // `${this.satelliteSettings.scidapRoot}/files`
-            };
-        } else {
-            satelliteConf.remotes.localfiles = {
-                collection: {},
-                publication: 'none'
-            };
-        }
-
-        return satelliteConf;
-    }
-
-    /**
-     *
-     */
     getInterfaces() {
         const ifaces = os.networkInterfaces();
 
@@ -805,9 +668,7 @@ export class SatelliteApp {
         return this.networkInterfaces;
     }
 
-    /**
-     *
-     */
+
     send(channel, ...arg) {
         this.win.webContents.send(channel, ...arg);
     }

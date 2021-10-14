@@ -4,6 +4,8 @@ import { SatelliteApp } from './SatelliteApp';
 
 import './SatelliteBus';
 
+import * as path from 'path';
+
 const appVersion = app.getVersion();
 // const updateUrl = `https://scidap.com/updates/`;
 
@@ -117,16 +119,16 @@ try {
         satelliteApp.createWebuiWindow();
     });
 
-    ipcMain.on('mongo-express-window', (event) => {
-        satelliteApp.createMongoExpressWindow();
-    });
+    // ipcMain.on('mongo-express-window', (event) => {
+    //     satelliteApp.createMongoExpressWindow();
+    // });
 
 
     /**
      * change to once?
      */
     ipcMain.on('satellite-init', (event) => {
-        Log.info('init');
+        Log.info('satellite-init');
 
         satelliteApp.satelliteInit().then(() => {
             event.reply('satellite-init', 'complete');
@@ -162,9 +164,7 @@ try {
         Log.info('restart-programs');
 
         satelliteApp.disconnectPM2().then(() => {
-            return satelliteApp.killPM2_2();
-        }).then(() => {
-            return satelliteApp.chainStartPM2Services();
+            return satelliteApp.satelliteInit(true);          // we run it with true to skip folders creation. Only settings will be updated and services restarted.
         }).then(() => {
             event.reply('restart-programs', 'complete');
         }).catch((err) => {
@@ -175,6 +175,12 @@ try {
 
     ipcMain.on('checking-for-update', (event) => {
         Log.info('checking-for-update');
+        if (satelliteApp.settings.devel && satelliteApp.settings.devel.mac_update_from_devel) {
+            // Need to overwrite default update settings to point to the development versions
+            const devUpdateSetting = path.resolve(app.getAppPath(), './dev-app-update.yml');
+            autoUpdater.updateConfigPath = devUpdateSetting;
+            Log.info('Using development update configurations file', devUpdateSetting);
+        }
         if (serve) {
             autoUpdater.checkForUpdates();
         } else {
