@@ -1,3 +1,10 @@
+## 2.0.5 (2021-11-02)
+
+* Bug fixes and copying files from localfile location
+## 2.0.4 (2021-09-21)
+
+* file manager updated with local files fixes
+* cwl-airflow updated to 1.2.11
 ## 2.0.3 (2020-06-25)
 
 * fix bug with not deleted `scidapRoot`. Need to delete it as after each update `systemRoot`

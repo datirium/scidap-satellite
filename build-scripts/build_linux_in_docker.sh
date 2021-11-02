@@ -2,11 +2,11 @@
 
 BUILD_CONTAINER=${1:-"ubuntu:18.04"}                          # ubuntu or centos images (centos:7, centos:8, ubuntu:18.04, ubuntu:20.04)
 SATELLITE_VERSION_LABEL=${2:-`git rev-parse HEAD`}            # For tagging purpose only (use current commit be default). We always mount the content of the local build-scripts directory.
-NODE_VERSION=${3:-"12.22.6"}
+NODE_VERSION=${3:-"12.22.7"}
 ARIA2_VERSION=${4:-"1.36.0"}
 CWLAIRFLOW_VERSION=${5:-"1.2.11"}
 CWLAIRFLOW_PYTHON_VERSION=${6:-"3.8.12"}
-NJS_CLIENT_VERSION=${7:-"23cf9d10f2f9"}                       # No local builds. Always pulled from BitBucket. All the changes should be pushed beforehand.
+NJS_CLIENT_VERSION=${7:-"master"}                       # No local builds. Always pulled from BitBucket. All the changes should be pushed beforehand.
 SRA_TOOLKIT_VERSION=${8:-"2.11.1"}
 POSTGRESQL_VERSION=${9:-"10.18"}                              # see https://www.enterprisedb.com/download-postgresql-binaries for available versions
 

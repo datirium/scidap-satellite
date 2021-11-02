@@ -49,11 +49,11 @@ build_njs_client() {
 
 
 # Setting up package versions
-NODE_VERSION="12.22.6"
+NODE_VERSION="12.22.7"
 ARIA2_VERSION="1.35.0"            # couldn't find the latest 1.36.0 for mac. Will update later.
 CWLAIRFLOW_VERSION="1.2.11"
 CWLAIRFLOW_PYTHON_VERSION="3.8"
-NJS_CLIENT_VERSION="23cf9d10f2f9"
+NJS_CLIENT_VERSION="master"
 SRA_TOOLKIT_VERSION="2.11.1"
 POSTGRESQL_VERSION="13.4"
 ARIA2_WEBUI_VERSION="master"
