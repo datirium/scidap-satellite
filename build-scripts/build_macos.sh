@@ -30,7 +30,7 @@ build_njs_client() {
   PULL_REQUESTED="${2:-false}"
   if [ $PULL_REQUESTED = true ]; then
     echo "Git pull was requested. Checking if repository is clean"
-    CHANGES_FOUND="$(git status --porcelain)"
+    CHANGES_FOUND="$(git ls-files --modified)"
     echo "$CHANGES_FOUND"
     if ! [ -n "$CHANGES_FOUND" ]; then
       echo "Pulling the latest changes"
@@ -188,6 +188,7 @@ else
   cp -L ../build-scripts/start_scripts/start_postgres.sh ${SATDIR}/bin/
   cp -L ../build-scripts/start_scripts/start_scheduler.sh ${SATDIR}/bin/
   cp -L ../build-scripts/start_scripts/start_apiserver.sh ${SATDIR}/bin/
+  cp -L ../build-scripts/start_scripts/start_webserver.sh ${SATDIR}/bin/
 fi
 
 

@@ -262,6 +262,7 @@ function getSettings(cwd, customLocation){
       startPostgres: path.resolve(cwd, '../satellite/bin/start_postgres.sh'),
       startScheduler: path.resolve(cwd, '../satellite/bin/start_scheduler.sh'),
       startApiserver: path.resolve(cwd, '../satellite/bin/start_apiserver.sh'),
+      startWebserver: path.resolve(cwd, '../satellite/bin/start_webserver.sh'),
       startNjsClient: path.resolve(cwd, '../satellite/dist/src/main.js'),
       satelliteBin: path.resolve(cwd, '../satellite/bin'),                       // not used directly, but added just in case
       cwlAirflowBin: path.resolve(cwd, '../cwl-airflow/bin_portable'),
@@ -311,6 +312,19 @@ function getRunConfiguration(settings){
         name: 'airflow-apiserver',
         script: settings.executables.startApiserver,
         args: getAirflowApiServerArgs(settings),
+        interpreter: 'bash',
+        watch: false,
+        exec_mode: 'fork_mode',
+        cwd: settings.defaultLocations.airflow,
+        env: {
+          ...getPostgresEnvVar(settings),
+          ...getAirflowEnvVar(settings)
+        }
+      },
+      {
+        name: 'airflow-webserver',
+        script: settings.executables.startWebserver,
+        args: [],
         interpreter: 'bash',
         watch: false,
         exec_mode: 'fork_mode',
