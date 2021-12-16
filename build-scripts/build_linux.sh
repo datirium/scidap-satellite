@@ -145,6 +145,8 @@ cd ${WORKDIR}
 cp -L ../start_scripts/start_postgres.sh ${SATDIR}/bin/
 cp -L ../start_scripts/start_scheduler.sh ${SATDIR}/bin/
 cp -L ../start_scripts/start_apiserver.sh ${SATDIR}/bin/
+cp -L ../start_scripts/start_webserver.sh ${SATDIR}/bin/
+
 
 echo "Moving installed programs to the bundle folder, copying configuration files and utilities. Compressing results."
 cd ${WORKDIR}

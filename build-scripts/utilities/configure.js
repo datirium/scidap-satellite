@@ -322,6 +322,19 @@ function getRunConfiguration(settings){
         }
       },
       {
+        name: 'airflow-webserver',
+        script: settings.executables.startWebserver,
+        args: [],
+        interpreter: 'bash',
+        watch: false,
+        exec_mode: 'fork_mode',
+        cwd: settings.defaultLocations.airflow,
+        env: {
+          ...getPostgresEnvVar(settings),
+          ...getAirflowEnvVar(settings)
+        }
+      },
+      {
         name: 'njs-client',
         script: settings.executables.startNjsClient,
         interpreter: 'node',

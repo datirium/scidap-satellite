@@ -12,10 +12,12 @@ exports.default = async function notarizing(context) {
   const appName = context.packager.appInfo.productFilename;
 
   return await notarize({
+    // tool: 'notarytool',
     appBundleId: 'com.datirium.scidap-satellite',
     appPath: `${appOutDir}/${appName}.app`,
     appleId: process.env.APPLE_ID,
     appleIdPassword: password,
     ascProvider: process.env.TEAM_ID,
+    teamId: process.env.TEAM_ID
   });
 };
