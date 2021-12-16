@@ -2,6 +2,59 @@
 
 ## Ubuntu/CentOS
 
+
+lxml in cwl-airflow:
+
+```
+ git clone https://github.com/lxml/lxml
+ python3.7 setup.py build --static-deps
+```
+
+The most annoying patch is to sign the binaries https://github.com/electron-userland/electron-builder/pull/5322/commits/209874e84e83940f30b7f33086c3e6d00177bf6a, problem that `app-builder-lib/electron-osx-sign/util.js` ignores hidden and libs, etc.
+
+
+# Boilerplate
+
+Clone this repository locally :
+
+``` bash
+git clone https://github.com/maximegris/angular-electron.git
+```
+
+Install dependencies with npm :
+
+``` bash
+npm install
+```
+
+There is an issue with `yarn` and `node_modules` that are only used in electron on the backend when the application is built by the packager. Please use `npm` as dependencies manager.
+
+
+If you want to generate Angular components with Angular-cli , you **MUST** install `@angular/cli` in npm global context.
+Please follow [Angular-cli documentation](https://github.com/angular/angular-cli) if you had installed a previous version of `angular-cli`.
+
+``` bash
+npm install -g @angular/cli
+```
+
+
+# Building SciDAP-Satellite bundle for Ubuntu and macOS
+
+## Ubuntu
+
+**To build** relocatable `tar.gz` that can be run with PM2 on Ubuntu 18.04, follow these directions.
+- Start a clean virtual machine with Ubuntu 18.04. Install required dependencies.
+   ```bash
+   sudo apt-get install git g++ make curl
+   curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -    # to get Node 12.X and npm
+   sudo apt-get install nodejs
+   mkdir ~/.npm-global                                                # to avoid permission problems with npm
+   npm config set prefix '~/.npm-global'
+   export PATH=~/.npm-global/bin:$PATH
+   npm install -g @nestjs/cli@7.6.0
+   ```
+- Clone `scidap-satellite` repository and switch to the `main` branch.
+=======
 **To build** relocatable `tar.gz` that can be run on Ubuntu 18.04/20.04, CentOS 7/8, follow these directions.
 - Make sure that Docker is installed and properly configured [see installation instructions](https://docs.docker.com/engine/install/ubuntu/)
 - Clone [scidap-satellite](https://github.com/datirium/scidap-satellite) repository and switch to the branch/tag/commit you want to build from. Note, all local changes in the `build-scripts` directory will be included in the bundle.
@@ -158,4 +211,57 @@ The default configuration file from `./configs/scidap_default_settings.json` wil
         "mac_update_from_devel": false
     }
 }
+<<<<<<< HEAD
 ```
+
+_____
+## Notes for developers
+
+**Applied patches and used binaries**
+
+1. For Ubuntu bundle had to patch `cwltool/sandboxjs.py` as it fails to evaluate JavaScript expressions when CWL-Airflow is run from PM2. Perhaps, it's somehow related to how PM2 starts the project. As a workaround, made `cwltool` always run JavaScript expression evaluation using Docker.
+2. Couldn't compile aria with `--with-openssl` even if openssl was installed. As a solution use builds from here https://github.com/q3aql/aria2-static-builds
+3. PostgeSQL binaries are downloaded from https://www.enterprisedb.com/download-postgresql-binaries 
+
+**Upgrading from the old (prior to replacing BioWardrobe-NG) Ubuntu satellite installation**
+1. Stop services
+```bash
+systemctl stop airflow-apiserver
+systemctl stop airflow-scheduler
+systemctl stop airflow-webserver
+systemctl stop aria2c
+systemctl stop scidap-satellite
+```
+2. Create dump from the current MongoDB and stop `mongodb` service
+```
+mongodump
+systemctl stop mongodb
+```
+3. Start only `mongod` using PM2 `--only` parameter and restore database from the the dump
+```
+pm2 start ecosystem.config.js --only mongod
+mongorestore
+```
+4. Start all services using PM2
+5. After update (both for Ubuntu and macOS) you might need to force SciDAP-UI push new CWL to the Satellite. For that remove `CWL` field from the `sync` object of the correspondent document in the `Satellites` collection. **Do not** remove other fields as that will cause samples to rerun.
+
+**Known issues on Ubuntu**
+1. Can't find Node's modules
+```export NODE_PATH="'$(npm root)'"```
+or
+```export NODE_PATH="'$(npm root -g)'"```
+2. Can't start `airflow-scheduler` or `airflow-apiserver` services
+    Make sure you don't have `~/.local` with python packages installed, especially with `cwl-airflow`. Quick solution - just rename it. Even if we set PYTHONPATH, it will still try to search in the standard python module locations.
+3. Docker seems to works slow even on `docker run`. Check if you have the following line in the `journalctl -u docker` log
+    ```
+    INFO[2021-01-03T12:21:16.363784091-05:00] No non-localhost DNS nameservers are left in resolv.conf. Using default external servers: [nameserver 8.8.8.8 nameserver 8.8.4.4]
+    ```
+    Check if you can ping either 8.8.8.8 or 8.8.4.4. If not, add dns configuration into your `/etc/docker/daemon.json` file the `/etc/resolv.conf` file similar to what is listed below.
+    ```
+    "dns": ["127.0.0.53", "8.8.8.8", "8.8.4.4"]
+    ```
+    More details can be found https://docs.docker.com/engine/install/linux-postinstall/#specify-dns-servers-for-docker and https://stackoverflow.com/a/39400887/8808721
+    Alternatively, test `docker run` with `--dns` param to see if DNS was the problem
+
+**Known issues on macOS**
+1. Updating `Enable local files module` from the `Settings` won't make any effect (need to be properly implemented).

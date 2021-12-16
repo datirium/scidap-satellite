@@ -245,7 +245,7 @@ function getSettings(cwd, customLocation){
   const settings_locations = [
     process.env.SCIDAP_SETTINGS,
     path.resolve(cwd, '../../scidap_settings.json'),
-    path.resolve(os.homedir(), './.config/scidap-satellite/scidap_settings.json'),  // might be different on mac
+    path.resolve(os.homedir(), './.config/scidap_satellite/scidap_settings.json'),  // might be different on mac
     path.resolve(cwd, '../configs/scidap_default_settings.json')                    // default settings should be always present
   ];
 
@@ -342,7 +342,20 @@ function getRunConfiguration(settings){
         exec_mode: 'fork_mode',
         cwd: settings.defaultLocations.airflow,
         env: getNjsClientEnvVar(settings)
-      }
+      },
+      {
+        name: 'airflow-webserver',
+        script: settings.executables.startWebserver,
+        args: [],
+        interpreter: 'bash',
+        watch: false,
+        exec_mode: 'fork_mode',
+        cwd: settings.defaultLocations.airflow,
+        env: {
+          ...getPostgresEnvVar(settings),
+          ...getAirflowEnvVar(settings)
+        }
+      },
     ]
   };
 
