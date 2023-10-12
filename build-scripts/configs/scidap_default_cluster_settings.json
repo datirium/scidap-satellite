@@ -1,0 +1,74 @@
+{
+    "defaultLocations": {
+        "airflow": "airflow",
+        "pgdata": "pgdata",
+        "clusterApi": "cluster-api"
+    },
+    "satelliteSettings": {
+        "rcServerToken": "",
+        "rcServer": "api-sync.scidap.com:8080",
+        "port": 3069,
+        "airflowAPIPort": 8081,
+        "systemRoot": "./scidap",
+        "aria2cPort": 6800,
+        "pm2Port": 9615,
+        "enableSSL": true,
+        "proxy": "",
+        "noProxy": "",
+        "remotes": {
+            "directurl": {
+                "protocol": [
+                    "ftp",
+                    "http",
+                    "https"
+                ],
+                "caption": "ftp"
+            },
+            "geo": {
+                "protocol": "geo",
+                "caption": "geo"
+            },
+            "localfiles": {
+                "show": false,
+                "collection": [
+                    {
+                        "path": "upload",
+                        "name": "localfiles"
+                    }
+                ]
+            }
+        }
+    },
+    "clusterApiSettings": {
+        "scriptDir": "/home/scidap/satellite/satellite/bin",
+        "outputDir": "/home/scidap/scidap/projects",
+        "tmpToilDir": "/mnt/cache/TMP_TOIL_DIR"
+    },
+    "aria2cSettings": {
+        "--console-log-level": "debug",
+        "--remove-control-file": true,
+        "--allow-overwrite": true,
+        "--auto-file-renaming": false
+    },
+    "airflowSettings": {
+        "core__executor": "LocalExecutor",
+        "core__parallelism": 1,
+        "core__dag_concurrency": 1,
+        "core__max_active_runs_per_dag": 5,
+        "core__hostname_callable": "socket.gethostname",
+        "webserver__rbac": false,
+        "webserver__enable_proxy_fix": "True",
+        "webserver__web_server_port": 8081,
+        "webserver__web_server_host": "127.0.0.1"
+    },
+    "databaseSettings":{
+        "db_port": 5432,
+        "db_user": "airflow",
+        "db_password": "airflow",
+        "db_name": "airflow"
+    },
+    "devel":{
+        "simulation": false,
+        "mac_update_from_devel": false
+    }
+}
