@@ -82,6 +82,19 @@ In case you by mistake run `build_ubuntu.sh` script, you will need to remove `no
 
 The default configuration file from `./configs/scidap_default_settings.json` will be used by Electron for generating `config.json`.
 
+
+## Building CLUSTER sat (locally)
+
+run 
+
+```bash
+./build_sripts/build_linux_CLUSTER_in_docker.sh /abs/path/to/cluster/repo /abs/path/to/njs/repo DOCKER_IMAGE_NAME
+# 6 more optional params with defaults
+```
+
+> NOTE: the docker image should be ubuntu base, but requires python with shiv installed
+A dockerfile to use as a basis is also included, and can be built with ```docker build --tag "SOME_TAG" - < linux_cluster.dockerfile```
+
 ## Default configuration
 
 - `defaultLocations.airflow` and `defaultLocations.pgdata` define the locations for airflow configuration and PostreSQL database files correspondingly. If they are set as relative paths, they by default will be resolved based on the `satelliteSettings.systemRoot`. However, for macOS bundle if `satelliteSettings.systemRoot` was changed from the **Satellite data directory** parameter in the **Common** settings tab, the `defaultLocations.airflow` and `defaultLocations.pgdata` won't be re-evaluated.
