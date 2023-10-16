@@ -41,10 +41,10 @@ build_cluster_api() {
   # PATH="${WORKDIR}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
   echo "Building api with shiv"
   cd $1
-  conda activate buildCluster
+  # conda activate buildCluster
   shiv -c start-cluster-api -o start-cluster-api . > ${WORKDIR}/cluster_build.log 2>&1
   mv start-cluster-api ${SATDIR}/bin
-  conda deactivate
+  # conda deactivate
   cd ${WORKDIR}
   PATH=$TEMP_PATH
 }
@@ -130,18 +130,19 @@ build_njs_client $NJS_REPO_PATH #/Users/scrowley/Desktop/REPOS/scidap-satellite-
 echo "Installing pm2"
 install_pm2 ${SATDIR}
 
+
+# echo "Downloading python and installing shiv for building cluster"
+# PYTHON_URL="https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz"
+# download_and_extract $PYTHON_URL
+echo "Downloading cluster-api"
+build_cluster_api $CLUSTER_REPO_PATH #/Users/scrowley/Desktop/REPOS/sat-cluster-api
+
+
 echo "Downloading Aria2"
 ARIA2_URL="https://github.com/q3aql/aria2-static-builds/releases/download/v${ARIA2_VERSION}/aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1.tar.bz2"
 download_and_extract $ARIA2_URL aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1.tar.bz2 aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1
 echo "Copying aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1/aria2c"
 cp aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1/aria2c ${SATDIR}/bin/
-
-# echo "Downloading python and installing shiv for building cluster"
-# PYTHON_URL="https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz"
-# download_and_extract $PYTHON_URL
-
-echo "Downloading cluster-api"
-build_cluster_api $CLUSTER_REPO_PATH #/Users/scrowley/Desktop/REPOS/sat-cluster-api
 
 
 echo "Downloading SRA-Toolkit"                                           # need to copy some extra files as fastq-dump doesn't work without them)
@@ -167,16 +168,16 @@ cp -L pgsql/bin/psql.bin ${SATDIR}/bin/
 cp -r pgsql/lib ${SATDIR}/
 cp -r pgsql/share ${SATDIR}/
 
-echo "Downloading CWL-Airflow"
-CWLAIRFLOW_URL="https://github.com/Barski-lab/cwl-airflow/releases/download/${CWLAIRFLOW_VERSION}/python_${CWLAIRFLOW_PYTHON_VERSION}_cwl_airflow_master_linux.tar.gz"
-download_and_extract $CWLAIRFLOW_URL python_${CWLAIRFLOW_PYTHON_VERSION}_cwl_airflow_master_linux.tar.gz python3
-echo "Copying python3 to ${WORKDIR}/cwl-airflow"
-cp -r python3 cwl-airflow
-# patch cwltool so it always use docker for javascript evaluation. The normal node causes troubles when running from pm2 (perhaps somehow related to subprocesses?)
-SHORT_PYTHON_VERSION=$(echo ${CWLAIRFLOW_PYTHON_VERSION} | cut -d "." -f 1,2)
-sed -i -e 's/^    trynodes = ("nodejs", "node")/    trynodes = []/g' ./cwl-airflow/python${CWLAIRFLOW_PYTHON_VERSION}/opt/python${SHORT_PYTHON_VERSION}/lib/python${SHORT_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
-# patch cwltool to have longer timeout for javascript evaluation as hardcoded 30 sec is not enough when starting multiple containers simultaniously
-sed -i -e '157i\ \ \ \ timeout = 600' ./cwl-airflow/python${CWLAIRFLOW_PYTHON_VERSION}/opt/python${SHORT_PYTHON_VERSION}/lib/python${SHORT_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
+# echo "Downloading CWL-Airflow"
+# CWLAIRFLOW_URL="https://github.com/Barski-lab/cwl-airflow/releases/download/${CWLAIRFLOW_VERSION}/python_${CWLAIRFLOW_PYTHON_VERSION}_cwl_airflow_master_linux.tar.gz"
+# download_and_extract $CWLAIRFLOW_URL python_${CWLAIRFLOW_PYTHON_VERSION}_cwl_airflow_master_linux.tar.gz python3
+# echo "Copying python3 to ${WORKDIR}/cwl-airflow"
+# cp -r python3 cwl-airflow
+# # patch cwltool so it always use docker for javascript evaluation. The normal node causes troubles when running from pm2 (perhaps somehow related to subprocesses?)
+# SHORT_PYTHON_VERSION=$(echo ${CWLAIRFLOW_PYTHON_VERSION} | cut -d "." -f 1,2)
+# sed -i -e 's/^    trynodes = ("nodejs", "node")/    trynodes = []/g' ./cwl-airflow/python${CWLAIRFLOW_PYTHON_VERSION}/opt/python${SHORT_PYTHON_VERSION}/lib/python${SHORT_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
+# # patch cwltool to have longer timeout for javascript evaluation as hardcoded 30 sec is not enough when starting multiple containers simultaniously
+# sed -i -e '157i\ \ \ \ timeout = 600' ./cwl-airflow/python${CWLAIRFLOW_PYTHON_VERSION}/opt/python${SHORT_PYTHON_VERSION}/lib/python${SHORT_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
 
 
 echo "Copying start scripts"
@@ -198,4 +199,4 @@ cp ../configs/ecosystem.config.js ./configs/
 cp ../configs/scidap_default_cluster_settings.json ./configs/scidap_default_settings.json
 cp ../utilities/configure_cluster.js ./utilities/configure.js
 tar -czf scidap-cluster-satellite-${SATELLITE_VERSION_LABEL}-${DISTRO_TAG}.tar.gz ./*
-rm -rf cwl-airflow satellite configs utilities pm2
+rm -rf satellite configs utilities pm2 #cwl-airflow

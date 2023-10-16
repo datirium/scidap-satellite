@@ -21,3 +21,11 @@ RUN conda create -n buildCluster python=3.6.8
 # RUN conda activate buildCluster
 # RUN pip install shiv
 RUN conda install -n buildCluster -c conda-forge shiv
+
+
+# Make RUN commands use the new environment:
+SHELL ["conda", "run", "-n", "buildCluster", "/bin/bash", "-c"]
+
+# The code to run when container is started:
+ENTRYPOINT ["conda", "run", "-n", "buildCluster"] 
+#, "python3", "src/server.py"]
