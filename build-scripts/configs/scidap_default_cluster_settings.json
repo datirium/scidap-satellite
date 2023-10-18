@@ -42,7 +42,8 @@
     "clusterApiSettings": {
         "scriptDir": "/home/scidap/satellite/satellite/bin",
         "outputDir": "/home/scidap/scidap/projects",
-        "tmpToilDir": "/mnt/cache/TMP_TOIL_DIR"
+        "tmpToilDir": "/mnt/cache/TMP_TOIL_DIR",
+        "envFilePath": "/data/barskilab/temporary/myenv/bin/activate"
     },
     "aria2cSettings": {
         "--console-log-level": "debug",
