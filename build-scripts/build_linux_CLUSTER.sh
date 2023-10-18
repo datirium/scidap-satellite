@@ -41,10 +41,10 @@ build_cluster_api() {
   # PATH="${WORKDIR}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
   echo "Building api with shiv"
   cd $1
-  # conda activate buildCluster
-  shiv -c start-cluster-api -o start-cluster-api . > ${WORKDIR}/cluster_build.log 2>&1
-  mv start-cluster-api ${SATDIR}/bin
-  # conda deactivate
+
+  # shiv -c start-cluster-api -o start-cluster-api . > ${WORKDIR}/cluster_build.log 2>&1
+  # mv start-cluster-api ${SATDIR}/bin
+
   cd ${WORKDIR}
   PATH=$TEMP_PATH
 }
@@ -198,5 +198,5 @@ mkdir configs utilities
 cp ../configs/ecosystem.config.js ./configs/
 cp ../configs/scidap_default_cluster_settings.json ./configs/scidap_default_settings.json
 cp ../utilities/configure_cluster.js ./utilities/configure.js
-tar -czf scidap-cluster-satellite-${SATELLITE_VERSION_LABEL}-${DISTRO_TAG}.tar.gz ./*
+tar -czf scidap-cluster-satellite-v${SATELLITE_VERSION_LABEL}-${DISTRO_TAG}.tar.gz ./*
 rm -rf satellite configs utilities pm2 #cwl-airflow

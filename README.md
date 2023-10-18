@@ -88,7 +88,7 @@ The default configuration file from `./configs/scidap_default_settings.json` wil
 run 
 
 ```bash
-./build_sripts/build_linux_CLUSTER_in_docker.sh /abs/path/to/cluster/repo /abs/path/to/njs/repo DOCKER_IMAGE_NAME
+./build_sripts/build_linux_CLUSTER_in_docker.sh /abs/path/to/cluster/repo /abs/path/to/njs/repo DOCKER_IMAGE_NAME sat.new.version
 # 6 more optional params with defaults
 ```
 

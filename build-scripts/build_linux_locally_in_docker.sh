@@ -39,11 +39,10 @@ sleep 2
 
 docker run --rm -it \
        --volume ${WORKING_DIR}:/tmp \
-       --volume ${CLUSTER_REPO_PATH}:/cluster-repo \
        --volume ${NJS_REPO_PATH}:/njs-repo \
        --workdir /tmp \
        ${BUILD_CONTAINER} \
-       /tmp/build_linux_CLUSTER.sh \
+       /tmp/build_linux_locally.sh \
        ${SATELLITE_VERSION_LABEL} \
        ${NODE_VERSION} \
        ${ARIA2_VERSION} \

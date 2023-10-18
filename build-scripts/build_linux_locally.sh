@@ -36,31 +36,6 @@ build_njs_client() {
   PATH=$TEMP_PATH
 }
 
-build_cluster_api() {
-  TEMP_PATH=$PATH
-  # PATH="${WORKDIR}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
-  echo "Building api with shiv"
-  cd $1
-  # conda activate buildCluster
-  shiv -c start-cluster-api -o start-cluster-api . > ${WORKDIR}/cluster_build.log 2>&1
-  mv start-cluster-api ${SATDIR}/bin
-  # conda deactivate
-  cd ${WORKDIR}
-  PATH=$TEMP_PATH
-}
-
-download_and_build_toil() {
-  TEMP_PATH=$PATH
-  # PATH="${WORKDIR}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
-  echo "Building api with shiv"
-  git clone https://github.com/michael-kotliar/toil.git
-  cd toil
-  shiv -c start-cluster-api -o start-cluster-api . > ${WORKDIR}/njs_npm_build.log 2>&1
-  mv start-cluster-api ${SATDIR}/bin
-  cd ${WORKDIR}
-  PATH=$TEMP_PATH
-}
-
 install_pm2() {
   TEMP_PATH=$PATH
   PATH="${WORKDIR}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
@@ -179,17 +154,16 @@ cp -L ../start_scripts/start_postgres.sh ${SATDIR}/bin/
 cp -L ../start_scripts/start_scheduler.sh ${SATDIR}/bin/
 cp -L ../start_scripts/start_apiserver.sh ${SATDIR}/bin/
 cp -L ../start_scripts/start_webserver.sh ${SATDIR}/bin/
-cp -L ../start_scripts/start_cluster_api.sh ${SATDIR}/bin/
-cp -L ../start_scripts/run_toil.sh ${SATDIR}/bin/
+
 
 echo "Moving installed programs to the bundle folder, copying configuration files and utilities. Compressing results."
 cd ${WORKDIR}
-mv ${SATDIR} ../bundle
+mv cwl-airflow ${SATDIR} ../bundle
 cp -L ../start_scripts/pm2 ../bundle/
 cd ../bundle
 mkdir configs utilities
 cp ../configs/ecosystem.config.js ./configs/
-cp ../configs/scidap_default_cluster_settings.json ./configs/scidap_default_settings.json
-cp ../utilities/configure_cluster.js ./utilities/configure.js
-tar -czf scidap-cluster-satellite-${SATELLITE_VERSION_LABEL}-${DISTRO_TAG}.tar.gz ./*
-rm -rf satellite configs utilities pm2 cwl-airflow
+cp ../configs/scidap_default_settings.json ./configs/
+cp ../utilities/configure.js ./utilities/
+tar -czf scidap-satellite-v${SATELLITE_VERSION_LABEL}-${DISTRO_TAG}.tar.gz ./*
+rm -rf cwl-airflow satellite configs utilities pm2
