@@ -65,6 +65,7 @@ function getClusterEnvVar(settings){
     SCRIPT_DIR: settings.clusterApiSettings.scriptDir,
     TMP_TOIL_DIR: settings.clusterApiSettings.tmpToilDir,
     ENV_FILE_PATH: settings.clusterApiSettings.envFilePath,
+    SINGULARITY_TMP_DIR: settings.clusterApiSettings.singularityTmpPath,
   };
   return clusterEnvVar
 }
