@@ -49,5 +49,5 @@ docker run --rm -it \
        ${CLUSTERAPI_PYTHON_VERSION} \
        ${SRA_TOOLKIT_VERSION} \
        ${POSTGRESQL_VERSION} \
-       ${CLUSTER_API_VERSION}
+       ${CLUSTER_API_VERSION} \
        /njs-repo
