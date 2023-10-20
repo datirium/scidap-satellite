@@ -19,6 +19,10 @@
 
 After script finishes running, you will find a compressed `scidap-satellite-commitsha-ubuntu.tar.gz` in the `./bundle` folder. All the temporary data will be kept in `./build` and can be removed.
 
+
+### Building Cluster Sat
+The env vars for `GITHUB_USER` and `GITHUB_TOKEN` should be set according to your personal access token for github
+
 **To run** relocatable `tar.gz` on Ubuntu 18.04/20.04, CentOS 7/8, follow these directions.
 - Make sure that Docker is installed and properly configured [see installation instructions](https://docs.docker.com/engine/install/ubuntu/)
 - Uncompress `scidap-satellite-commitsha-ubuntu.tar.gz` into an empty folder and start `pm2` with `./configs/ecosystem.config.js` file. See how to provide custom settings location at the end of this section.
