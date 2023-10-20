@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-CLUSTER_REPO_PATH=${1:-"/Users/scrowley/Desktop/REPOS/sat-cluster-api"}
+# CLUSTER_REPO_PATH=${1:-"/Users/scrowley/Desktop/REPOS/sat-cluster-api"}
+CLUSTER_API_VERSION=${1:="0.1.1"}
 NJS_REPO_PATH=${2:-"/Users/scrowley/Desktop/REPOS/scidap-satellite-interactions/scidap-satellite"}
 
 BUILD_CONTAINER=${3:-"ubuntu:18.04"}                          # ubuntu or centos images (centos:7, centos:8, ubuntu:18.04, ubuntu:20.04)
@@ -8,10 +9,10 @@ SATELLITE_VERSION_LABEL=${4:-`git rev-parse HEAD`}            # For tagging purp
 NODE_VERSION=${5:-"12.22.7"}
 ARIA2_VERSION=${6:-"1.36.0"}
 # CWLAIRFLOW_VERSION=${5:-"1.2.11"}
-# CWLAIRFLOW_PYTHON_VERSION=${6:-"3.8.12"}
+CLUSTERAPI_PYTHON_VERSION=${7:-"3.8.18"}
 # NJS_CLIENT_VERSION=${7:-"master"}                       # No local builds. Always pulled from BitBucket. All the changes should be pushed beforehand.
-SRA_TOOLKIT_VERSION=${7:-"2.11.1"}
-POSTGRESQL_VERSION=${8:-"10.18"}                              # see https://www.enterprisedb.com/download-postgresql-binaries for available versions
+SRA_TOOLKIT_VERSION=${8:-"2.11.1"}
+POSTGRESQL_VERSION=${9:-"10.18"}                              # see https://www.enterprisedb.com/download-postgresql-binaries for available versions
 # PYTHON_VERSION=${9:-"3.6.8"}
 
 # if [[ -z "${BITBUCKET_USER}" ]] || [[ -z "${BITBUCKET_PASS}" ]]; then
@@ -32,12 +33,12 @@ echo "  ARIA2_VERSION=${ARIA2_VERSION}"
 # echo "  NJS_CLIENT_VERSION=${NJS_CLIENT_VERSION}"
 echo "  SRA_TOOLKIT_VERSION=${SRA_TOOLKIT_VERSION}"
 echo "  POSTGRESQL_VERSION=${POSTGRESQL_VERSION}"
+echo "  CLUSTER_API_VERSION=${CLUSTER_API_VERSION}"
 
 sleep 2
 
 docker run --rm -it \
        --volume ${WORKING_DIR}:/tmp \
-       --volume ${CLUSTER_REPO_PATH}:/cluster-repo \
        --volume ${NJS_REPO_PATH}:/njs-repo \
        --workdir /tmp \
        ${BUILD_CONTAINER} \
@@ -45,7 +46,8 @@ docker run --rm -it \
        ${SATELLITE_VERSION_LABEL} \
        ${NODE_VERSION} \
        ${ARIA2_VERSION} \
+       ${CLUSTERAPI_PYTHON_VERSION} \
        ${SRA_TOOLKIT_VERSION} \
        ${POSTGRESQL_VERSION} \
-       /cluster-repo \
+       ${CLUSTER_API_VERSION}
        /njs-repo

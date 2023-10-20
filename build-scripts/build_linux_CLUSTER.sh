@@ -36,30 +36,18 @@ build_njs_client() {
   PATH=$TEMP_PATH
 }
 
-build_cluster_api() {
-  TEMP_PATH=$PATH
-  # PATH="${WORKDIR}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
-  echo "Building api with shiv"
-  cd $1
+# build_cluster_api() {
+#   TEMP_PATH=$PATH
+#   # PATH="${WORKDIR}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
+#   echo "Building api with shiv"
+#   cd $1
 
-  # shiv -c start-cluster-api -o start-cluster-api . > ${WORKDIR}/cluster_build.log 2>&1
-  # mv start-cluster-api ${SATDIR}/bin
+#   shiv -c start-cluster-api -o start-cluster-api . > ${WORKDIR}/cluster_build.log 2>&1
+#   mv start-cluster-api ${SATDIR}/bin
 
-  cd ${WORKDIR}
-  PATH=$TEMP_PATH
-}
-
-download_and_build_toil() {
-  TEMP_PATH=$PATH
-  # PATH="${WORKDIR}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
-  echo "Building api with shiv"
-  git clone https://github.com/michael-kotliar/toil.git
-  cd toil
-  shiv -c start-cluster-api -o start-cluster-api . > ${WORKDIR}/njs_npm_build.log 2>&1
-  mv start-cluster-api ${SATDIR}/bin
-  cd ${WORKDIR}
-  PATH=$TEMP_PATH
-}
+#   cd ${WORKDIR}
+#   PATH=$TEMP_PATH
+# }
 
 install_pm2() {
   TEMP_PATH=$PATH
@@ -76,13 +64,14 @@ SATELLITE_VERSION_LABEL=$1
 NODE_VERSION=$2
 ARIA2_VERSION=$3
 # CWLAIRFLOW_VERSION=$4
-# CWLAIRFLOW_PYTHON_VERSION=$5
+CLUSTERAPI_PYTHON_VERSION=$5
 # NJS_CLIENT_VERSION=$6
-SRA_TOOLKIT_VERSION=$4
-POSTGRESQL_VERSION=$5 
+SRA_TOOLKIT_VERSION=$5
+POSTGRESQL_VERSION=$6
 # PYTHON_VERSION=$6
-CLUSTER_REPO_PATH=$6
-NJS_REPO_PATH=$7
+# CLUSTER_REPO_PATH=$6
+CLUSTER_API_VERSION=$7
+NJS_REPO_PATH=$8
 
 DISTRO=`awk -F= '/^NAME/{print $2}' /etc/os-release`              # either "Ubuntu" or "CentOS Linux"
 
@@ -130,20 +119,19 @@ build_njs_client $NJS_REPO_PATH #/Users/scrowley/Desktop/REPOS/scidap-satellite-
 echo "Installing pm2"
 install_pm2 ${SATDIR}
 
-
-# echo "Downloading python and installing shiv for building cluster"
-# PYTHON_URL="https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz"
-# download_and_extract $PYTHON_URL
-echo "Downloading cluster-api"
-build_cluster_api $CLUSTER_REPO_PATH #/Users/scrowley/Desktop/REPOS/sat-cluster-api
-
-
 echo "Downloading Aria2"
 ARIA2_URL="https://github.com/q3aql/aria2-static-builds/releases/download/v${ARIA2_VERSION}/aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1.tar.bz2"
 download_and_extract $ARIA2_URL aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1.tar.bz2 aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1
 echo "Copying aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1/aria2c"
 cp aria2-${ARIA2_VERSION}-linux-gnu-64bit-build1/aria2c ${SATDIR}/bin/
 
+echo "Downloading cluster-api"
+# build_cluster_api $CLUSTER_REPO_PATH #/Users/scrowley/Desktop/REPOS/sat-cluster-api
+CLUSTER_TAR_NAME="python_${CLUSTERAPI_PYTHON_VERSION}_toil_api_master_linux.tar.gz"
+CLUSTER_API_URL="https://github.com/datirium/satellite-cluster-api/releases/download/${CLUSTER_API_VERSION}/${CLUSTER_TAR_NAME}"
+download_and_extract $CWLAIRFLOW_URL ${CLUSTER_TAR_NAME} python3
+echo "Copying python3 to ${WORKDIR}/cluster_api"
+cp -r python3 cluster_api
 
 echo "Downloading SRA-Toolkit"                                           # need to copy some extra files as fastq-dump doesn't work without them)
 SRA_TOOLKIT_URL="https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_TOOLKIT_VERSION}/sratoolkit.${SRA_TOOLKIT_VERSION}-${SRA_TOOLKIT_SUFFIX}.tar.gz"
@@ -168,16 +156,6 @@ cp -L pgsql/bin/psql.bin ${SATDIR}/bin/
 cp -r pgsql/lib ${SATDIR}/
 cp -r pgsql/share ${SATDIR}/
 
-# echo "Downloading CWL-Airflow"
-# CWLAIRFLOW_URL="https://github.com/Barski-lab/cwl-airflow/releases/download/${CWLAIRFLOW_VERSION}/python_${CWLAIRFLOW_PYTHON_VERSION}_cwl_airflow_master_linux.tar.gz"
-# download_and_extract $CWLAIRFLOW_URL python_${CWLAIRFLOW_PYTHON_VERSION}_cwl_airflow_master_linux.tar.gz python3
-# echo "Copying python3 to ${WORKDIR}/cwl-airflow"
-# cp -r python3 cwl-airflow
-# # patch cwltool so it always use docker for javascript evaluation. The normal node causes troubles when running from pm2 (perhaps somehow related to subprocesses?)
-# SHORT_PYTHON_VERSION=$(echo ${CWLAIRFLOW_PYTHON_VERSION} | cut -d "." -f 1,2)
-# sed -i -e 's/^    trynodes = ("nodejs", "node")/    trynodes = []/g' ./cwl-airflow/python${CWLAIRFLOW_PYTHON_VERSION}/opt/python${SHORT_PYTHON_VERSION}/lib/python${SHORT_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
-# # patch cwltool to have longer timeout for javascript evaluation as hardcoded 30 sec is not enough when starting multiple containers simultaniously
-# sed -i -e '157i\ \ \ \ timeout = 600' ./cwl-airflow/python${CWLAIRFLOW_PYTHON_VERSION}/opt/python${SHORT_PYTHON_VERSION}/lib/python${SHORT_PYTHON_VERSION}/site-packages/cwltool/sandboxjs.py
 
 
 echo "Copying start scripts"
@@ -199,4 +177,4 @@ cp ../configs/ecosystem.config.js ./configs/
 cp ../configs/scidap_default_cluster_settings.json ./configs/scidap_default_settings.json
 cp ../utilities/configure_cluster.js ./utilities/configure.js
 tar -czf scidap-cluster-satellite-v${SATELLITE_VERSION_LABEL}-${DISTRO_TAG}.tar.gz ./*
-rm -rf satellite configs utilities pm2 #cwl-airflow
+rm -rf satellite configs utilities pm2 cluster_api
