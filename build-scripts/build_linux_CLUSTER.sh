@@ -140,7 +140,7 @@ echo "Downloading cluster-api"
 # build_cluster_api $CLUSTER_REPO_PATH #/Users/scrowley/Desktop/REPOS/sat-cluster-api
 CLUSTER_TAR_NAME="python_${CLUSTERAPI_PYTHON_VERSION}_toil_api_master_linux.tar.gz"
 CLUSTER_API_URL="https://github.com/datirium/satellite-cluster-api/releases/download/${CLUSTER_API_VERSION}/${CLUSTER_TAR_NAME}"
-download_and_extract $CWLAIRFLOW_URL ${CLUSTER_TAR_NAME} python3
+download_and_extract $CLUSTER_API_URL ${CLUSTER_TAR_NAME} python3
 echo "Copying python3 to ${WORKDIR}/cluster_api"
 cp -r python3 cluster_api
 
