@@ -10,12 +10,13 @@ DAG_ID=$5
 RUN_ID=$6
 TOIL_ENV_FILE=$7
 SINGULARITY_TMP_DIR=$8
-MEMORY=${9:-"68719476736"}
-CPU=${10:-"8"}
+NJS_CLIENT_PORT=${9:-"3069"}
+MEMORY=${10:-"68719476736"}
+CPU=${11:-"8"}
 
 
 # remove file formats from cwl
-sed -i '/format: /d' $WORKFLOW
+sed -i '/"format": /d' $WORKFLOW
 
 JOBSTORE="${TMPDIR}/jobstore"
 LOGS="${TMPDIR}/logs/${DAG_ID}_${RUN_ID}"

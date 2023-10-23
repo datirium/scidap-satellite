@@ -10,7 +10,7 @@ TMP_TOIL_DIR="${TMP_TOIL_DIR:="/mnt/cache/TOIL_TMP_DIR"}"
 # a better default path needs to be established
 ENV_FILE_PATH="${ENV_FILE_PATH:="/path/to/temporary/myenv/bin/activate"}"
 SINGULARITY_TMP_DIR="${SINGULARITY_TMP_DIR:="/mnt/cache/SINGULARITY_TMP_DIR"}"
-
+NJS_CLIENT_PORT="${NJS_CLIENT_PORT:="3069"}"
 
 echo "Starting Cluster API for cwl-toil"
-start-cluster-api $OUTPUT_DIR $SCRIPT_DIR $TMP_TOIL_DIR $ENV_FILE_PATH $SINGULARITY_TMP_DIR
+start-cluster-api $OUTPUT_DIR $SCRIPT_DIR $TMP_TOIL_DIR $ENV_FILE_PATH $SINGULARITY_TMP_DIR $NJS_CLIENT_PORT

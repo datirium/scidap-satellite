@@ -180,7 +180,7 @@ cp -L ../start_scripts/run_toil.sh ${SATDIR}/bin/
 
 echo "Moving installed programs to the bundle folder, copying configuration files and utilities. Compressing results."
 cd ${WORKDIR}
-mv ${SATDIR} ../bundle
+mv cluster_api ${SATDIR} ../bundle
 cp -L ../start_scripts/pm2 ../bundle/
 cd ../bundle
 mkdir configs utilities
