@@ -28,7 +28,7 @@ cleanup()
   echo "Sending workflow execution error"
   PAYLOAD="{\"payload\":{\"dag_id\": \"${DAG_ID}\", \"run_id\": \"${RUN_ID}\", \"state\": \"failed\", \"progress\": 0, \"error\": \"failed\", \"statistics\": \"\", \"logs\": \"\"}}"
   echo $PAYLOAD
-  curl -X POST http://localhost:3069/airflow/progress -H "Content-Type: application/json" -d "${PAYLOAD}"
+  curl -X POST http://localhost:${NJS_CLIENT_PORT}/airflow/progress -H "Content-Type: application/json" -d "${PAYLOAD}"
   exit ${EXIT_CODE}
 }
 trap cleanup SIGINT SIGTERM SIGKILL ERR
@@ -67,7 +67,7 @@ EOL
 echo "Sending workflow execution progress"
 PAYLOAD="{\"payload\":{\"dag_id\": \"${DAG_ID}\", \"run_id\": \"${RUN_ID}\", \"state\": \"Sent to Cluster\", \"progress\": 8, \"error\": \"\", \"statistics\": \"\", \"logs\": \"\"}}"
 echo $PAYLOAD
-curl -X POST http://localhost:3069/airflow/progress -H "Content-Type: application/json" -d "${PAYLOAD}"
+curl -X POST http://localhost:${NJS_CLIENT_PORT}/airflow/progress -H "Content-Type: application/json" -d "${PAYLOAD}"
 
 /cm/shared/apps/lsf10/10.1/linux3.10-glibc2.17-x86_64/bin/bwait -w "done(${DAG_ID}_${RUN_ID})"      # won't be caught by trap if job finished successfully
 
@@ -75,4 +75,4 @@ RESULTS=`cat ${OUTDIR}/results.json`
 PAYLOAD="{\"payload\":{\"dag_id\": \"${DAG_ID}\", \"run_id\": \"${RUN_ID}\", \"results\": $RESULTS}}"
 echo "Sending workflow execution results from ${OUTDIR}/results.json"
 echo $PAYLOAD
-curl -X POST http://localhost:3069/airflow/results -H "Content-Type: application/json" -d "${PAYLOAD}"
+curl -X POST http://localhost:${NJS_CLIENT_PORT}/airflow/results -H "Content-Type: application/json" -d "${PAYLOAD}"
