@@ -58,31 +58,18 @@ function getAria2cArgs(settings){
   return Object.keys(aria2cArgs).map((key) => `${key}=${aria2cArgs[key]}`);  // to return as array of "key=value"
 }
 
-
-function getAirflowApiServerArgs(settings){
-  const airflowApiServerArgs = [
-    '--port', settings.satelliteSettings.airflowAPIPort
-  ];
-  if (settings.devel && settings.devel.simulation) {
-    airflowApiServerArgs.push('--simulation')
-  };
-  return airflowApiServerArgs
-}
-
-
-function getPostgresEnvVar(settings){
-  const postgresEnvVar = {
+function getClusterEnvVar(settings){
+  const clusterEnvVar = {
     PATH: settings.executables.pathEnvVar,
-    PGHOST: '127.0.0.1',
-    PGPORT: settings.databaseSettings.db_port,
-    PGDATA: settings.defaultLocations.pgdata,
-    PGUSER: settings.databaseSettings.db_user,
-    PGPASSWORD: settings.databaseSettings.db_password,
-    PGDATABASE: settings.databaseSettings.db_name
+    OUTPUT_DIR: settings.clusterApiSettings.outputDir,
+    SCRIPT_DIR: settings.clusterApiSettings.scriptDir,
+    TMP_TOIL_DIR: settings.clusterApiSettings.tmpToilDir,
+    ENV_FILE_PATH: settings.clusterApiSettings.envFilePath,
+    SINGULARITY_TMP_DIR: settings.clusterApiSettings.singularityTmpPath,
+    NJS_CLIENT_PORT: settings.satelliteSettings.port,
   };
-  return postgresEnvVar
+  return clusterEnvVar
 }
-
 
 function getAirflowEnvVar(settings){
   const airflowEnvVar = {
@@ -99,7 +86,6 @@ function getAirflowEnvVar(settings){
   };
   return airflowEnvVar
 }
-
 
 function getNjsClientEnvVar(settings){
 
@@ -182,14 +168,14 @@ function waitForInitConfiguration(settings){
       console.log(`Failed to create directory ${folder} due to ${e}`);
     }
   }
-  child_process.spawnSync(                         // Need to leave it like this until we make sure that api server is run after scheduler and they both don't create airflow.cfg
-    "airflow", [],
-    {
-      cwd: settings.defaultLocations.airflow,
-      shell: true,
-      env: getAirflowEnvVar(settings)
-    }
-  );
+  // child_process.spawnSync(                         // Need to leave it like this until we make sure that api server is run after scheduler and they both don't create airflow.cfg
+  //   "airflow", [],
+  //   {
+  //     cwd: settings.defaultLocations.airflow,
+  //     shell: true,
+  //     env: getAirflowEnvVar(settings)
+  //   }
+  // );
   const ncbi_dir = path.resolve(os.homedir(), '.ncbi')
   const mkfg_file = path.resolve(ncbi_dir, 'user-settings.mkfg')
   const mkfg_file_backup = path.resolve(ncbi_dir, 'user-settings.mkfg.backuped_by_scidap')
@@ -245,6 +231,7 @@ function getSettings(cwd, customLocation){
   const settings_locations = [
     process.env.SCIDAP_SETTINGS,
     path.resolve(cwd, '../../scidap_settings.json'),
+    path.resolve(cwd, '../../.config/scidap_satellite/scidap_settings.json'),
     path.resolve(os.homedir(), './.config/scidap_satellite/scidap_settings.json'),  // might be different on mac
     path.resolve(cwd, '../configs/scidap_default_settings.json')                    // default settings should be always present
   ];
@@ -258,6 +245,7 @@ function getSettings(cwd, customLocation){
   const settings = {
     ...loadSettings(settings_locations),
     executables: {
+      startClusterApi: path.resolve(cwd, '../satellite/bin/start_cluster_api.sh'),
       aria2c: path.resolve(cwd, '../satellite/bin/aria2c'),
       startPostgres: path.resolve(cwd, '../satellite/bin/start_postgres.sh'),
       startScheduler: path.resolve(cwd, '../satellite/bin/start_scheduler.sh'),
@@ -265,8 +253,9 @@ function getSettings(cwd, customLocation){
       startWebserver: path.resolve(cwd, '../satellite/bin/start_webserver.sh'),
       startNjsClient: path.resolve(cwd, '../satellite/dist/src/main.js'),
       satelliteBin: path.resolve(cwd, '../satellite/bin'),                       // not used directly, but added just in case
-      cwlAirflowBin: path.resolve(cwd, '../cwl-airflow/bin_portable'),
-      pathEnvVar: `${ path.resolve(cwd, '../satellite/bin') }:${ path.resolve(cwd, '../cwl-airflow/bin_portable') }:/usr/bin:/bin:/usr/local/bin:/usr/sbin`  // maybe add to the original PATH to make it universal, might be different on mac
+      // cwlAirflowBin: path.resolve(cwd, '../cwl-airflow/bin_portable'),
+      clusterBin: path.resolve(cwd, '../cluster_api/bin_portable'),
+      pathEnvVar: `${ path.resolve(cwd, '../satellite/bin') }:${ path.resolve(cwd, '../cluster_api/bin_portable') }:/usr/bin:/bin:/usr/local/bin:/usr/sbin`  // maybe add to the original PATH to make it universal, might be different on mac
     }
   }
 
@@ -287,53 +276,14 @@ function getRunConfiguration(settings){
         cwd: settings.defaultLocations.airflow
       },
       {
-        name: 'postgres',
-        script: settings.executables.startPostgres,
-        args: [],
-        watch: false,
-        exec_mode: 'fork_mode',
-        cwd: settings.defaultLocations.airflow,
-        env: getPostgresEnvVar(settings)  // -D, -h and -p will be read from the environment variables
-      },
-      {
-        name: 'airflow-scheduler',
-        script: settings.executables.startScheduler,
-        args: [],
+        name: 'cluster-api',
+        script: settings.executables.startClusterApi,
         interpreter: 'bash',
         watch: false,
         exec_mode: 'fork_mode',
-        cwd: settings.defaultLocations.airflow,
-        env: {
-          ...getPostgresEnvVar(settings),
-          ...getAirflowEnvVar(settings)
-        }
-      },
-      {
-        name: 'airflow-apiserver',
-        script: settings.executables.startApiserver,
-        args: getAirflowApiServerArgs(settings),
-        interpreter: 'bash',
-        watch: false,
-        exec_mode: 'fork_mode',
-        cwd: settings.defaultLocations.airflow,
-        env: {
-          ...getPostgresEnvVar(settings),
-          ...getAirflowEnvVar(settings)
-        }
-      },
-      {
-        name: 'airflow-webserver',
-        script: settings.executables.startWebserver,
-        args: [],
-        interpreter: 'bash',
-        watch: false,
-        exec_mode: 'fork_mode',
-        cwd: settings.defaultLocations.airflow,
-        env: {
-          ...getPostgresEnvVar(settings),
-          ...getAirflowEnvVar(settings)
-        }
-      },
+        cwd: settings.defaultLocations.clusterApi,
+        env: getClusterEnvVar(settings)
+      },  
       {
         name: 'njs-client',
         script: settings.executables.startNjsClient,

@@ -19,6 +19,10 @@
 
 After script finishes running, you will find a compressed `scidap-satellite-commitsha-ubuntu.tar.gz` in the `./bundle` folder. All the temporary data will be kept in `./build` and can be removed.
 
+
+### Building Cluster Sat
+The env vars for `GITHUB_USER` and `GITHUB_TOKEN` should be set according to your personal access token for github
+
 **To run** relocatable `tar.gz` on Ubuntu 18.04/20.04, CentOS 7/8, follow these directions.
 - Make sure that Docker is installed and properly configured [see installation instructions](https://docs.docker.com/engine/install/ubuntu/)
 - Uncompress `scidap-satellite-commitsha-ubuntu.tar.gz` into an empty folder and start `pm2` with `./configs/ecosystem.config.js` file. See how to provide custom settings location at the end of this section.
@@ -81,6 +85,19 @@ After script finishes running, you will find a `scidap-satellite.app` in `./rele
 In case you by mistake run `build_ubuntu.sh` script, you will need to remove `node_modules`, `build`, `build_ubuntu`, `Services`, `ubuntu_post_build` folders in the root of you repository and rerun `npm install`, `build_macos.sh` and `npm run electron:mac` commands as it's listed above.
 
 The default configuration file from `./configs/scidap_default_settings.json` will be used by Electron for generating `config.json`.
+
+
+## Building CLUSTER sat (locally)
+
+run 
+
+```bash
+./build_sripts/build_linux_CLUSTER_in_docker.sh /abs/path/to/cluster/repo /abs/path/to/njs/repo DOCKER_IMAGE_NAME sat.new.version
+# 6 more optional params with defaults
+```
+
+> NOTE: the docker image should be ubuntu base, but requires python with shiv installed
+A dockerfile to use as a basis is also included, and can be built with ```docker build --tag "SOME_TAG" - < linux_cluster.dockerfile```
 
 ## Default configuration
 
