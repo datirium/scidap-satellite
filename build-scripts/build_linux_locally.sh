@@ -137,7 +137,8 @@ cp -r pgsql/lib ${SATDIR}/
 cp -r pgsql/share ${SATDIR}/
 
 echo "Downloading CWL-Airflow"
-CWLAIRFLOW_URL="https://github.com/Barski-lab/cwl-airflow/releases/download/${CWLAIRFLOW_VERSION}/python_${CWLAIRFLOW_PYTHON_VERSION}_cwl_airflow_master_linux.tar.gz"
+CWLAIRFLOW_URL="https://github.com/scrowley-Datirium/cwl-airflow/releases/download/${CWLAIRFLOW_VERSION}/python_${CWLAIRFLOW_PYTHON_VERSION}_cwl_airflow_master_linux.tar.gz"
+#"https://github.com/Barski-lab/cwl-airflow/releases/download/${CWLAIRFLOW_VERSION}/python_${CWLAIRFLOW_PYTHON_VERSION}_cwl_airflow_master_linux.tar.gz"
 download_and_extract $CWLAIRFLOW_URL python_${CWLAIRFLOW_PYTHON_VERSION}_cwl_airflow_master_linux.tar.gz python3
 echo "Copying python3 to ${WORKDIR}/cwl-airflow"
 cp -r python3 cwl-airflow

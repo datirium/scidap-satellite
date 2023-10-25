@@ -231,7 +231,8 @@ function getSettings(cwd, customLocation){
   const settings_locations = [
     process.env.SCIDAP_SETTINGS,
     path.resolve(cwd, '../../scidap_settings.json'),
-    path.resolve(os.homedir(), './.config/scidap-satellite/scidap_settings.json'),  // might be different on mac
+    path.resolve(cwd, '../../.config/scidap_satellite/scidap_settings.json'),
+    path.resolve(os.homedir(), './.config/scidap_satellite/scidap_settings.json'),  // might be different on mac
     path.resolve(cwd, '../configs/scidap_default_settings.json')                    // default settings should be always present
   ];
 
