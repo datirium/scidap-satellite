@@ -44,7 +44,8 @@
         "outputDir": "/home/scidap/scidap/projects",
         "tmpToilDir": "/mnt/cache/TOIL_TMP_DIR",
         "envFilePath": "/data/barskilab/temporary/myenv/bin/activate",
-        "singularityTmpPath": "/mnt/cache/SINGULARITY_TMP_DIR"
+        "singularityTmpPath": "/mnt/cache/SINGULARITY_TMP_DIR",
+        "cwlSingularityPath": "/mnt/cache/SINGULARITY_TMP_DIR"
     },
     "aria2cSettings": {
         "--console-log-level": "debug",
