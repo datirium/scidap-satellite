@@ -256,7 +256,7 @@ function getSettings(cwd, customLocation){
       satelliteBin: path.resolve(cwd, '../satellite/bin'),                       // not used directly, but added just in case
       // cwlAirflowBin: path.resolve(cwd, '../cwl-airflow/bin_portable'),
       clusterBin: path.resolve(cwd, '../cluster_api/bin_portable'),
-      pathEnvVar: `${ path.resolve(cwd, '../satellite/bin') }:${ path.resolve(cwd, '../cluster_api/bin_portable') }:/usr/bin:/bin:/usr/local/bin:/usr/sbin`  // maybe add to the original PATH to make it universal, might be different on mac
+      pathEnvVar: `${ path.resolve(cwd, '../satellite/bin') }:${ path.resolve(cwd, '../cluster_api/bin_portable') }:/usr/bin:/bin:/usr/local/bin:/usr/sbin:${process.env.PATH}`  // maybe add to the original PATH to make it universal, might be different on mac
     }
   }
 
