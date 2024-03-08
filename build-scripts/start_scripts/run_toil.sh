@@ -44,6 +44,7 @@ bsub -J "${DAG_ID}_${RUN_ID}" \
      -R "rusage[mem=64000] span[hosts=1]" \
      -o "${OUTDIR}/stdout.txt" \
      -e "${OUTDIR}/stderr.txt" << EOL
+set -e
 module purge
 module load nodejs jq anaconda3 singularity/3.7.0
 source $TOIL_ENV_FILE
@@ -55,17 +56,19 @@ export CWL_SINGULARITY_CACHE=$CWL_SINGULARITY_CACHE
 export TOIL_LSF_ARGS="-W 48:00"
 toil-cwl-runner \
 --logDebug \
+--stats \
 --bypass-file-store \
 --batchSystem lsf \
 --singularity \
 --retryCount 0 \
---clean always \
 --disableCaching \
 --defaultMemory ${MEMORY} \
 --defaultCores ${CPU} \
 --jobStore "${JOBSTORE}" \
 --writeLogs ${LOGS} \
---outdir ${OUTDIR} ${WORKFLOW} ${JOB} | jq 'walk(if type == "object" then with_entries(select(.key | test("listing") | not)) else . end)' > ${OUTDIR}/results.json
+--outdir ${OUTDIR} ${WORKFLOW} ${JOB} > ${OUTDIR}/results_full.json
+toil stats ${JOBSTORE} > ${OUTDIR}/stats.txt
+cat ${OUTDIR}/results_full.json | jq 'walk(if type == "object" then with_entries(select(.key | test("listing") | not)) else . end)' > ${OUTDIR}/results.json
 EOL
 
 # jq 'walk(if type == "object" then with_entries(select(.key | test("listing") | not)) else . end)'
