@@ -6,10 +6,10 @@
 NJS_REPO_PATH=${1:-"/Users/scrowley/Desktop/REPOS/scidap-satellite-interactions/scidap-satellite"}
 
 BUILD_CONTAINER=${2:-"ubuntu:18.04"}                          # ubuntu or centos images (centos:7, centos:8, ubuntu:18.04, ubuntu:20.04)
-SATELLITE_VERSION_LABEL=${3:-`git rev-parse HEAD`}            # For tagging purpose only (use current commit be default). We always mount the content of the local build-scripts directory.
+SATELLITE_VERSION_LABEL=${3:-"2.0.10"} #`git rev-parse HEAD`}            # For tagging purpose only (use current commit be default). We always mount the content of the local build-scripts directory.
 NODE_VERSION=${4:-"12.22.7"} # newer sat coming with 14.21.3
 ARIA2_VERSION=${5:-"1.36.0"}
-CWLAIRFLOW_VERSION=${6:-"0.1.1"} #"1.2.12"}
+CWLAIRFLOW_VERSION=${6:-"1.2.12"}
 CWLAIRFLOW_PYTHON_VERSION=${7:-"3.8.18"} # was 3.8.12
 # NJS_CLIENT_VERSION=${7:-"master"}                       # No local builds. Always pulled from BitBucket. All the changes should be pushed beforehand.
 SRA_TOOLKIT_VERSION=${8:-"2.11.1"}

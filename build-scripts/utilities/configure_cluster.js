@@ -66,6 +66,7 @@ function getClusterEnvVar(settings){
     TMP_TOIL_DIR: settings.clusterApiSettings.tmpToilDir,
     ENV_FILE_PATH: settings.clusterApiSettings.envFilePath,
     SINGULARITY_TMP_DIR: settings.clusterApiSettings.singularityTmpPath,
+    CWL_SINGULARITY_DIR: settings.clusterApiSettings.cwlSingularityPath,
     NJS_CLIENT_PORT: settings.satelliteSettings.port,
   };
   return clusterEnvVar
@@ -255,7 +256,7 @@ function getSettings(cwd, customLocation){
       satelliteBin: path.resolve(cwd, '../satellite/bin'),                       // not used directly, but added just in case
       // cwlAirflowBin: path.resolve(cwd, '../cwl-airflow/bin_portable'),
       clusterBin: path.resolve(cwd, '../cluster_api/bin_portable'),
-      pathEnvVar: `${ path.resolve(cwd, '../satellite/bin') }:${ path.resolve(cwd, '../cluster_api/bin_portable') }:/usr/bin:/bin:/usr/local/bin:/usr/sbin`  // maybe add to the original PATH to make it universal, might be different on mac
+      pathEnvVar: `${ path.resolve(cwd, '../satellite/bin') }:${ path.resolve(cwd, '../cluster_api/bin_portable') }:/usr/bin:/bin:/usr/local/bin:/usr/sbin:${process.env.PATH}`  // maybe add to the original PATH to make it universal, might be different on mac
     }
   }
 

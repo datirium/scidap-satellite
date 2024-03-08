@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # CLUSTER_REPO_PATH=${1:-"/Users/scrowley/Desktop/REPOS/sat-cluster-api"}
-CLUSTER_API_VERSION=${1:="0.1.1"}
+CLUSTER_API_VERSION=${1:="0.1.2"}
 NJS_REPO_PATH=${2:-"/Users/scrowley/Desktop/REPOS/scidap-satellite-interactions/scidap-satellite"}
 
 BUILD_CONTAINER=${3:-"ubuntu:18.04"}                          # ubuntu or centos images (centos:7, centos:8, ubuntu:18.04, ubuntu:20.04)
