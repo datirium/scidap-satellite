@@ -13,12 +13,13 @@ NJS_CLIENT_PORT=${5:-"3069"}
 
 SEARCH_DIR="${TMP_DIR}/${DAG_ID}_${RUN_ID}/jobstore/stats"
 
-echo "directory for getting number of jobs run/running: $SEARCH_DIR"
+# echo "directory for getting number of jobs run/running: $SEARCH_DIR"
+# echo "number of total steps (-1): $TOTAL_STEPS"
 
 sendProgressReport() {
     progress=$1
     PAYLOAD="{\"payload\":{\"dag_id\": \"${DAG_ID}\", \"run_id\": \"${RUN_ID}\", \"state\": \"Sent to Cluster\", \"progress\": $progress, \"error\": \"\", \"statistics\": \"\", \"logs\": \"\"}}"
-    echo $PAYLOAD
+    # echo "send payload: $PAYLOAD"
     curl -X POST http://localhost:${NJS_CLIENT_PORT}/airflow/progress -H "Content-Type: application/json" -d "${PAYLOAD}"
 }
 
@@ -43,8 +44,8 @@ while true; do
             percentage=$( expr 100 '*' "$stepNum" / "$TOTAL_STEPS" )
             if [ "$percentage" -gt "$lastProgress" ]
             then 
-                echo "would report with progress of $percentage"
-                # sendProgressReport $percentage
+                # echo "would report with progress of $percentage"
+                sendProgressReport $percentage
             else
                 echo "would NOT report anything"
             fi
